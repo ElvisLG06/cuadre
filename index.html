@@ -43,8 +43,53 @@
     display: flex; flex-direction: column;
     transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .35s;
   }
-  #movimientos, #deudas, #metas { transform: translateX(100%); }
-  #movimientos.on, #deudas.on, #metas.on { transform: translateX(0); }
+  #movimientos, #deudas, #metas, #stats { transform: translateX(100%); }
+  #movimientos.on, #deudas.on, #metas.on, #stats.on { transform: translateX(0); }
+
+  /* ---------- Estadísticas ---------- */
+  #stats .periodo { margin-bottom: 12px; }
+  .scroll-stats { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; margin: 12px -22px 0; padding: 0 22px 24px; }
+  .tarjeta { background: var(--surface); border-radius: 20px; padding: 18px; margin-bottom: 14px; }
+  .tarjeta h4 { font-size: 13px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+  .dona-wrap { position: relative; width: 190px; height: 190px; margin: 2px auto 16px; }
+  .dona-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .dona-wrap circle { transition: stroke-dasharray .7s cubic-bezier(.2,.8,.2,1), stroke-dashoffset .7s cubic-bezier(.2,.8,.2,1); }
+  .dona-centro { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .dona-centro small { font-size: 12.5px; color: var(--muted); }
+  .dona-centro b { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .leyenda-fila {
+    display: flex; align-items: center; gap: 10px; padding: 10px 2px; border-top: 1px solid var(--surface-2);
+    background: none; border-left: 0; border-right: 0; border-bottom: 0; width: 100%; color: var(--text); text-align: left; font-family: inherit;
+  }
+  .leyenda-fila:first-of-type { border-top: 0; }
+  .leyenda-fila .pt { width: 11px; height: 11px; border-radius: 4px; flex-shrink: 0; }
+  .leyenda-fila .nm { flex: 1; min-width: 0; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .leyenda-fila .pc { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; width: 42px; text-align: right; }
+  .leyenda-fila .mt { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 72px; text-align: right; }
+  .sin-datos { text-align: center; color: var(--muted); font-size: 15px; padding: 26px 0; line-height: 1.5; }
+  .ppto { padding: 12px 0; border-top: 1px solid var(--surface-2); }
+  .ppto:first-of-type { border-top: 0; padding-top: 2px; }
+  .ppto-top { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; }
+  .ppto-top b { font-weight: 600; }
+  .ppto-top span { color: var(--muted); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  .ppto-bar { height: 10px; border-radius: 999px; background: var(--bg); margin: 9px 0 6px; overflow: hidden; }
+  .ppto-bar i { display: block; height: 100%; border-radius: 999px; transition: width .7s cubic-bezier(.2,.8,.2,1), background .3s; }
+  .ppto-msg { font-size: 12.5px; color: var(--muted); }
+  .ok-c { background: var(--green); } .warn-c { background: #e8b23d; } .over-c { background: var(--red); }
+  .ppto-msg.warn { color: #e8b23d; } .ppto-msg.over { color: var(--red); }
+  .btn-link { background: none; border: 0; color: var(--green); font-size: 15px; font-weight: 600; font-family: inherit; padding: 8px 0 0; }
+
+  /* Categorías */
+  .cat-fila {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; font-family: inherit; color: var(--text);
+    background: var(--bg); border: 0; border-radius: 14px; padding: 14px 14px; margin-bottom: 8px;
+  }
+  .cat-fila:active { background: var(--surface-2); }
+  .cat-fila .pt { width: 11px; height: 11px; border-radius: 4px; flex-shrink: 0; }
+  .cat-fila .nm { flex: 1; min-width: 0; font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cat-fila .pp { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .cat-agregar { width: 100%; border: 1.5px dashed var(--surface-2); background: none; color: var(--green); border-radius: 14px; height: 50px; font-size: 15px; font-weight: 600; font-family: inherit; margin: 4px 0 14px; }
+
 
   /* ---------- Periodo (Todo / mes) ---------- */
   .periodo { display: flex; justify-content: center; align-items: center; gap: 8px; }
@@ -190,9 +235,9 @@
   .total { display: inline-block; white-space: nowrap; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .col .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
-  .links { display: flex; gap: 8px; margin: 16px 0 4px; }
+  .links { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0 4px; }
   .link-mov {
-    flex: 1 1 auto; margin: 0; height: 50px; padding: 0 8px;
+    margin: 0; height: 46px; padding: 0 8px;
     background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.07); border-radius: 14px;
     color: var(--text); font-size: 15px; font-weight: 500; white-space: nowrap;
     display: flex; align-items: center; justify-content: center; gap: 4px;
@@ -344,6 +389,8 @@
     transform: translateY(105%); transition: transform .32s cubic-bezier(.2,.8,.2,1);
   }
   .hoja.on { transform: translateY(0); }
+  .hoja.alta { max-height: 88vh; display: flex; flex-direction: column; }
+  .hoja.alta .scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; margin: 0 -22px; padding: 0 22px; flex: 1; min-height: 0; }
   .agarre { width: 40px; height: 5px; border-radius: 3px; background: var(--surface-2); margin: 0 auto 16px; }
   .hoja h3 { font-size: 22px; font-weight: 700; margin-bottom: 16px; }
   .campo { display: block; margin-bottom: 12px; }
@@ -451,6 +498,41 @@
       </button>
       <button class="link-mov" id="abrirMetas">Metas
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+      <button class="link-mov" id="abrirStats">Estadísticas
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- ========== ESTADÍSTICAS ========== -->
+  <section class="view" id="stats" aria-hidden="true">
+    <div class="top">
+      <button class="back" id="cerrarStats">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <h2>Estadísticas</h2>
+    </div>
+    <div class="periodo" data-per>
+      <button class="per-todo">Todo</button>
+      <div class="per-mes"><button class="per-prev" aria-label="Mes anterior">‹</button><button class="per-label"></button><button class="per-next" aria-label="Mes siguiente">›</button></div>
+    </div>
+    <div class="segmento" id="segStats" data-t="gasto" style="grid-template-columns:repeat(2,1fr)">
+      <span class="indicador" style="width:calc((100% - 8px) / 2);transform:translateX(0)"></span>
+      <button data-t="gasto" class="on">Gastos</button>
+      <button data-t="ingreso">Ingresos</button>
+    </div>
+    <div class="scroll-stats" id="scrollStats">
+      <div class="tarjeta">
+        <h4 id="tituloDona">Gastos por categoría</h4>
+        <div id="cuerpoDona"></div>
+      </div>
+      <div class="tarjeta" id="tarjetaPpto">
+        <h4 id="tituloPpto">Presupuestos</h4>
+        <div id="cuerpoPpto"></div>
+      </div>
+      <button class="btn sec full" id="abrirCats" style="margin-bottom:6px">
+        Administrar categorías y presupuestos
       </button>
     </div>
   </section>
@@ -679,6 +761,41 @@
     </div>
   </div>
 
+  <!-- ========== HOJA: CATEGORÍAS ========== -->
+  <div class="hoja alta" id="hojaCats">
+    <div class="agarre"></div>
+    <h3>Categorías</h3>
+    <div class="segmento" id="segCats" data-t="gasto" style="grid-template-columns:repeat(2,1fr);margin-bottom:14px">
+      <span class="indicador" style="width:calc((100% - 8px) / 2);transform:translateX(0)"></span>
+      <button data-t="gasto" class="on">Gastos</button>
+      <button data-t="ingreso">Ingresos</button>
+    </div>
+    <div class="scroll" id="listaCats"></div>
+    <button type="button" class="btn sec full" id="cerrarCats" style="margin-top:6px">Listo</button>
+  </div>
+
+  <!-- ========== HOJA: EDITAR CATEGORÍA ========== -->
+  <form class="hoja" id="hojaCat" autocomplete="off">
+    <div class="agarre"></div>
+    <h3 id="tituloCat">Nueva categoría</h3>
+    <label class="campo">
+      <span>Nombre</span>
+      <input id="cNombre" type="text" maxlength="24" placeholder="Ej. Gimnasio, Mascota…" enterkeyhint="next">
+    </label>
+    <div class="nota-bloqueo" id="notaOtros" hidden>«Otros» es fija: no se puede renombrar ni eliminar.</div>
+    <label class="campo monto" id="campoPpto">
+      <span>Presupuesto mensual ($) <em class="opc">(opcional)</em></span>
+      <input id="cPpto" type="text" inputmode="decimal" placeholder="Sin límite" enterkeyhint="done">
+    </label>
+    <div class="aviso" id="avisoCat" hidden></div>
+    <div class="error" id="errCat"></div>
+    <div class="botones" id="botonesCat">
+      <button type="button" class="btn sec" id="cancelarCat">Cancelar</button>
+      <button type="submit" class="btn verde" id="guardarCat">Guardar</button>
+    </div>
+    <button type="button" class="btn sec borrar-deuda full" id="borrarCat" style="margin-top:10px">Eliminar categoría</button>
+  </form>
+
   <!-- ========== HOJA: NUEVA / EDITAR META ========== -->
   <form class="hoja" id="hojaMetaForm" autocomplete="off">
     <div class="agarre"></div>
@@ -740,6 +857,30 @@
   }
   let movs = cargar();
 
+  /* ---------- Categorías (editables; las de siempre vienen por defecto) ---------- */
+  const KEY_CATS = 'cuadre_categorias_v1';
+  const CATS_DEF = { ingreso: ['Sueldo', 'Segundo sueldo', 'Otros'], gasto: ['Housing', 'Super', 'Comida', 'Entretenimiento', 'Ropa', 'Otros'] };
+  const RESERVADAS = ['deuda', 'meta'];
+  const idCat = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  let catsData;
+  try { catsData = JSON.parse(localStorage.getItem(KEY_CATS) || 'null'); } catch (e) { catsData = null; }
+  if (!catsData || !Array.isArray(catsData.ingreso) || !Array.isArray(catsData.gasto)) {
+    catsData = {
+      ingreso: CATS_DEF.ingreso.map(n => ({ id: idCat(), nombre: n })),
+      gasto: CATS_DEF.gasto.map(n => ({ id: idCat(), nombre: n, presupuesto: 0 }))
+    };
+  }
+  function guardarCats() { try { localStorage.setItem(KEY_CATS, JSON.stringify(catsData)); } catch (e) {} }
+  const PALETA = ['#5b8def', '#e8a33d', '#b06fd8', '#3fb8b0', '#d86f9b', '#a3ad5a', '#8f7cf0', '#e07b4f', '#4fb3d9', '#c9785b', '#8a93a6'];
+  function colorCat(tipo, nombre) {
+    const i = catsData[tipo].findIndex(c => c.nombre === nombre);
+    if (i >= 0) return PALETA[i % PALETA.length];
+    if (nombre === 'Deuda') return '#7d8597';
+    if (nombre === 'Meta') return '#c9a227';
+    let h = 0; for (const ch of nombre) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    return PALETA[h % PALETA.length];
+  }
+
   /* ---------- Utilidades ---------- */
   const $ = id => document.getElementById(id);
   const fmt = n => {
@@ -771,6 +912,7 @@
     try { localStorage.setItem('cuadre_periodo', p); } catch (e) {}
     pintarInicio();
     if ($('movimientos').classList.contains('on')) pintarLista();
+    if ($('stats').classList.contains('on')) pintarStats();
   }
   function pintarPeriodo() {
     document.querySelectorAll('[data-per]').forEach(el => {
@@ -836,7 +978,9 @@
     const wrap = $('chipsWrap'), chips = $('chips');
     if (fTipo === 'todos') { wrap.classList.remove('on'); return; }
     const delTipo = movs.filter(m => m.tipo === fTipo && enPeriodo(m) && coincide(m));
-    const cats = CATEGORIAS[fTipo].concat('Deuda');
+    const base = CATEGORIAS[fTipo];
+    const extra = [...new Set(movs.filter(m => m.tipo === fTipo && m.categoria && enPeriodo(m)).map(m => m.categoria))].filter(c => !base.includes(c));
+    const cats = base.concat(extra);
     const x = chips.dataset.t === fTipo ? chips.scrollLeft : 0;
     chips.className = 'chips ' + fTipo; chips.dataset.t = fTipo;
     chips.innerHTML =
@@ -966,8 +1110,8 @@
 
   /* ---------- Formulario Ingreso / Gasto ---------- */
   const CATEGORIAS = {
-    ingreso: ['Sueldo', 'Segundo sueldo', 'Otros'],
-    gasto: ['Housing', 'Super', 'Comida', 'Entretenimiento', 'Ropa', 'Otros']
+    get ingreso() { return catsData.ingreso.map(c => c.nombre); },
+    get gasto() { return catsData.gasto.map(c => c.nombre); }
   };
   let tipoActual = 'ingreso';
 
@@ -1331,6 +1475,179 @@
     cerrarHoja(); pintarDeudas(); pintarInicio();
   };
 
+  /* =================== ESTADÍSTICAS =================== */
+  let tipoStats = 'gasto';
+  $('abrirStats').onclick = () => { abrirVista('stats'); pintarStats(); };
+  $('cerrarStats').onclick = () => cerrarVista('stats');
+  $('segStats').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || b.dataset.t === tipoStats) return;
+    tipoStats = b.dataset.t; pintarStats();
+  });
+  function pintarSeg(el, t) {
+    el.dataset.t = t;
+    el.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+    el.querySelector('.indicador').style.transform = el.querySelectorAll('button')[0].dataset.t === t ? 'translateX(0)' : 'translateX(100%)';
+    el.querySelector('.indicador').style.background = t === 'ingreso' ? 'var(--green-soft)' : 'var(--red-soft)';
+  }
+
+  function pintarStats() {
+    pintarPeriodo();
+    pintarSeg($('segStats'), tipoStats);
+    const ing = tipoStats === 'ingreso';
+    const lista = movs.filter(m => m.tipo === tipoStats && enPeriodo(m));
+    const total = r2(lista.reduce((a, m) => a + m.monto, 0));
+    const porCat = {};
+    lista.forEach(m => { const c = m.categoria || 'Sin categoría'; porCat[c] = (porCat[c] || 0) + m.monto; });
+    const filas = Object.entries(porCat).sort((a, b) => b[1] - a[1]);
+    const cuando = periodo === 'todo' ? '' : ' · ' + nombreMes(periodo);
+    $('tituloDona').textContent = (ing ? 'Ingresos' : 'Gastos') + ' por categoría' + cuando;
+    if (!filas.length) {
+      $('cuerpoDona').innerHTML = `<div class="sin-datos">No hay ${ing ? 'ingresos' : 'gastos'}${periodo === 'todo' ? '' : ' en ' + nombreMes(periodo)}.</div>`;
+    } else {
+      const R = 70, C = 2 * Math.PI * R, gap = filas.length > 1 ? 2 : 0;
+      let acc = 0;
+      const arcos = filas.map(([c, v]) => {
+        const len = Math.max(0, (v / total) * C - gap);
+        const arco = `<circle cx="95" cy="95" r="${R}" fill="none" stroke="${colorCat(tipoStats, c)}" stroke-width="24" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-acc}"/>`;
+        acc += (v / total) * C; return arco;
+      }).join('');
+      $('cuerpoDona').innerHTML = `
+        <div class="dona-wrap">
+          <svg viewBox="0 0 190 190"><circle cx="95" cy="95" r="${R}" fill="none" stroke="var(--bg)" stroke-width="24"/>${arcos}</svg>
+          <div class="dona-centro"><small>Total ${ing ? 'ingresos' : 'gastos'}</small><b class="${ing ? 'pos' : 'neg'}">${fmt(total)}</b></div>
+        </div>` +
+        filas.map(([c, v]) => `
+          <button class="leyenda-fila" data-c="${esc(c)}">
+            <span class="pt" style="background:${colorCat(tipoStats, c)}"></span>
+            <span class="nm">${esc(c)}</span>
+            <span class="pc">${Math.round((v / total) * 100)}%</span>
+            <span class="mt">${fmt(r2(v))}</span>
+          </button>`).join('');
+    }
+    pintarPresupuestos();
+  }
+
+  // Tocar una categoría de la leyenda → ver esos movimientos
+  $('cuerpoDona').addEventListener('click', e => {
+    const f = e.target.closest('.leyenda-fila'); if (!f) return;
+    fTipo = tipoStats; fCat = f.dataset.c === 'Sin categoría' ? null : f.dataset.c;
+    $('stats').classList.remove('on'); pintarLista(); $('movimientos').classList.add('on');
+  });
+
+  function pintarPresupuestos() {
+    const t = $('tarjetaPpto');
+    if (tipoStats !== 'gasto') { t.hidden = true; return; }
+    t.hidden = false;
+    const mes = periodo === 'todo' ? ymHoy() : periodo;
+    $('tituloPpto').textContent = 'Presupuestos de ' + nombreMes(mes);
+    const conPpto = catsData.gasto.filter(c => c.presupuesto > 0);
+    if (!conPpto.length) {
+      $('cuerpoPpto').innerHTML = `<div class="sin-datos" style="padding:6px 0 0">Aún no tienes presupuestos.<br><button class="btn-link" id="irPpto">Definir un límite mensual por categoría</button></div>`;
+      $('irPpto').onclick = () => abrirCats('gasto');
+      return;
+    }
+    $('cuerpoPpto').innerHTML = conPpto.map(c => {
+      const gastado = r2(movs.filter(m => m.tipo === 'gasto' && m.categoria === c.nombre && ymDe(m.fecha) === mes).reduce((a, m) => a + m.monto, 0));
+      const p = gastado / c.presupuesto;
+      const cls = p > 1 ? 'over' : p >= .8 ? 'warn' : 'ok';
+      const msg = p > 1 ? `Te pasaste por ${fmt(r2(gastado - c.presupuesto))}`
+        : p >= 1 ? 'Llegaste a tu límite'
+        : p >= .8 ? `Cuidado: te quedan ${fmt(r2(c.presupuesto - gastado))}`
+        : `Te quedan ${fmt(r2(c.presupuesto - gastado))}`;
+      return `<div class="ppto">
+        <div class="ppto-top"><b>${esc(c.nombre)}</b><span>${fmt(gastado)} de ${fmt(c.presupuesto)}</span></div>
+        <div class="ppto-bar"><i class="${cls}-c" style="width:${Math.min(100, p * 100)}%"></i></div>
+        <div class="ppto-msg ${cls === 'ok' ? '' : cls}">${msg}</div>
+      </div>`;
+    }).join('');
+  }
+
+  /* ----- Administrar categorías ----- */
+  let tipoCats = 'gasto', catEdit = null, borrandoCat = false;
+  $('abrirCats').onclick = () => abrirCats(tipoStats);
+  function abrirCats(t) { tipoCats = t; pintarCats(); abrirHoja($('hojaCats')); }
+  $('cerrarCats').onclick = () => { cerrarHoja(); if ($('stats').classList.contains('on')) pintarStats(); };
+  $('segCats').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return; tipoCats = b.dataset.t; pintarCats();
+  });
+  function pintarCats() {
+    pintarSeg($('segCats'), tipoCats);
+    const g = tipoCats === 'gasto';
+    $('listaCats').innerHTML = catsData[tipoCats].map(c => `
+      <button class="cat-fila" data-id="${c.id}">
+        <span class="pt" style="background:${colorCat(tipoCats, c.nombre)}"></span>
+        <span class="nm">${esc(c.nombre)}</span>
+        ${g ? `<span class="pp">${c.presupuesto > 0 ? fmt(c.presupuesto) + '/mes' : 'Sin límite'}</span>` : ''}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>`).join('') +
+      `<button class="cat-agregar" id="agregarCat">+ Agregar categoría de ${g ? 'gasto' : 'ingreso'}</button>`;
+    $('agregarCat').onclick = () => abrirCat(null);
+  }
+  $('listaCats').addEventListener('click', e => {
+    const f = e.target.closest('.cat-fila'); if (!f) return;
+    const c = catsData[tipoCats].find(x => x.id === f.dataset.id); if (c) abrirCat(c);
+  });
+  function abrirCat(c) {
+    catEdit = c; borrandoCat = false;
+    const g = tipoCats === 'gasto', otros = c && c.nombre === 'Otros';
+    $('tituloCat').textContent = c ? 'Editar categoría' : `Nueva categoría de ${g ? 'gasto' : 'ingreso'}`;
+    $('cNombre').value = c ? c.nombre : ''; $('cNombre').disabled = otros;
+    $('notaOtros').hidden = !otros;
+    $('campoPpto').hidden = !g;
+    $('cPpto').value = c && c.presupuesto > 0 ? String(c.presupuesto) : '';
+    $('borrarCat').hidden = !c || otros;
+    $('borrarCat').textContent = 'Eliminar categoría';
+    $('avisoCat').hidden = true; $('errCat').textContent = '';
+    $('botonesCat').hidden = false;
+    cerrarHoja(); setTimeout(() => abrirHoja($('hojaCat')), 260);
+  }
+  const volverACats = () => { cerrarHoja(); setTimeout(() => { pintarCats(); abrirHoja($('hojaCats')); }, 260); };
+  $('cancelarCat').onclick = volverACats;
+  $('hojaCat').addEventListener('submit', e => {
+    e.preventDefault();
+    const lista = catsData[tipoCats];
+    const nombre = $('cNombre').value.trim().replace(/\s+/g, ' ');
+    const err = t => { $('errCat').textContent = t; };
+    if (!nombre) { err('Escribe un nombre.'); return; }
+    if (RESERVADAS.includes(norm(nombre))) { err(`«${nombre}» está reservado por la app. Usa otro nombre.`); return; }
+    if (lista.some(c => c !== catEdit && norm(c.nombre) === norm(nombre))) { err('Ya tienes una categoría con ese nombre.'); return; }
+    let ppto = 0;
+    if (tipoCats === 'gasto' && $('cPpto').value.trim()) {
+      ppto = parseMonto($('cPpto').value);
+      if (!(ppto >= 0) || ppto > 999999999) { err('Escribe un presupuesto válido o déjalo vacío.'); return; }
+      ppto = r2(ppto);
+    }
+    if (catEdit) {
+      const viejo = catEdit.nombre;
+      if (viejo !== nombre) {   // renombrar también en los movimientos
+        movs.forEach(m => {
+          if (m.tipo === tipoCats && m.categoria === viejo) { m.categoria = nombre; if (m.nombre === viejo) m.nombre = nombre; }
+        });
+        guardar(movs);
+      }
+      catEdit.nombre = nombre;
+      if (tipoCats === 'gasto') catEdit.presupuesto = ppto;
+      toast('Categoría actualizada');
+    } else {
+      lista.push(tipoCats === 'gasto' ? { id: idCat(), nombre, presupuesto: ppto } : { id: idCat(), nombre });
+      toast('Categoría creada');
+    }
+    guardarCats(); pintarInicio(); volverACats();
+  });
+  $('borrarCat').onclick = () => {
+    if (!catEdit) return;
+    if (!borrandoCat) {
+      borrandoCat = true;
+      const n = movs.filter(m => m.tipo === tipoCats && m.categoria === catEdit.nombre).length;
+      $('avisoCat').textContent = `¿Eliminar «${catEdit.nombre}»?` + (n ? ` Tus ${n} movimiento${n === 1 ? '' : 's'} con esta categoría se mantienen, pero ya no podrás elegirla.` : '');
+      $('avisoCat').hidden = false; $('botonesCat').hidden = true;
+      $('borrarCat').textContent = 'Sí, eliminar';
+      return;
+    }
+    catsData[tipoCats] = catsData[tipoCats].filter(c => c !== catEdit);
+    guardarCats(); toast('Categoría eliminada'); volverACats();
+  };
+
   /* =================== METAS =================== */
   /* La ganancia (ingresos − gastos) llena las metas en orden: la de arriba primero. */
   const KEY_METAS = 'cuadre_metas_v1';
@@ -1576,7 +1893,7 @@
     const hoy = new Date();
     const f = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
     const nombre = `Cuadre-respaldo-${f}.json`;
-    const datos = JSON.stringify({ app: 'Cuadre', version: 2, exportado: Date.now(), movimientos: movs, deudas, metas }, null, 1);
+    const datos = JSON.stringify({ app: 'Cuadre', version: 2, exportado: Date.now(), movimientos: movs, deudas, metas, categorias: catsData }, null, 1);
     const marcar = () => { try { localStorage.setItem(KEY_RESP, String(Date.now())); } catch (e) {} pintarUltimo(); };
     try {
       const file = new File([datos], nombre, { type: 'application/json' });
@@ -1596,7 +1913,7 @@
     } catch (e) { toast('No se pudo exportar'); }
   };
 
-  let pendientes = null, deudasPend = [], metasPend = [];
+  let pendientes = null, deudasPend = [], metasPend = [], catsPend = null;
   $('btnImportar').onclick = () => { $('inArchivo').value = ''; $('inArchivo').click(); };
   $('inArchivo').addEventListener('change', async () => {
     const file = $('inArchivo').files[0]; if (!file) return;
@@ -1609,6 +1926,7 @@
           estado: x.estado === 'cerrada' ? 'cerrada' : 'activa', fechaCierre: +x.fechaCierre || undefined, gastado: x.gastado != null ? r2(+x.gastado) : undefined }));
       const dIds = new Set(deudas.map(x => x.id));
       deudasPend = dVal.filter(x => !dIds.has(x.id));
+      catsPend = d.categorias && typeof d.categorias === 'object' ? d.categorias : null;
       const mIds = new Set(metas.map(x => x.id));
       metasPend = (Array.isArray(d.metas) ? d.metas : []).filter(x => x && x.id && typeof x.nombre === 'string' && +x.monto > 0 && !mIds.has(String(x.id)))
         .map(x => ({ id: String(x.id), nombre: x.nombre.slice(0, 30), monto: r2(+x.monto), fecha: +x.fecha || Date.now() }));
@@ -1636,6 +1954,13 @@
     movs = movs.concat(pendientes); guardar(movs);
     deudas = deudas.concat(deudasPend); guardarDeudas();
     metas = metas.concat(metasPend); guardarMetas(); metasPend = [];
+    if (catsPend) {   // agregar las categorías del respaldo que no existan
+      ['ingreso', 'gasto'].forEach(t => (catsPend[t] || []).forEach(c => {
+        if (c && typeof c.nombre === 'string' && !catsData[t].some(x => norm(x.nombre) === norm(c.nombre)))
+          catsData[t].push(t === 'gasto' ? { id: idCat(), nombre: c.nombre.slice(0, 24), presupuesto: +c.presupuesto > 0 ? r2(+c.presupuesto) : 0 } : { id: idCat(), nombre: c.nombre.slice(0, 24) });
+      }));
+      guardarCats(); catsPend = null;
+    }
     pendientes = null; deudasPend = [];
     cerrarHoja(); pintarLista(); pintarDeudas(); pintarInicio();
     toast('Respaldo importado');
