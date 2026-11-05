@@ -159,6 +159,14 @@
   .meta-lograda b { font-variant-numeric: tabular-nums; font-size: 15px; }
   .nota-meta { font-size: 13px; color: var(--muted); text-align: center; margin: -4px 0 12px; }
 
+  /* Avisos */
+  .aviso-card { display: flex; gap: 12px; align-items: flex-start; background: var(--bg); border-radius: 16px; padding: 14px; margin-bottom: 10px; }
+  .aviso-card .ic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; font-size: 19px; flex-shrink: 0; background: var(--surface-2); }
+  .aviso-card .tx { flex: 1; min-width: 0; }
+  .aviso-card b { display: block; font-size: 15px; font-weight: 600; line-height: 1.3; }
+  .aviso-card small { display: block; font-size: 13px; color: var(--muted); margin-top: 3px; line-height: 1.35; }
+  .aviso-card button { margin-top: 8px; border: 0; background: none; color: var(--green); font-size: 14.5px; font-weight: 600; font-family: inherit; padding: 0; }
+
   /* ---------- Metas ---------- */
   .disp {
     background: linear-gradient(135deg, rgba(95,191,106,.18), rgba(95,191,106,.05));
@@ -717,6 +725,10 @@
       <span class="ico a"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></span>
       <span><b>Importar respaldo</b><small>Recupera tus movimientos, deudas y metas desde un archivo. No se duplican los que ya tienes.</small></span>
     </button>
+    <button class="opcion" id="btnExcel">
+      <span class="ico v" style="background:rgba(91,141,239,.16);color:#8fb0f5"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/></svg></span>
+      <span><b>Exportar a Excel</b><small>Resumen por mes, movimientos, categorías, deudas y metas en un archivo .xlsx.</small></span>
+    </button>
     <input type="file" id="inArchivo" accept=".json,application/json,text/plain" hidden>
     <div class="ultimo" id="ultimoResp"></div>
     <button type="button" class="btn sec full" id="cerrarResp">Cerrar</button>
@@ -875,6 +887,14 @@
       <button type="button" class="btn sec" id="btnCancelarMeta2">Cancelar</button>
       <button type="button" class="btn rojo" id="btnConfirmarMeta2">Sí, eliminar</button>
     </div>
+  </div>
+
+  <!-- ========== HOJA: AVISOS ========== -->
+  <div class="hoja alta" id="hojaAvisos">
+    <div class="agarre"></div>
+    <h3>Avisos</h3>
+    <div class="scroll" id="listaAvisos"></div>
+    <button type="button" class="btn sec full" id="cerrarAvisos" style="margin-top:6px">Entendido</button>
   </div>
 
   <div class="toast" id="toast">Movimiento eliminado</div>
@@ -2054,6 +2074,24 @@
   $('abrirResp').onclick = () => { pintarUltimo(); abrirHoja($('hojaResp')); };
   $('cerrarResp').onclick = cerrarHoja;
 
+  // Compartir / guardar un archivo (menú de compartir del iPhone o descarga)
+  async function compartirArchivo(contenido, nombre, tipo, titulo) {
+    try {
+      const file = new File([contenido], nombre, { type: tipo });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: titulo });
+        return 'ok';
+      }
+    } catch (e) { if (e && e.name === 'AbortError') return 'cancelado'; }
+    try {
+      const url = URL.createObjectURL(new Blob([contenido], { type: tipo }));
+      const a = document.createElement('a'); a.href = url; a.download = nombre;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      return 'ok';
+    } catch (e) { return 'error'; }
+  }
+
   $('btnExportar').onclick = async () => {
     if (!movs.length && !deudas.length && !metas.length) { toast('No hay datos para respaldar'); return; }
     const hoy = new Date();
@@ -2137,6 +2175,152 @@
     toast('Respaldo importado');
   };
 
+  /* =================== EXCEL (.xlsx sin librerías) =================== */
+  const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  const crc32 = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC_T[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  function zipStore(archivos) {   // [{nombre, datos(string)}] → Uint8Array (ZIP sin compresión)
+    const enc = new TextEncoder(), partes = [], central = []; let off = 0;
+    const u16 = n => [n & 255, (n >>> 8) & 255], u32 = n => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+    archivos.forEach(f => {
+      const nm = enc.encode(f.nombre), dt = enc.encode(f.datos), crc = crc32(dt);
+      const loc = new Uint8Array([...u32(0x04034b50), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(dt.length), ...u32(dt.length), ...u16(nm.length), ...u16(0)]);
+      partes.push(loc, nm, dt);
+      central.push(new Uint8Array([...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(dt.length), ...u32(dt.length), ...u16(nm.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(off)]), nm);
+      off += loc.length + nm.length + dt.length;
+    });
+    const tamC = central.reduce((a, x) => a + x.length, 0);
+    const fin = new Uint8Array([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(archivos.length), ...u16(archivos.length), ...u32(tamC), ...u32(off), ...u16(0)]);
+    const todo = [...partes, ...central, fin], out = new Uint8Array(todo.reduce((a, x) => a + x.length, 0));
+    let p = 0; todo.forEach(x => { out.set(x, p); p += x.length; }); return out;
+  }
+  const xmlEsc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const colL = i => { let s = ''; i++; while (i) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
+  // filas: arrays; la primera es cabecera (negrita). Números → celda numérica con formato 2 decimales
+  function hojaXml(filas, anchos) {
+    const cols = '<cols>' + anchos.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('') + '</cols>';
+    const rows = filas.map((f, r) => `<row r="${r + 1}">` + f.map((v, c) => {
+      const ref = colL(c) + (r + 1);
+      if (v === null || v === undefined || v === '') return '';
+      if (typeof v === 'number') return `<c r="${ref}" s="${r === 0 ? 1 : 2}"><v>${v}</v></c>`;
+      return `<c r="${ref}" t="inlineStr" s="${r === 0 ? 1 : 0}"><is><t xml:space="preserve">${xmlEsc(v)}</t></is></c>`;
+    }).join('') + '</row>').join('');
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>${cols}<sheetData>${rows}</sheetData></worksheet>`;
+  }
+  function crearXlsx(hojas) {   // [{nombre, filas, anchos}]
+    const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>` +
+      hojas.map((h, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('') + '</Types>';
+    const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+    const wb = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>` +
+      hojas.map((h, i) => `<sheet name="${xmlEsc(h.nombre)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('') + '</sheets></workbook>';
+    const wbRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
+      hojas.map((h, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('') +
+      `<Relationship Id="rId${hojas.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+    const estilos = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+    return zipStore([
+      { nombre: '[Content_Types].xml', datos: ct }, { nombre: '_rels/.rels', datos: rels },
+      { nombre: 'xl/workbook.xml', datos: wb }, { nombre: 'xl/_rels/workbook.xml.rels', datos: wbRels },
+      { nombre: 'xl/styles.xml', datos: estilos },
+      ...hojas.map((h, i) => ({ nombre: `xl/worksheets/sheet${i + 1}.xml`, datos: hojaXml(h.filas, h.anchos) }))
+    ]);
+  }
+  const mesLargo = ym => { const n = nombreMes(ym); return (n.charAt(0).toUpperCase() + n.slice(1)) + (/\d{4}/.test(n) ? '' : ' ' + ym.slice(0, 4)); };
+  function datosExcel() {
+    const orden = movs.slice().sort((a, b) => a.fecha - b.fecha);
+    const meses = [...new Set(orden.map(m => ymDe(m.fecha)))].sort();
+    const resumen = [['Mes', 'Ingresos', 'Gastos', 'Ganancia']];
+    let ti = 0, tg = 0;
+    meses.forEach(ym => {
+      const del = orden.filter(m => ymDe(m.fecha) === ym);
+      const i = r2(del.filter(m => m.tipo === 'ingreso').reduce((a, m) => a + m.monto, 0));
+      const g = r2(del.filter(m => m.tipo === 'gasto').reduce((a, m) => a + m.monto, 0));
+      ti += i; tg += g; resumen.push([mesLargo(ym), i, g, r2(i - g)]);
+    });
+    resumen.push(['TOTAL', r2(ti), r2(tg), r2(ti - tg)]);
+    const movRows = [['Fecha', 'Hora', 'Tipo', 'Categoría', 'Nombre', 'Monto', 'Neto']].concat(orden.map(m => [
+      isoDia(m.fecha), horaDe(m.fecha), m.tipo === 'ingreso' ? 'Ingreso' : 'Gasto', m.categoria || '', m.nombre, m.monto, m.tipo === 'ingreso' ? m.monto : -m.monto]));
+    const porCat = [['Mes', 'Tipo', 'Categoría', 'Total']];
+    meses.forEach(ym => ['ingreso', 'gasto'].forEach(t => {
+      const acc = {};
+      orden.filter(m => ymDe(m.fecha) === ym && m.tipo === t).forEach(m => { const c = m.categoria || 'Sin categoría'; acc[c] = (acc[c] || 0) + m.monto; });
+      Object.entries(acc).sort((a, b) => b[1] - a[1]).forEach(([c, v]) => porCat.push([mesLargo(ym), t === 'ingreso' ? 'Ingreso' : 'Gasto', c, r2(v)]));
+    }));
+    const deu = [['Tipo', 'Nombre', 'Persona', 'Monto', 'Abonado', 'Pendiente', 'Estado', 'Desde', 'Cerrada', 'Gastado del préstamo']].concat(
+      deudas.slice().sort((a, b) => a.fecha - b.fecha).map(d => [d.tipo === 'debo' ? 'Debo' : 'Me deben', d.nombre, d.persona, d.monto, r2(abonadoDe(d)),
+        d.estado === 'cerrada' ? 0 : pendienteDe(d), d.estado === 'cerrada' ? 'Cerrada' : 'Activa', isoDia(d.fecha), d.fechaCierre ? isoDia(d.fechaCierre) : '', d.gastado != null ? d.gastado : '']));
+    const rep = repartir(metas);
+    const met = [['Meta', 'Monto', 'Avance', 'Estado', 'Prioridad', 'Creada', 'Lograda']].concat(
+      metas.map((m, i) => [m.nombre, m.monto, rep[m.id] || 0, (rep[m.id] || 0) >= m.monto ? 'Completa' : 'En progreso', i + 1, isoDia(m.fecha), '']),
+      logradas.map(m => [m.nombre, m.monto, m.monto, 'Lograda', '', isoDia(m.fecha), isoDia(m.fechaLograda)]));
+    return [
+      { nombre: 'Resumen por mes', filas: resumen, anchos: [20, 14, 14, 14] },
+      { nombre: 'Movimientos', filas: movRows, anchos: [12, 8, 10, 18, 30, 12, 12] },
+      { nombre: 'Por categoría', filas: porCat, anchos: [20, 10, 20, 14] },
+      { nombre: 'Deudas', filas: deu, anchos: [10, 22, 18, 12, 12, 12, 10, 12, 12, 20] },
+      { nombre: 'Metas', filas: met, anchos: [22, 12, 12, 13, 10, 12, 12] }
+    ];
+  }
+  $('btnExcel').onclick = async () => {
+    if (!movs.length && !deudas.length && !metas.length) { toast('No hay datos para exportar'); return; }
+    const bytes = crearXlsx(datosExcel());
+    const r = await compartirArchivo(bytes, `Cuadre-resumen-${isoDia(Date.now())}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Resumen Cuadre');
+    if (r === 'ok') toast('Excel listo'); else if (r === 'error') toast('No se pudo exportar');
+  };
+
+  /* =================== AVISOS AL ABRIR =================== */
+  // Respaldo: a los 15 días sin respaldo, luego al mes, y después cada mes.
+  // Deudas pendientes: cada semana desde que se crearon.
+  const KEY_PRIMER = 'cuadre_primer_uso', KEY_AV_RESP = 'cuadre_aviso_respaldo', KEY_AV_DEU = 'cuadre_aviso_deudas';
+  const leer = (k, def) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? def : v; } catch (e) { return def; } };
+  const escribir = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  if (!leer(KEY_PRIMER, 0)) escribir(KEY_PRIMER, Date.now());
+  const nivelRespaldo = dias => dias < 15 ? 0 : dias < 30 ? 1 : 1 + Math.floor(dias / 30);
+  function calcularAvisos() {
+    const avisos = [], ahora = Date.now();
+    let ultimo = 0; try { ultimo = +localStorage.getItem(KEY_RESP) || 0; } catch (e) {}
+    const ref = ultimo || leer(KEY_PRIMER, ahora);
+    const dias = Math.floor((ahora - ref) / 86400000);
+    const nivel = nivelRespaldo(dias), visto = leer(KEY_AV_RESP, { ref: 0, nivel: 0 });
+    const hayDatos = movs.length || deudas.length || metas.length;
+    if (hayDatos && nivel > 0 && !(visto.ref === ref && visto.nivel >= nivel)) {
+      avisos.push({ tipo: 'resp', ic: '💾', titulo: ultimo ? `Hace ${dias} días que no haces un respaldo` : 'Aún no has hecho ningún respaldo',
+        texto: 'Guarda una copia de tus datos por si cambias de iPhone o borras la app.', accion: 'Hacer respaldo', marcar: () => escribir(KEY_AV_RESP, { ref, nivel }) });
+    }
+    const vistos = leer(KEY_AV_DEU, {});
+    deudas.filter(d => d.estado !== 'cerrada').forEach(d => {
+      const sem = Math.floor((ahora - d.fecha) / (7 * 86400000));
+      if (sem >= 1 && (vistos[d.id] || 0) < sem) {
+        const debo = d.tipo === 'debo', monto = fmt(pendienteDe(d)), hace = sem === 1 ? '1 semana' : `${sem} semanas`;
+        avisos.push({ tipo: 'deuda', ic: debo ? '🔴' : '🟢',
+          titulo: debo ? `Le debes ${monto} a ${d.persona}` : `${d.persona} te debe ${monto}`,
+          texto: `«${d.nombre}» · desde hace ${hace}.`, accion: 'Ver deudas',
+          marcar: () => { const v = leer(KEY_AV_DEU, {}); v[d.id] = sem; escribir(KEY_AV_DEU, v); } });
+      }
+    });
+    return avisos;
+  }
+  let avisosMostrados = [];
+  function revisarAvisos() {
+    if (hojaAbierta || document.querySelector('.view.on')) return;   // solo en el inicio y sin otra ventana abierta
+    const avisos = calcularAvisos(); if (!avisos.length) return;
+    avisosMostrados = avisos;
+    avisos.forEach(a => a.marcar());   // cada aviso se muestra una sola vez por periodo
+    $('listaAvisos').innerHTML = avisos.map((a, i) => `
+      <div class="aviso-card">
+        <span class="ic">${a.ic}</span>
+        <div class="tx"><b>${esc(a.titulo)}</b><small>${esc(a.texto)}</small><button data-i="${i}">${a.accion} →</button></div>
+      </div>`).join('');
+    abrirHoja($('hojaAvisos'));
+  }
+  $('cerrarAvisos').onclick = cerrarHoja;
+  $('listaAvisos').addEventListener('click', e => {
+    const b = e.target.closest('button[data-i]'); if (!b) return;
+    const a = avisosMostrados[+b.dataset.i]; cerrarHoja();
+    setTimeout(() => {
+      if (a.tipo === 'resp') { pintarUltimo(); abrirHoja($('hojaResp')); }
+      else { vistaDeudas = 'activas'; pintarDeudas(); abrirVista('deudas'); }
+    }, 280);
+  });
+
   /* ---------- Arranque ---------- */
   window.addEventListener('resize', ajustarTextos);
   window.addEventListener('pageshow', pintarInicio);
@@ -2144,6 +2328,8 @@
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustarTextos);
   pintarInicio();
   requestAnimationFrame(pintarInicio);
+  setTimeout(revisarAvisos, 900);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(revisarAvisos, 600); });
 
   /* ---------- Pedir al iPhone que no borre los datos ---------- */
   try { navigator.storage && navigator.storage.persist && navigator.storage.persist().catch(() => {}); } catch (e) {}
