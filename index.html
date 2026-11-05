@@ -161,6 +161,8 @@
     -webkit-user-select: text; user-select: text;
   }
   .campo input:focus { border-color: var(--muted); }
+  .campo .opc { font-style: normal; opacity: .7; }
+  .pista-nombre { display: block; font-size: 12.5px; color: var(--muted); margin: 6px 0 0 4px; }
   .campo.monto input { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .error { color: var(--red); font-size: 13px; min-height: 18px; margin: -4px 0 6px 4px; }
   .botones { display: grid; grid-template-columns: 1fr 1.6fr; gap: 10px; margin-top: 6px; }
@@ -256,8 +258,9 @@
     <div class="agarre"></div>
     <h3 id="tituloForm">Nuevo ingreso</h3>
     <label class="campo">
-      <span>Nombre</span>
+      <span>Nombre <em class="opc">(opcional)</em></span>
       <input id="inNombre" type="text" maxlength="40" placeholder="Ej. Sueldo, Comida…" enterkeyhint="next">
+      <small class="pista-nombre" id="pistaNombre">Sin nombre, se guardará como «Ingreso».</small>
     </label>
     <label class="campo monto">
       <span>Monto ($)</span>
@@ -422,6 +425,8 @@
   document.querySelectorAll('.pill').forEach(b => b.onclick = () => {
     tipoActual = b.dataset.tipo;
     $('tituloForm').textContent = tipoActual === 'ingreso' ? 'Nuevo ingreso' : 'Nuevo gasto';
+    $('pistaNombre').textContent = `Sin nombre, se guardará como «${tipoActual === 'ingreso' ? 'Ingreso' : 'Gasto'}».`;
+    $('inNombre').placeholder = tipoActual === 'ingreso' ? 'Ej. Sueldo, Venta…' : 'Ej. Comida, Taxi…';
     $('guardarForm').className = 'btn ' + (tipoActual === 'ingreso' ? 'verde' : 'rojo');
     $('inNombre').value = ''; $('inMonto').value = ''; $('errForm').textContent = '';
     abrirHoja($('hojaForm'));
@@ -432,9 +437,8 @@
 
   $('hojaForm').addEventListener('submit', e => {
     e.preventDefault();
-    const nombre = $('inNombre').value.trim();
+    const nombre = $('inNombre').value.trim() || (tipoActual === 'ingreso' ? 'Ingreso' : 'Gasto');
     const monto = parseFloat($('inMonto').value.replace(/[^0-9.,]/g, '').replace(',', '.'));
-    if (!nombre) { $('errForm').textContent = 'Escribe un nombre.'; return; }
     if (!(monto > 0)) { $('errForm').textContent = 'Escribe un monto mayor a 0.'; return; }
     if (monto > 999999999999) { $('errForm').textContent = 'El monto es demasiado grande.'; return; }
     movs.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tipo: tipoActual, nombre, monto: Math.round(monto * 100) / 100, fecha: Date.now() });
