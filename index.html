@@ -148,13 +148,16 @@
   .total { display: inline-block; white-space: nowrap; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .col .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
-  .links { display: flex; justify-content: center; gap: 0; margin: 16px -10px 4px; }
+  .links { display: flex; gap: 8px; margin: 16px 0 4px; }
   .link-mov {
-    margin: 0; background: none; border: 0; color: var(--text);
-    font-size: 16.5px; font-weight: 500; padding: 12px 9px; border-radius: 14px; gap: 4px !important; white-space: nowrap;
-    display: flex; align-items: center; gap: 8px;
+    flex: 1 1 auto; margin: 0; height: 50px; padding: 0 8px;
+    background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.07); border-radius: 14px;
+    color: var(--text); font-size: 15px; font-weight: 500; white-space: nowrap;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+    transition: background .15s, transform .1s;
   }
-  .link-mov:active { background: var(--surface); }
+  .link-mov svg { width: 16px; height: 16px; opacity: .55; flex-shrink: 0; }
+  .link-mov:active { background: var(--surface); transform: scale(.97); }
 
   /* ---------- Movimientos ---------- */
   .top { display: flex; align-items: center; gap: 6px; margin: -6px 0 16px -8px; }
