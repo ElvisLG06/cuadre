@@ -46,6 +46,48 @@
   #movimientos, #deudas, #metas { transform: translateX(100%); }
   #movimientos.on, #deudas.on, #metas.on { transform: translateX(0); }
 
+  /* ---------- Periodo (Todo / mes) ---------- */
+  .periodo { display: flex; justify-content: center; align-items: center; gap: 8px; }
+  .periodo button { border: 0; font-family: inherit; }
+  .per-todo, .per-mes {
+    height: 36px; border-radius: 999px; background: var(--surface); color: var(--muted);
+    font-size: 14.5px; font-weight: 600; transition: background .2s, color .2s;
+  }
+  .per-todo { padding: 0 16px; }
+  .per-mes { display: flex; align-items: center; padding: 0 2px; }
+  .per-mes button { background: none; color: inherit; height: 36px; }
+  .per-prev, .per-next { width: 34px; font-size: 20px; line-height: 1; }
+  .per-next:disabled { opacity: .25; }
+  .per-label { padding: 0 4px; font-size: 14.5px; font-weight: 600; min-width: 128px; }
+  .periodo.todo .per-todo, .periodo:not(.todo) .per-mes { background: var(--surface-2); color: var(--text); }
+  #inicio .periodo { margin-top: 18px; }
+  #inicio .balance { margin-top: 14px; }
+
+  /* Fila de Movimientos: periodo + buscador */
+  .fila-filtros { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; min-height: 40px; }
+  .fila-filtros .periodo { flex: 1; justify-content: flex-start; }
+  .btn-buscar {
+    width: 40px; height: 36px; border-radius: 999px; border: 0; background: var(--surface); color: var(--text);
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+  .buscador { flex: 1; display: none; align-items: center; gap: 8px; height: 40px; background: var(--surface); border-radius: 12px; padding: 0 6px 0 12px; }
+  .buscador input { flex: 1; min-width: 0; background: none; border: 0; outline: none; color: var(--text); font-size: 16px; font-family: inherit; -webkit-user-select: text; user-select: text; }
+  .buscador { min-width: 0; }
+  .buscador button { border: 0; background: none; color: var(--green); font-size: 15px; font-weight: 500; font-family: inherit; padding: 6px 8px; flex-shrink: 0; }
+  .buscador input::-webkit-search-cancel-button, .buscador input::-webkit-search-decoration { -webkit-appearance: none; display: none; }
+  .fila-filtros.buscando .periodo, .fila-filtros.buscando .btn-buscar { display: none; }
+  .fila-filtros.buscando .buscador { display: flex; }
+
+  /* Cabeceras por día */
+  .dia { display: flex; justify-content: space-between; align-items: baseline; margin: 16px 4px 8px; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .dia:first-child { margin-top: 4px; }
+  .dia b { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* Campo fecha */
+  .campo input[type="date"] { -webkit-appearance: none; appearance: none; display: block; min-height: 54px; line-height: 54px; text-align: left; color-scheme: dark; }
+  .campo input:disabled, .select-wrap select:disabled { opacity: .5; }
+  .nota-bloqueo { font-size: 12.5px; color: var(--muted); margin: -2px 0 10px 4px; }
+
   /* ---------- Metas ---------- */
   .disp {
     background: linear-gradient(135deg, rgba(95,191,106,.18), rgba(95,191,106,.05));
@@ -377,6 +419,11 @@
       <button class="pill gasto" data-tipo="gasto">Gasto</button>
     </div>
 
+    <div class="periodo" data-per>
+      <button class="per-todo">Todo</button>
+      <div class="per-mes"><button class="per-prev" aria-label="Mes anterior">‹</button><button class="per-label"></button><button class="per-next" aria-label="Mes siguiente">›</button></div>
+    </div>
+
     <div class="balance">
       <div class="label" id="lblBalance">Ganancia</div>
       <div class="monto-wrap"><div class="monto pos" id="montoBalance">$0</div></div>
@@ -460,6 +507,20 @@
         Respaldo
       </button>
     </div>
+    <div class="fila-filtros" id="filaFiltros">
+      <div class="periodo" data-per>
+        <button class="per-todo">Todo</button>
+        <div class="per-mes"><button class="per-prev" aria-label="Mes anterior">‹</button><button class="per-label"></button><button class="per-next" aria-label="Mes siguiente">›</button></div>
+      </div>
+      <button class="btn-buscar" id="btnBuscar" aria-label="Buscar">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      </button>
+      <div class="buscador">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" style="color:var(--muted);flex-shrink:0"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="inBuscar" type="search" placeholder="Buscar por nombre o categoría" enterkeyhint="search" autocomplete="off">
+        <button id="cerrarBuscar">Cancelar</button>
+      </div>
+    </div>
     <div class="segmento" id="segTipo" data-t="todos">
       <span class="indicador"></span>
       <button data-t="todos" class="on">Todos</button>
@@ -497,12 +558,31 @@
       <span>Monto ($)</span>
       <input id="inMonto" type="text" inputmode="decimal" placeholder="0.00" enterkeyhint="done">
     </label>
+    <label class="campo">
+      <span>Fecha</span>
+      <input id="inFecha" type="date">
+    </label>
+    <div class="nota-bloqueo" id="notaBloqueo" hidden>Este movimiento viene de una deuda: solo puedes cambiar el nombre y la fecha.</div>
     <div class="error" id="errForm"></div>
     <div class="botones">
       <button type="button" class="btn sec" id="cancelarForm">Cancelar</button>
       <button type="submit" class="btn verde" id="guardarForm">Guardar</button>
     </div>
   </form>
+
+  <!-- ========== HOJA: DETALLE DE MOVIMIENTO ========== -->
+  <div class="hoja" id="hojaMov">
+    <div class="agarre"></div>
+    <h3 id="detMovTitulo"></h3>
+    <div class="fichas" id="detMovFichas"></div>
+    <div class="acciones-deuda">
+      <div class="fila">
+        <button type="button" class="btn sec borrar-deuda" id="btnMovBorrar">Eliminar</button>
+        <button type="button" class="btn sec" id="btnMovEditar">Editar</button>
+      </div>
+      <button type="button" class="btn sec full" id="btnMovCerrar">Cerrar</button>
+    </div>
+  </div>
 
   <!-- ========== HOJA: BORRAR MOVIMIENTO ========== -->
   <div class="hoja" id="hojaBorrar">
@@ -676,12 +756,46 @@
   const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   /* ---------- Pintar pantalla de inicio ---------- */
+  /* ---------- Periodo: 'todo' o 'AAAA-MM' (se recuerda) ---------- */
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const ymDe = ts => { const d = new Date(ts); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
+  const ymHoy = () => ymDe(Date.now());
+  const nombreMes = ym => { const [y, m] = ym.split('-').map(Number); return MESES[m - 1] + (y !== new Date().getFullYear() ? ' ' + y : ''); };
+  const moverMes = (ym, n) => { const [y, m] = ym.split('-').map(Number); const d = new Date(y, m - 1 + n, 1); return ymDe(d.getTime()); };
+  let periodo = 'todo', mesVisto = ymHoy();
+  try { const g = localStorage.getItem('cuadre_periodo'); if (g === 'todo' || /^\d{4}-\d{2}$/.test(g || '')) periodo = g; } catch (e) {}
+  if (periodo !== 'todo') { if (periodo > ymHoy()) periodo = ymHoy(); mesVisto = periodo; }
+  const enPeriodo = m => periodo === 'todo' || ymDe(m.fecha) === periodo;
+  function setPeriodo(p) {
+    periodo = p; if (p !== 'todo') mesVisto = p;
+    try { localStorage.setItem('cuadre_periodo', p); } catch (e) {}
+    pintarInicio();
+    if ($('movimientos').classList.contains('on')) pintarLista();
+  }
+  function pintarPeriodo() {
+    document.querySelectorAll('[data-per]').forEach(el => {
+      el.classList.toggle('todo', periodo === 'todo');
+      const lbl = nombreMes(mesVisto);
+      el.querySelector('.per-label').textContent = lbl.charAt(0).toUpperCase() + lbl.slice(1);
+      el.querySelector('.per-next').disabled = mesVisto >= ymHoy();
+    });
+  }
+  document.addEventListener('click', e => {
+    const per = e.target.closest('[data-per]'); if (!per) return;
+    if (e.target.closest('.per-todo')) setPeriodo('todo');
+    else if (e.target.closest('.per-prev')) setPeriodo(moverMes(mesVisto, -1));
+    else if (e.target.closest('.per-next')) { const n = moverMes(mesVisto, 1); if (n <= ymHoy()) setPeriodo(n); }
+    else if (e.target.closest('.per-label')) setPeriodo(mesVisto);
+  });
+
   function pintarInicio() {
-    const ing = movs.filter(m => m.tipo === 'ingreso').reduce((a, m) => a + m.monto, 0);
-    const gas = movs.filter(m => m.tipo === 'gasto').reduce((a, m) => a + m.monto, 0);
+    pintarPeriodo();
+    const base = movs.filter(enPeriodo);
+    const ing = base.filter(m => m.tipo === 'ingreso').reduce((a, m) => a + m.monto, 0);
+    const gas = base.filter(m => m.tipo === 'gasto').reduce((a, m) => a + m.monto, 0);
     const dif = Math.round((ing - gas) * 100) / 100;
 
-    $('lblBalance').textContent = dif < 0 ? 'Pérdida' : 'Ganancia';
+    $('lblBalance').textContent = (dif < 0 ? 'Pérdida' : 'Ganancia') + (periodo === 'todo' ? '' : ' de ' + nombreMes(periodo));
     const mb = $('montoBalance');
     mb.textContent = fmt(dif);
     mb.className = 'monto ' + (dif < 0 ? 'neg' : 'pos');
@@ -721,7 +835,7 @@
     seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === fTipo));
     const wrap = $('chipsWrap'), chips = $('chips');
     if (fTipo === 'todos') { wrap.classList.remove('on'); return; }
-    const delTipo = movs.filter(m => m.tipo === fTipo);
+    const delTipo = movs.filter(m => m.tipo === fTipo && enPeriodo(m) && coincide(m));
     const cats = CATEGORIAS[fTipo].concat('Deuda');
     const x = chips.dataset.t === fTipo ? chips.scrollLeft : 0;
     chips.className = 'chips ' + fTipo; chips.dataset.t = fTipo;
@@ -737,7 +851,16 @@
 
   function pintarResumen(lista) {
     const r = $('resumen');
-    if (fTipo === 'todos') { r.className = 'resumen'; return; }
+    if (fTipo === 'todos' && !busqueda) { r.className = 'resumen'; return; }
+    if (fTipo === 'todos') {   // solo búsqueda: muestra el neto
+      const neto = r2(lista.reduce((a, m) => a + (m.tipo === 'ingreso' ? m.monto : -m.monto), 0));
+      $('resTitulo').textContent = `Resultado de «${$('inBuscar').value.trim()}»`;
+      $('resCuenta').textContent = `${lista.length} movimiento${lista.length === 1 ? '' : 's'}`;
+      $('resMonto').textContent = (neto > 0 ? '+' : '') + fmt(neto);
+      $('resMonto').className = 'monto-res ' + (neto < 0 ? 'neg' : 'pos');
+      r.className = 'resumen on ' + (neto < 0 ? 'gasto' : 'ingreso');
+      return;
+    }
     const total = lista.reduce((a, m) => a + m.monto, 0);
     const ing = fTipo === 'ingreso';
     $('resTitulo').textContent = fCat ? `Total ${fCat}` : (ing ? 'Total ingresos' : 'Total gastos');
@@ -751,29 +874,66 @@
   function pintarLista() {
     const cont = $('lista');
     pintarFiltros();
-    const lista = movs.filter(m => (fTipo === 'todos' || m.tipo === fTipo) && (fCat === null || m.categoria === fCat));
+    pintarPeriodo();
+    const lista = movs.filter(m => enPeriodo(m) && coincide(m) && (fTipo === 'todos' || m.tipo === fTipo) && (fCat === null || m.categoria === fCat));
     pintarResumen(lista);
     if (!movs.length) {
       cont.innerHTML = '<div class="vacio">Aún no hay movimientos.<br>Registra un ingreso o un gasto desde el inicio.</div>';
       return;
     }
     if (!lista.length) {
-      const que = fCat ? `en «${esc(fCat)}»` : (fTipo === 'ingreso' ? 'de ingresos' : 'de gastos');
-      cont.innerHTML = `<div class="vacio">No hay movimientos ${que}.</div>`;
+      const que = busqueda ? `que coincidan con «${esc($('inBuscar').value.trim())}»`
+        : fCat ? `en «${esc(fCat)}»` : fTipo === 'ingreso' ? 'de ingresos' : fTipo === 'gasto' ? 'de gastos' : '';
+      const cuando = periodo === 'todo' ? '' : ` en ${nombreMes(periodo)}`;
+      cont.innerHTML = `<div class="vacio">No hay movimientos ${que}${cuando}.</div>`;
       return;
     }
-    cont.innerHTML = [...lista].sort((a, b) => b.fecha - a.fecha).map(m => `
+    // Agrupar por día, con el neto de cada día
+    const orden = [...lista].sort((a, b) => b.fecha - a.fecha);
+    const netoDia = {};
+    orden.forEach(m => { const k = claveDia(m.fecha); netoDia[k] = (netoDia[k] || 0) + (m.tipo === 'ingreso' ? m.monto : -m.monto); });
+    let ultimo = null;
+    cont.innerHTML = orden.map(m => {
+      const k = claveDia(m.fecha); let cab = '';
+      if (k !== ultimo) {
+        ultimo = k; const n = r2(netoDia[k]);
+        cab = `<div class="dia"><span>${etiquetaDia(m.fecha)}</span><b class="${n < 0 ? 'neg' : 'pos'}">${n > 0 ? '+' : ''}${fmt(n)}</b></div>`;
+      }
+      return cab + `
       <div class="item" data-id="${m.id}">
         <div class="info">
           <div class="nombre">${esc(m.nombre)}</div>
-          <div class="meta"><span class="tag ${m.tipo}">${m.tipo === 'ingreso' ? 'Ingreso' : 'Gasto'}</span><span class="fecha">${m.categoria && m.categoria !== m.nombre ? esc(m.categoria) + ' · ' : ''}${fmtFecha(m.fecha)}</span></div>
+          <div class="meta"><span class="tag ${m.tipo}">${m.tipo === 'ingreso' ? 'Ingreso' : 'Gasto'}</span><span class="fecha">${m.categoria && m.categoria !== m.nombre ? esc(m.categoria) + ' · ' : ''}${horaDe(m.fecha)}</span></div>
         </div>
         <div class="valor ${m.tipo === 'ingreso' ? 'pos' : 'neg'}">${m.tipo === 'ingreso' ? '+' : '-'}${fmt(m.monto)}</div>
         <button class="borrar" aria-label="Eliminar">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
         </button>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
+
+  /* ---------- Días y búsqueda ---------- */
+  const claveDia = ts => { const d = new Date(ts); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; };
+  function etiquetaDia(ts) {
+    const d = new Date(ts), hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    const dd = new Date(d); dd.setHours(0, 0, 0, 0);
+    const dif = Math.round((hoy - dd) / 86400000);
+    if (dif === 0) return 'Hoy';
+    if (dif === 1) return 'Ayer';
+    const o = { weekday: 'long', day: 'numeric', month: 'short' };
+    if (d.getFullYear() !== hoy.getFullYear()) o.year = 'numeric';
+    const t = d.toLocaleDateString('es-PE', o).replace(/\./g, '').replace(',', '');
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  }
+  const horaDe = ts => new Date(ts).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const norm = t => (t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  let busqueda = '';
+  const coincide = m => !busqueda || norm(m.nombre).includes(busqueda) || norm(m.categoria).includes(busqueda);
+  $('btnBuscar').onclick = () => { $('filaFiltros').classList.add('buscando'); setTimeout(() => $('inBuscar').focus(), 50); };
+  $('cerrarBuscar').onclick = () => { $('inBuscar').value = ''; busqueda = ''; $('filaFiltros').classList.remove('buscando'); pintarLista(); };
+  $('inBuscar').addEventListener('input', () => { busqueda = norm($('inBuscar').value.trim()); pintarLista(); });
+  $('inBuscar').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('inBuscar').blur(); } });
 
   $('segTipo').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b || b.dataset.t === fTipo) return;
@@ -826,16 +986,31 @@
   }
   $('inCategoria').addEventListener('change', pintarPista);
 
-  document.querySelectorAll('.pill').forEach(b => b.onclick = () => {
-    tipoActual = b.dataset.tipo;
-    $('tituloForm').textContent = tipoActual === 'ingreso' ? 'Nuevo ingreso' : 'Nuevo gasto';
+  // Fecha: AAAA-MM-DD local
+  const isoDia = ts => { const d = new Date(ts); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  let editId = null;
+  function abrirForm(tipo, m) {
+    tipoActual = tipo; editId = m ? m.id : null;
+    const ing = tipo === 'ingreso';
+    $('tituloForm').textContent = (m ? 'Editar ' : 'Nuevo ') + (ing ? 'ingreso' : 'gasto');
+    const cats = CATEGORIAS[tipo].slice();
+    if (m && m.categoria && !cats.includes(m.categoria)) cats.push(m.categoria);
     $('inCategoria').innerHTML = '<option value="" disabled selected>Elige una categoría</option>' +
-      CATEGORIAS[tipoActual].map(c => `<option value="${c}">${c}</option>`).join('');
-    $('guardarForm').className = 'btn ' + (tipoActual === 'ingreso' ? 'verde' : 'rojo');
-    $('inNombre').value = ''; $('inMonto').value = ''; $('errForm').textContent = '';
+      cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    $('inCategoria').value = m && m.categoria ? m.categoria : '';
+    $('guardarForm').className = 'btn ' + (ing ? 'verde' : 'rojo');
+    $('guardarForm').textContent = m ? 'Guardar cambios' : 'Guardar';
+    $('inNombre').value = m ? (m.nombre === m.categoria ? '' : m.nombre) : '';
+    $('inMonto').value = m ? String(m.monto) : '';
+    $('inFecha').value = isoDia(m ? m.fecha : Date.now());
+    $('inFecha').max = isoDia(Date.now());
+    const bloqueado = !!(m && m.deudaId);
+    $('inCategoria').disabled = bloqueado; $('inMonto').disabled = bloqueado; $('notaBloqueo').hidden = !bloqueado;
+    $('errForm').textContent = '';
     pintarPista();
     abrirHoja($('hojaForm'));
-  });
+  }
+  document.querySelectorAll('.pill[data-tipo]').forEach(b => b.onclick = () => abrirForm(b.dataset.tipo, null));
   $('cancelarForm').onclick = cerrarHoja;
   $('inNombre').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('inMonto').focus(); } });
 
@@ -849,10 +1024,27 @@
     const monto = parseFloat($('inMonto').value.replace(/[^0-9.,]/g, '').replace(',', '.'));
     if (!(monto > 0)) { $('errForm').textContent = 'Escribe un monto mayor a 0.'; return; }
     if (monto > 999999999999) { $('errForm').textContent = 'El monto es demasiado grande.'; return; }
-    movs.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tipo: tipoActual, categoria, nombre, monto: Math.round(monto * 100) / 100, fecha: Date.now() });
-    guardar(movs);
+    const dia = $('inFecha').value;
+    if (!dia) { $('errForm').textContent = 'Elige una fecha.'; return; }
+    if (dia > isoDia(Date.now())) { $('errForm').textContent = 'La fecha no puede ser futura.'; return; }
+    const original = editId ? movs.find(x => x.id === editId) : null;
+    // Hoy → hora actual; otro día → mediodía de ese día; si al editar no cambió el día, se conserva la hora
+    let fecha;
+    if (original && isoDia(original.fecha) === dia) fecha = original.fecha;
+    else if (dia === isoDia(Date.now())) fecha = Date.now();
+    else { const [y, mo, d] = dia.split('-').map(Number); fecha = new Date(y, mo - 1, d, 12, 0, 0).getTime(); }
+    if (original) {
+      original.categoria = categoria; original.nombre = nombre; original.fecha = fecha;
+      if (!original.deudaId) original.monto = Math.round(monto * 100) / 100;
+      toast('Movimiento actualizado');
+    } else {
+      movs.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tipo: tipoActual, categoria, nombre, monto: Math.round(monto * 100) / 100, fecha });
+      if (dia !== isoDia(Date.now())) toast('Guardado el ' + new Date(fecha).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' }).replace('.', ''));
+    }
+    guardar(movs); editId = null;
     cerrarHoja();
     pintarInicio();
+    if ($('movimientos').classList.contains('on')) pintarLista();
   });
 
   /* ---------- Eliminar con doble verificación ---------- */
@@ -863,9 +1055,25 @@
     $('avisoBorrar').hidden = n === 1;
     $('confirmarBorrar').textContent = n === 1 ? 'Eliminar' : 'Sí, eliminar';
   }
+  let movSel = null;
   $('lista').addEventListener('click', e => {
     const it = e.target.closest('.item'); if (!it) return;
     const m = movs.find(x => x.id === it.dataset.id); if (!m) return;
+    if (e.target.closest('.borrar')) { abrirBorrar(m); return; }
+    movSel = m;
+    const ing = m.tipo === 'ingreso';
+    $('detMovTitulo').textContent = m.nombre;
+    $('detMovFichas').innerHTML = `
+      <div class="ficha"><span>Tipo</span><b class="${ing ? 'pos' : 'neg'}">${ing ? 'Ingreso' : 'Gasto'}</b></div>
+      <div class="ficha"><span>Categoría</span><b>${m.categoria ? esc(m.categoria) : '—'}</b></div>
+      <div class="ficha"><span>Monto</span><b class="${ing ? 'pos' : 'neg'}">${ing ? '+' : '-'}${fmt(m.monto)}</b></div>
+      <div class="ficha"><span>Fecha</span><b>${etiquetaDia(m.fecha)} · ${new Date(m.fecha).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false })}</b></div>`;
+    abrirHoja($('hojaMov'));
+  });
+  $('btnMovCerrar').onclick = cerrarHoja;
+  $('btnMovEditar').onclick = () => { const m = movSel; cerrarHoja(); setTimeout(() => abrirForm(m.tipo, m), 280); };
+  $('btnMovBorrar').onclick = () => { const m = movSel; cerrarHoja(); setTimeout(() => abrirBorrar(m), 280); };
+  function abrirBorrar(m) {
     idBorrar = m.id;
     $('detBorrar').textContent = `${m.tipo === 'ingreso' ? 'Ingreso' : 'Gasto'} · ${m.nombre} · ${fmt(m.monto)}`;
     pasoBorrar(1);
@@ -874,7 +1082,7 @@
       ? 'Este movimiento es de una deuda pendiente. La deuda seguirá en Deudas; si quieres quitar todo, elimínala desde allí.'
       : 'Esta acción no se puede deshacer. El monto se quitará de tus totales.';
     abrirHoja($('hojaBorrar'));
-  });
+  }
   $('cancelarBorrar').onclick = cerrarHoja;
   $('confirmarBorrar').onclick = () => {
     if (paso === 1) { pasoBorrar(2); return; }        // 1ª confirmación → pide la 2ª
