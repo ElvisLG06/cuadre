@@ -162,6 +162,17 @@
   }
   .campo input:focus { border-color: var(--muted); }
   .campo .opc { font-style: normal; opacity: .7; }
+  .campo .opc.req { color: var(--red); opacity: 1; }
+  .select-wrap { position: relative; }
+  .select-wrap select {
+    display: block; line-height: normal; text-align: left;
+    width: 100%; height: 54px; border-radius: 14px; border: 1.5px solid transparent;
+    background: var(--bg); color: var(--text); padding: 0 44px 0 16px;
+    font-size: 18px; font-family: inherit; outline: none; -webkit-appearance: none; appearance: none;
+  }
+  .select-wrap select:focus { border-color: var(--muted); }
+  .select-wrap select.sin-valor { color: var(--muted); }
+  .select-wrap svg { position: absolute; right: 16px; top: 18px; color: var(--muted); pointer-events: none; }
   .pista-nombre { display: block; font-size: 12.5px; color: var(--muted); margin: 6px 0 0 4px; }
   .campo.monto input { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .error { color: var(--red); font-size: 13px; min-height: 18px; margin: -4px 0 6px 4px; }
@@ -258,9 +269,16 @@
     <div class="agarre"></div>
     <h3 id="tituloForm">Nuevo ingreso</h3>
     <label class="campo">
-      <span>Nombre <em class="opc">(opcional)</em></span>
-      <input id="inNombre" type="text" maxlength="40" placeholder="Ej. Sueldo, Comida…" enterkeyhint="next">
-      <small class="pista-nombre" id="pistaNombre">Sin nombre, se guardará como «Ingreso».</small>
+      <span>Categoría</span>
+      <div class="select-wrap">
+        <select id="inCategoria"></select>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+    </label>
+    <label class="campo">
+      <span>Nombre <em class="opc" id="opcNombre">(opcional)</em></span>
+      <input id="inNombre" type="text" maxlength="40" placeholder="Ej. Pago de noviembre" enterkeyhint="next">
+      <small class="pista-nombre" id="pistaNombre"></small>
     </label>
     <label class="campo monto">
       <span>Monto ($)</span>
@@ -397,7 +415,7 @@
       <div class="item" data-id="${m.id}">
         <div class="info">
           <div class="nombre">${esc(m.nombre)}</div>
-          <div class="meta"><span class="tag ${m.tipo}">${m.tipo === 'ingreso' ? 'Ingreso' : 'Gasto'}</span><span class="fecha">${fmtFecha(m.fecha)}</span></div>
+          <div class="meta"><span class="tag ${m.tipo}">${m.tipo === 'ingreso' ? 'Ingreso' : 'Gasto'}</span><span class="fecha">${m.categoria && m.categoria !== m.nombre ? esc(m.categoria) + ' · ' : ''}${fmtFecha(m.fecha)}</span></div>
         </div>
         <div class="valor ${m.tipo === 'ingreso' ? 'pos' : 'neg'}">${m.tipo === 'ingreso' ? '+' : '-'}${fmt(m.monto)}</div>
         <button class="borrar" aria-label="Eliminar">
@@ -421,27 +439,51 @@
   $('velo').onclick = cerrarHoja;
 
   /* ---------- Formulario Ingreso / Gasto ---------- */
+  const CATEGORIAS = {
+    ingreso: ['Sueldo', 'Segundo sueldo', 'Otros'],
+    gasto: ['Housing', 'Super', 'Comida', 'Entretenimiento', 'Ropa', 'Otros']
+  };
   let tipoActual = 'ingreso';
+
+  // Mensaje bajo el nombre según la categoría elegida
+  function pintarPista() {
+    const cat = $('inCategoria').value;
+    $('inCategoria').classList.toggle('sin-valor', !cat);
+    const otros = cat === 'Otros';
+    $('opcNombre').textContent = otros ? '(obligatorio)' : '(opcional)';
+    $('opcNombre').classList.toggle('req', otros);
+    $('pistaNombre').textContent = otros
+      ? 'Con «Otros» debes escribir un nombre.'
+      : cat ? `Si no escribes un nombre, se guardará como «${cat}».`
+            : 'Si no escribes un nombre, se guardará con el de la categoría.';
+    if ($('errForm').textContent) $('errForm').textContent = '';
+  }
+  $('inCategoria').addEventListener('change', pintarPista);
+
   document.querySelectorAll('.pill').forEach(b => b.onclick = () => {
     tipoActual = b.dataset.tipo;
     $('tituloForm').textContent = tipoActual === 'ingreso' ? 'Nuevo ingreso' : 'Nuevo gasto';
-    $('pistaNombre').textContent = `Sin nombre, se guardará como «${tipoActual === 'ingreso' ? 'Ingreso' : 'Gasto'}».`;
-    $('inNombre').placeholder = tipoActual === 'ingreso' ? 'Ej. Sueldo, Venta…' : 'Ej. Comida, Taxi…';
+    $('inCategoria').innerHTML = '<option value="" disabled selected>Elige una categoría</option>' +
+      CATEGORIAS[tipoActual].map(c => `<option value="${c}">${c}</option>`).join('');
     $('guardarForm').className = 'btn ' + (tipoActual === 'ingreso' ? 'verde' : 'rojo');
     $('inNombre').value = ''; $('inMonto').value = ''; $('errForm').textContent = '';
+    pintarPista();
     abrirHoja($('hojaForm'));
-    setTimeout(() => $('inNombre').focus(), 320);
   });
   $('cancelarForm').onclick = cerrarHoja;
   $('inNombre').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('inMonto').focus(); } });
 
   $('hojaForm').addEventListener('submit', e => {
     e.preventDefault();
-    const nombre = $('inNombre').value.trim() || (tipoActual === 'ingreso' ? 'Ingreso' : 'Gasto');
+    const categoria = $('inCategoria').value;
+    if (!categoria) { $('errForm').textContent = 'Elige una categoría.'; return; }
+    const escrito = $('inNombre').value.trim();
+    if (categoria === 'Otros' && !escrito) { $('errForm').textContent = 'Con «Otros» el nombre es obligatorio.'; $('inNombre').focus(); return; }
+    const nombre = escrito || categoria;
     const monto = parseFloat($('inMonto').value.replace(/[^0-9.,]/g, '').replace(',', '.'));
     if (!(monto > 0)) { $('errForm').textContent = 'Escribe un monto mayor a 0.'; return; }
     if (monto > 999999999999) { $('errForm').textContent = 'El monto es demasiado grande.'; return; }
-    movs.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tipo: tipoActual, nombre, monto: Math.round(monto * 100) / 100, fecha: Date.now() });
+    movs.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tipo: tipoActual, categoria, nombre, monto: Math.round(monto * 100) / 100, fecha: Date.now() });
     guardar(movs);
     cerrarHoja();
     pintarInicio();
@@ -521,7 +563,7 @@
       const lista = Array.isArray(d) ? d : d.movimientos;
       if (!Array.isArray(lista)) throw 0;
       const validos = lista.filter(m => m && (m.tipo === 'ingreso' || m.tipo === 'gasto') && typeof m.nombre === 'string' && +m.monto > 0 && m.id)
-        .map(m => ({ id: String(m.id), tipo: m.tipo, nombre: m.nombre.slice(0, 40), monto: Math.round(+m.monto * 100) / 100, fecha: +m.fecha || Date.now() }));
+        .map(m => ({ id: String(m.id), tipo: m.tipo, categoria: typeof m.categoria === 'string' ? m.categoria.slice(0, 30) : undefined, nombre: m.nombre.slice(0, 40), monto: Math.round(+m.monto * 100) / 100, fecha: +m.fecha || Date.now() }));
       if (!validos.length) throw 0;
       const ids = new Set(movs.map(m => m.id));
       pendientes = validos.filter(m => !ids.has(m.id));
