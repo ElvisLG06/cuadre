@@ -137,6 +137,61 @@
   .toast.on { transform: translate(-50%, 0); opacity: 1; }
   .vacio { text-align: center; color: var(--muted); margin-top: 30%; font-size: 16px; line-height: 1.5; }
 
+  /* ---------- Filtros ---------- */
+  .segmento {
+    position: relative; display: grid; grid-template-columns: repeat(3, 1fr);
+    background: var(--surface); border-radius: 14px; padding: 4px; margin-bottom: 4px;
+  }
+  .segmento button {
+    position: relative; z-index: 1; border: 0; background: none; color: var(--muted);
+    height: 38px; font-size: 15px; font-weight: 600; border-radius: 10px; transition: color .25s;
+  }
+  .segmento button.on { color: var(--text); }
+  .segmento button.on[data-t="ingreso"] { color: var(--green); }
+  .segmento button.on[data-t="gasto"] { color: var(--red); }
+  .segmento .indicador {
+    position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 3);
+    border-radius: 10px; background: var(--surface-2);
+    transition: transform .3s cubic-bezier(.2,.8,.2,1), background .3s;
+  }
+  .segmento[data-t="ingreso"] .indicador { transform: translateX(100%); background: var(--green-soft); }
+  .segmento[data-t="gasto"] .indicador { transform: translateX(200%); background: var(--red-soft); }
+
+  .chips-wrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s ease, margin .3s; margin: 0 -22px; }
+  .chips-wrap.on { grid-template-rows: 1fr; margin-top: 8px; margin-bottom: 4px; }
+  .chips-wrap > div { overflow: hidden; }
+  .chips {
+    display: flex; gap: 8px; overflow-x: auto; padding: 2px 22px 8px; scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex-shrink: 0; border: 1.5px solid var(--surface-2); background: transparent; color: var(--text);
+    height: 36px; padding: 0 14px; border-radius: 999px; font-size: 14.5px; font-weight: 500;
+    display: flex; align-items: center; gap: 7px; transition: background .2s, border-color .2s, color .2s;
+  }
+  .chip .n { font-size: 12px; font-weight: 600; color: var(--muted); }
+  .chip:active { transform: scale(.96); }
+  .chips.ingreso .chip.on { background: var(--green); border-color: var(--green); color: #fff; }
+  .chips.gasto .chip.on { background: var(--red); border-color: var(--red); color: #fff; }
+  .chip.on .n { color: rgba(255,255,255,.8); }
+  .chip.cero { opacity: .45; }
+
+  .lista-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; margin-top: 10px; }
+  .resumen {
+    display: flex; align-items: center; gap: 12px; margin: 0 -6px;
+    background: var(--surface); border-radius: 18px; padding: 14px 18px;
+    transform: translateY(20px); opacity: 0; max-height: 0; overflow: hidden; padding-top: 0; padding-bottom: 0;
+    transition: all .3s cubic-bezier(.2,.8,.2,1);
+  }
+  .resumen.on { transform: none; opacity: 1; max-height: 90px; padding-top: 14px; padding-bottom: 14px; margin-top: 8px; }
+  .resumen .txt { flex: 1; min-width: 0; }
+  .resumen .txt b { display: block; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .resumen .txt small { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .resumen .monto-res { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .resumen.ingreso { box-shadow: inset 4px 0 0 var(--green); }
+  .resumen.gasto { box-shadow: inset 4px 0 0 var(--red); }
+
   /* ---------- Hoja inferior (formulario) ---------- */
   .velo {
     position: fixed; inset: 0; background: rgba(5,8,14,.55);
@@ -260,7 +315,20 @@
         Respaldo
       </button>
     </div>
-    <div class="lista" id="lista"></div>
+    <div class="segmento" id="segTipo" data-t="todos">
+      <span class="indicador"></span>
+      <button data-t="todos" class="on">Todos</button>
+      <button data-t="ingreso">Ingresos</button>
+      <button data-t="gasto">Gastos</button>
+    </div>
+    <div class="chips-wrap" id="chipsWrap"><div><div class="chips" id="chips"></div></div></div>
+    <div class="lista-wrap">
+      <div class="lista" id="lista"></div>
+      <div class="resumen" id="resumen">
+        <div class="txt"><b id="resTitulo"></b><small id="resCuenta"></small></div>
+        <div class="monto-res" id="resMonto"></div>
+      </div>
+    </div>
   </section>
 
   <!-- ========== HOJA: NUEVO MOVIMIENTO ========== -->
@@ -405,13 +473,57 @@
   }
 
   /* ---------- Pintar lista de movimientos ---------- */
+  /* Filtros: tipo (todos / ingreso / gasto) + categoría opcional */
+  let fTipo = 'todos', fCat = null;
+
+  function pintarFiltros() {
+    const seg = $('segTipo');
+    seg.dataset.t = fTipo;
+    seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === fTipo));
+    const wrap = $('chipsWrap'), chips = $('chips');
+    if (fTipo === 'todos') { wrap.classList.remove('on'); return; }
+    const delTipo = movs.filter(m => m.tipo === fTipo);
+    const cats = CATEGORIAS[fTipo];
+    const x = chips.dataset.t === fTipo ? chips.scrollLeft : 0;
+    chips.className = 'chips ' + fTipo; chips.dataset.t = fTipo;
+    chips.innerHTML =
+      `<button class="chip ${fCat === null ? 'on' : ''}" data-c="">Todas <span class="n">${delTipo.length}</span></button>` +
+      cats.map(c => {
+        const n = delTipo.filter(m => m.categoria === c).length;
+        return `<button class="chip ${fCat === c ? 'on' : ''} ${n ? '' : 'cero'}" data-c="${c}">${c} <span class="n">${n}</span></button>`;
+      }).join('');
+    chips.scrollLeft = x;
+    wrap.classList.add('on');
+  }
+
+  function pintarResumen(lista) {
+    const r = $('resumen');
+    if (fTipo === 'todos') { r.className = 'resumen'; return; }
+    const total = lista.reduce((a, m) => a + m.monto, 0);
+    const ing = fTipo === 'ingreso';
+    $('resTitulo').textContent = fCat ? `Total ${fCat}` : (ing ? 'Total ingresos' : 'Total gastos');
+    $('resCuenta').textContent = `${lista.length} movimiento${lista.length === 1 ? '' : 's'}`;
+    const m = $('resMonto');
+    m.textContent = ing ? fmt(total) : fmt(-total);
+    m.className = 'monto-res ' + (ing ? 'pos' : 'neg');
+    r.className = 'resumen on ' + fTipo;
+  }
+
   function pintarLista() {
     const cont = $('lista');
+    pintarFiltros();
+    const lista = movs.filter(m => (fTipo === 'todos' || m.tipo === fTipo) && (fCat === null || m.categoria === fCat));
+    pintarResumen(lista);
     if (!movs.length) {
       cont.innerHTML = '<div class="vacio">Aún no hay movimientos.<br>Registra un ingreso o un gasto desde el inicio.</div>';
       return;
     }
-    cont.innerHTML = [...movs].sort((a, b) => b.fecha - a.fecha).map(m => `
+    if (!lista.length) {
+      const que = fCat ? `en «${esc(fCat)}»` : (fTipo === 'ingreso' ? 'de ingresos' : 'de gastos');
+      cont.innerHTML = `<div class="vacio">No hay movimientos ${que}.</div>`;
+      return;
+    }
+    cont.innerHTML = [...lista].sort((a, b) => b.fecha - a.fecha).map(m => `
       <div class="item" data-id="${m.id}">
         <div class="info">
           <div class="nombre">${esc(m.nombre)}</div>
@@ -423,6 +535,17 @@
         </button>
       </div>`).join('');
   }
+
+  $('segTipo').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || b.dataset.t === fTipo) return;
+    fTipo = b.dataset.t; fCat = null; pintarLista(); $('lista').scrollTop = 0;
+  });
+  $('chips').addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    fCat = b.dataset.c || null; pintarLista(); $('lista').scrollTop = 0;
+    const on = $('chips').querySelector('.chip.on');
+    on && on.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+  });
 
   /* ---------- Navegación ---------- */
   $('abrirMov').onclick = () => { pintarLista(); $('inicio').classList.add('off'); $('movimientos').classList.add('on'); };
