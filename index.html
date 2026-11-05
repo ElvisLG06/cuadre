@@ -142,7 +142,14 @@
   /* ---------- Deudas ---------- */
   .pill.debo { background: var(--red); }
   .pill.medeben { background: var(--green); }
-  #deudas .acciones { margin-top: 0; }
+  #deudas .acciones { margin-top: 12px; }
+  .segmento.dos { grid-template-columns: repeat(2, 1fr); }
+  .segmento.dos .indicador { width: calc((100% - 8px) / 2); }
+  .segmento[data-t="cerradas"] .indicador { transform: translateX(100%); }
+  .item.deuda .persona .estado { color: var(--muted); }
+  .item.deuda.cerrada .valor { opacity: .75; }
+  .seccion .cuenta { font-size: 13px; font-weight: 600; letter-spacing: .3px; text-transform: none; color: var(--muted); }
+  #detDeudaGasto .campo { margin-bottom: 4px; }
   .lista-deudas { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; margin: 14px -22px 0; padding: 0 22px 20px; }
   .seccion {
     display: flex; align-items: baseline; justify-content: space-between;
@@ -343,7 +350,12 @@
       </button>
       <h2>Deudas</h2>
     </div>
-    <div class="acciones">
+    <div class="segmento dos" id="segDeudas" data-t="activas">
+      <span class="indicador"></span>
+      <button data-t="activas" class="on">Activas</button>
+      <button data-t="cerradas">Cerradas</button>
+    </div>
+    <div class="acciones" id="accDeudas">
       <button class="pill debo" data-dt="debo">Debo</button>
       <button class="pill medeben" data-dt="medeben">Me deben</button>
     </div>
@@ -476,6 +488,18 @@
     <h3 id="detDeudaTitulo"></h3>
     <div class="fichas" id="detDeudaFichas"></div>
     <div class="aviso" id="detDeudaAviso" hidden></div>
+    <div id="detDeudaGasto" hidden>
+      <label class="campo monto">
+        <span>¿Cuánto gastaste de este préstamo?</span>
+        <input id="dGastado" type="text" inputmode="decimal" placeholder="0.00" enterkeyhint="done">
+      </label>
+      <small class="pista-nombre" id="pistaGasto"></small>
+      <div class="error" id="errGasto" style="margin-top:6px"></div>
+      <div class="botones">
+        <button type="button" class="btn sec" id="btnCancelarGasto">Cancelar</button>
+        <button type="button" class="btn rojo" id="btnContinuarGasto">Continuar</button>
+      </div>
+    </div>
     <div class="acciones-deuda" id="detDeudaPaso1">
       <button type="button" class="btn full" id="btnSaldar"></button>
       <div class="fila">
@@ -720,7 +744,7 @@
     idBorrar = m.id;
     $('detBorrar').textContent = `${m.tipo === 'ingreso' ? 'Ingreso' : 'Gasto'} · ${m.nombre} · ${fmt(m.monto)}`;
     pasoBorrar(1);
-    const ligada = m.deudaId && deudas.some(d => d.id === m.deudaId);
+    const ligada = m.deudaId && deudas.some(d => d.id === m.deudaId && d.estado !== 'cerrada');
     $('avisoBorrar').textContent = ligada
       ? 'Este movimiento es de una deuda pendiente. La deuda seguirá en Deudas; si quieres quitar todo, elimínala desde allí.'
       : 'Esta acción no se puede deshacer. El monto se quitará de tus totales.';
@@ -735,6 +759,8 @@
   };
 
   /* =================== DEUDAS =================== */
+  /* Me deben: al crear → gasto; al cobrar → ingreso (mismo monto).
+     Debo:     al crear → no afecta nada; al pagar → gasto solo por lo que se gastó del préstamo. */
   const KEY_DEUDAS = 'cuadre_deudas_v1';
   let memDeudas = [];
   function cargarDeudas() {
@@ -746,27 +772,67 @@
     try { localStorage.setItem(KEY_DEUDAS, JSON.stringify(deudas)); } catch (e) {}
   }
   let deudas = cargarDeudas();
+  // Migración: los "Debo" activos creados con la lógica anterior tenían un ingreso; se quita.
+  (() => {
+    let cambio = false;
+    deudas.forEach(d => {
+      if (d.tipo === 'debo' && d.estado !== 'cerrada' && d.movId) {
+        movs = movs.filter(m => m.id !== d.movId); delete d.movId; cambio = true;
+      }
+    });
+    if (cambio) { guardar(movs); guardarDeudas(); }
+  })();
+
   const nuevoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const icoPersona = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>';
   const icoChev = '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+  const fmtDia = ts => new Date(ts).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' }).replace('.', '');
+  const parseMonto = v => parseFloat(String(v).replace(/[^0-9.,]/g, '').replace(',', '.'));
+  const r2 = n => Math.round(n * 100) / 100;
+
+  let vistaDeudas = 'activas';
+  $('segDeudas').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || b.dataset.t === vistaDeudas) return;
+    vistaDeudas = b.dataset.t; pintarDeudas(); $('listaDeudas').scrollTop = 0;
+  });
 
   function pintarDeudas() {
+    const seg = $('segDeudas'); seg.dataset.t = vistaDeudas;
+    seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === vistaDeudas));
+    const activas = vistaDeudas === 'activas';
+    $('accDeudas').hidden = !activas;
     const cont = $('listaDeudas');
     const sec = (tipo, titulo) => {
-      const lista = deudas.filter(d => d.tipo === tipo).sort((a, b) => b.fecha - a.fecha);
-      const total = lista.reduce((a, d) => a + d.monto, 0);
+      const lista = deudas.filter(d => d.tipo === tipo && (activas ? d.estado !== 'cerrada' : d.estado === 'cerrada'))
+        .sort((a, b) => activas ? b.fecha - a.fecha : (b.fechaCierre || 0) - (a.fechaCierre || 0));
       const cls = tipo === 'debo' ? 'neg' : 'pos';
-      return `<div class="seccion"><span>${titulo}</span>${lista.length ? `<b class="${cls}">${fmt(total)}</b>` : ''}</div>` +
-        (lista.length ? lista.map(d => `
-          <div class="item deuda" data-id="${d.id}">
+      let cab;
+      if (activas) {
+        const total = lista.reduce((a, d) => a + d.monto, 0);
+        cab = lista.length ? `<b class="${cls}">${fmt(total)}</b>` : '';
+      } else {
+        cab = `<span class="cuenta">${lista.length} ${lista.length === 1 ? 'deuda' : 'deudas'}</span>`;
+      }
+      const vacio = activas
+        ? (tipo === 'debo' ? 'No le debes a nadie 🎉' : 'Nadie te debe por ahora')
+        : 'Aún no hay deudas cerradas';
+      return `<div class="seccion"><span>${titulo}</span>${cab}</div>` +
+        (lista.length ? lista.map(d => {
+          let sub = esc(d.persona);
+          if (!activas) {
+            sub += ` <span class="estado">· pagada ${fmtDia(d.fechaCierre || d.fecha)}</span>`;
+            if (d.tipo === 'debo' && d.gastado != null && d.gastado < d.monto) sub += ` <span class="estado">· gastaste ${fmt(d.gastado)}</span>`;
+          }
+          return `
+          <div class="item deuda ${activas ? '' : 'cerrada'}" data-id="${d.id}">
             <div class="info">
               <div class="nombre">${esc(d.nombre)}</div>
-              <div class="persona">${icoPersona}${esc(d.persona)}</div>
+              <div class="persona">${icoPersona}<span>${sub}</span></div>
             </div>
             <div class="valor ${cls}">${fmt(d.monto)}</div>
             ${icoChev}
-          </div>`).join('')
-        : `<div class="vacio-sec">${tipo === 'debo' ? 'No le debes a nadie 🎉' : 'Nadie te debe por ahora'}</div>`);
+          </div>`;
+        }).join('') : `<div class="vacio-sec">${vacio}</div>`);
     };
     cont.innerHTML = sec('debo', 'Debo') + sec('medeben', 'Me deben');
   }
@@ -779,7 +845,7 @@
     $('tituloDeuda').textContent = debo ? 'Debo' : 'Me deben';
     $('lblPersona').textContent = debo ? '¿A quién le debes?' : '¿Quién te debe?';
     $('infoDeuda').textContent = debo
-      ? 'Se registrará como ingreso (Deuda) en Movimientos. Cuando pagues, se registrará como gasto.'
+      ? 'No cambia tu ganancia. Cuando pagues, indicarás cuánto de este préstamo gastaste y solo eso se registrará como gasto.'
       : 'Se registrará como gasto (Deuda) en Movimientos. Cuando te paguen, se registrará como ingreso.';
     $('guardarDeuda').className = 'btn ' + (debo ? 'rojo' : 'verde');
     $('dNombre').value = ''; $('dPersona').value = ''; $('dMonto').value = ''; $('errDeuda').textContent = '';
@@ -793,83 +859,142 @@
     e.preventDefault();
     const nombre = $('dNombre').value.trim();
     const persona = $('dPersona').value.trim();
-    const monto = parseFloat($('dMonto').value.replace(/[^0-9.,]/g, '').replace(',', '.'));
+    const monto = parseMonto($('dMonto').value);
     const err = t => { $('errDeuda').textContent = t; };
     if (!nombre) { err('Escribe un nombre para la deuda.'); $('dNombre').focus(); return; }
     if (!persona) { err(tipoDeuda === 'debo' ? 'Escribe a quién le debes.' : 'Escribe quién te debe.'); $('dPersona').focus(); return; }
     if (!(monto > 0)) { err('Escribe un monto mayor a 0.'); return; }
     if (monto > 999999999999) { err('El monto es demasiado grande.'); return; }
-    const m = Math.round(monto * 100) / 100;
-    const d = { id: nuevoId(), tipo: tipoDeuda, nombre, persona, monto: m, fecha: Date.now() };
-    // Debo → recibí dinero (ingreso). Me deben → presté dinero (gasto).
-    const mov = { id: nuevoId(), tipo: tipoDeuda === 'debo' ? 'ingreso' : 'gasto', categoria: 'Deuda', nombre: `${nombre} · ${persona}`, monto: m, fecha: Date.now(), deudaId: d.id };
-    d.movId = mov.id;
+    const m = r2(monto);
+    const d = { id: nuevoId(), tipo: tipoDeuda, estado: 'activa', nombre, persona, monto: m, fecha: Date.now() };
+    if (tipoDeuda === 'medeben') {
+      const mov = { id: nuevoId(), tipo: 'gasto', categoria: 'Deuda', nombre: `${nombre} · ${persona}`, monto: m, fecha: Date.now(), deudaId: d.id };
+      d.movId = mov.id; movs.push(mov); guardar(movs);
+    }
     deudas.push(d); guardarDeudas();
-    movs.push(mov); guardar(movs);
     cerrarHoja(); pintarDeudas(); pintarInicio();
-    toast(tipoDeuda === 'debo' ? 'Deuda registrada · +ingreso' : 'Deuda registrada · +gasto');
+    toast(tipoDeuda === 'debo' ? 'Deuda registrada' : 'Deuda registrada · +gasto');
   });
 
-  /* ----- Detalle: saldar o eliminar (doble verificación) ----- */
-  let deudaSel = null, accion = null;
-  function detallePaso(n) {
+  /* ----- Detalle de una deuda ----- */
+  let deudaSel = null, accion = null, gastado = null;
+  function detallePaso(n) {             // 1: opciones · 'g': cuánto gastaste · 2: confirmación
     $('detDeudaPaso1').hidden = n !== 1;
+    $('detDeudaGasto').hidden = n !== 'g';
     $('detDeudaPaso2').hidden = n !== 2;
     $('detDeudaAviso').hidden = n !== 2;
   }
   $('listaDeudas').addEventListener('click', e => {
     const it = e.target.closest('.item.deuda'); if (!it) return;
     const d = deudas.find(x => x.id === it.dataset.id); if (!d) return;
-    deudaSel = d; accion = null;
-    const debo = d.tipo === 'debo';
+    deudaSel = d; accion = null; gastado = null;
+    const debo = d.tipo === 'debo', cerrada = d.estado === 'cerrada';
     $('detDeudaTitulo').textContent = d.nombre;
-    $('detDeudaFichas').innerHTML = `
+    let fichas = `
       <div class="ficha"><span>Tipo</span><b class="${debo ? 'neg' : 'pos'}">${debo ? 'Debo' : 'Me deben'}</b></div>
       <div class="ficha"><span>${debo ? 'Le debo a' : 'Me debe'}</span><b>${esc(d.persona)}</b></div>
       <div class="ficha"><span>Monto</span><b>${fmt(d.monto)}</b></div>
       <div class="ficha"><span>Desde</span><b>${fmtFecha(d.fecha)}</b></div>`;
+    if (cerrada) {
+      fichas += `<div class="ficha"><span>${debo ? 'Pagada' : 'Me pagaron'}</span><b>${fmtFecha(d.fechaCierre || d.fecha)}</b></div>`;
+      if (debo && d.gastado != null) {
+        fichas += `<div class="ficha"><span>Gastado del préstamo</span><b class="neg">${fmt(d.gastado)}</b></div>`;
+        if (d.gastado < d.monto) fichas += `<div class="ficha"><span>Devuelto sin usar</span><b>${fmt(r2(d.monto - d.gastado))}</b></div>`;
+      }
+    }
+    $('detDeudaFichas').innerHTML = fichas;
+    $('btnSaldar').hidden = cerrada;
     $('btnSaldar').textContent = debo ? '✓ Ya pagué' : '✓ Ya me pagaron';
     $('btnSaldar').className = 'btn full ' + (debo ? 'rojo' : 'verde');
+    $('btnBorrarDeuda').textContent = cerrada ? 'Quitar del historial' : 'Eliminar';
     detallePaso(1);
     abrirHoja($('hojaDeuda'));
   });
   $('btnCerrarDeuda').onclick = cerrarHoja;
   $('btnCancelarPaso2').onclick = () => detallePaso(1);
+  $('btnCancelarGasto').onclick = () => detallePaso(1);
 
-  $('btnSaldar').onclick = () => {
-    const d = deudaSel; if (!d) return; accion = 'saldar';
+  function confirmarSaldo() {
+    const d = deudaSel, debo = d.tipo === 'debo';
+    accion = 'saldar';
     $('detDeudaAviso').className = 'aviso ok';
-    const debo = d.tipo === 'debo';
-    $('detDeudaAviso').textContent = debo
-      ? `¿Confirmas que ya le pagaste ${fmt(d.monto)} a ${d.persona}? Se registrará un gasto de ${fmt(d.monto)} en Movimientos y la deuda se cerrará.`
-      : `¿Confirmas que ${d.persona} ya te pagó ${fmt(d.monto)}? Se registrará un ingreso de ${fmt(d.monto)} en Movimientos y la deuda se cerrará.`;
+    if (debo) {
+      const devuelto = r2(d.monto - gastado);
+      $('detDeudaAviso').textContent = `¿Confirmas que ya le pagaste ${fmt(d.monto)} a ${d.persona}? ` +
+        (gastado > 0 ? `Se registrará un gasto de ${fmt(gastado)} en Movimientos` : 'No se registrará ningún gasto') +
+        (devuelto > 0 && gastado > 0 ? ` (los otros ${fmt(devuelto)} los devolviste sin usar).` : '.') +
+        ' La deuda pasará a Cerradas.';
+    } else {
+      $('detDeudaAviso').textContent = `¿Confirmas que ${d.persona} ya te pagó ${fmt(d.monto)}? Se registrará un ingreso de ${fmt(d.monto)} en Movimientos y la deuda pasará a Cerradas.`;
+    }
     $('btnConfirmarPaso2').textContent = debo ? 'Sí, ya pagué' : 'Sí, ya me pagaron';
     $('btnConfirmarPaso2').className = 'btn ' + (debo ? 'rojo' : 'verde');
     detallePaso(2);
+  }
+
+  $('btnSaldar').onclick = () => {
+    const d = deudaSel; if (!d) return;
+    if (d.tipo === 'debo') {
+      // Primero: ¿cuánto de este préstamo gastaste? (por defecto, todo)
+      $('dGastado').value = String(d.monto);
+      $('pistaGasto').textContent = `Por defecto es el total (${fmt(d.monto)}). Si te dieron efectivo y devolviste una parte sin usarla, pon solo lo que gastaste.`;
+      $('errGasto').textContent = '';
+      detallePaso('g');
+    } else {
+      confirmarSaldo();
+    }
   };
+  $('btnContinuarGasto').onclick = () => {
+    const d = deudaSel; if (!d) return;
+    const raw = $('dGastado').value.trim();
+    const g = raw === '' ? NaN : parseMonto(raw);
+    if (!(g >= 0)) { $('errGasto').textContent = 'Escribe cuánto gastaste (puede ser 0).'; return; }
+    if (g > d.monto) { $('errGasto').textContent = `No puede ser mayor que la deuda (${fmt(d.monto)}).`; return; }
+    gastado = r2(g);
+    document.activeElement && document.activeElement.blur();
+    confirmarSaldo();
+  };
+  $('dGastado').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('btnContinuarGasto').click(); } });
+
   $('btnBorrarDeuda').onclick = () => {
     const d = deudaSel; if (!d) return; accion = 'borrar';
     $('detDeudaAviso').className = 'aviso';
-    const tieneMov = movs.some(m => m.id === d.movId);
-    $('detDeudaAviso').textContent = `¿Eliminar esta deuda? No se puede deshacer.` +
-      (tieneMov ? ` También se quitará el ${d.tipo === 'debo' ? 'ingreso' : 'gasto'} de ${fmt(d.monto)} que se registró al crearla.` : '');
-    $('btnConfirmarPaso2').textContent = 'Sí, eliminar';
+    if (d.estado === 'cerrada') {
+      $('detDeudaAviso').textContent = '¿Quitar esta deuda del historial? Tus movimientos no cambian.';
+      $('btnConfirmarPaso2').textContent = 'Sí, quitar';
+    } else {
+      const tieneMov = d.movId && movs.some(m => m.id === d.movId);
+      $('detDeudaAviso').textContent = '¿Eliminar esta deuda? No se puede deshacer.' +
+        (tieneMov ? ` También se quitará el gasto de ${fmt(d.monto)} que se registró al crearla.` : '');
+      $('btnConfirmarPaso2').textContent = 'Sí, eliminar';
+    }
     $('btnConfirmarPaso2').className = 'btn rojo';
     detallePaso(2);
   };
+
   $('btnConfirmarPaso2').onclick = () => {
     const d = deudaSel; if (!d || !accion) return;
     if (accion === 'saldar') {
       const debo = d.tipo === 'debo';
-      movs.push({ id: nuevoId(), tipo: debo ? 'gasto' : 'ingreso', categoria: 'Deuda', nombre: `${d.nombre} · ${d.persona}`, monto: d.monto, fecha: Date.now(), deudaId: d.id });
+      if (debo) {
+        if (gastado > 0) movs.push({ id: nuevoId(), tipo: 'gasto', categoria: 'Deuda', nombre: `${d.nombre} · ${d.persona}`, monto: gastado, fecha: Date.now(), deudaId: d.id });
+        d.gastado = gastado;
+      } else {
+        movs.push({ id: nuevoId(), tipo: 'ingreso', categoria: 'Deuda', nombre: `${d.nombre} · ${d.persona}`, monto: d.monto, fecha: Date.now(), deudaId: d.id });
+      }
       guardar(movs);
-      toast(debo ? 'Deuda pagada · +gasto' : 'Te pagaron · +ingreso');
+      d.estado = 'cerrada'; d.fechaCierre = Date.now();
+      toast(debo ? (gastado > 0 ? `Deuda pagada · gasto ${fmt(gastado)}` : 'Deuda pagada') : 'Te pagaron · +ingreso');
+    } else if (d.estado === 'cerrada') {
+      deudas = deudas.filter(x => x.id !== d.id);
+      toast('Quitada del historial');
     } else {
-      movs = movs.filter(m => m.id !== d.movId); guardar(movs);
+      if (d.movId) { movs = movs.filter(m => m.id !== d.movId); guardar(movs); }
+      deudas = deudas.filter(x => x.id !== d.id);
       toast('Deuda eliminada');
     }
-    deudas = deudas.filter(x => x.id !== d.id); guardarDeudas();
-    deudaSel = null; accion = null;
+    guardarDeudas();
+    deudaSel = null; accion = null; gastado = null;
     cerrarHoja(); pintarDeudas(); pintarInicio();
   };
 
@@ -923,7 +1048,8 @@
       const lista = Array.isArray(d) ? d : (d.movimientos || []);
       if (!Array.isArray(lista)) throw 0;
       const dVal = (Array.isArray(d.deudas) ? d.deudas : []).filter(x => x && x.id && (x.tipo === 'debo' || x.tipo === 'medeben') && typeof x.nombre === 'string' && typeof x.persona === 'string' && +x.monto > 0)
-        .map(x => ({ id: String(x.id), tipo: x.tipo, nombre: x.nombre.slice(0, 40), persona: x.persona.slice(0, 30), monto: Math.round(+x.monto * 100) / 100, fecha: +x.fecha || Date.now(), movId: x.movId ? String(x.movId) : undefined }));
+        .map(x => ({ id: String(x.id), tipo: x.tipo, nombre: x.nombre.slice(0, 40), persona: x.persona.slice(0, 30), monto: Math.round(+x.monto * 100) / 100, fecha: +x.fecha || Date.now(), movId: x.movId ? String(x.movId) : undefined,
+          estado: x.estado === 'cerrada' ? 'cerrada' : 'activa', fechaCierre: +x.fechaCierre || undefined, gastado: x.gastado != null ? r2(+x.gastado) : undefined }));
       const dIds = new Set(deudas.map(x => x.id));
       deudasPend = dVal.filter(x => !dIds.has(x.id));
       const validos = lista.filter(m => m && (m.tipo === 'ingreso' || m.tipo === 'gasto') && typeof m.nombre === 'string' && +m.monto > 0 && m.id)
