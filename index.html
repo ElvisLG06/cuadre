@@ -43,8 +43,68 @@
     display: flex; flex-direction: column;
     transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .35s;
   }
-  #movimientos, #deudas { transform: translateX(100%); }
-  #movimientos.on, #deudas.on { transform: translateX(0); }
+  #movimientos, #deudas, #metas { transform: translateX(100%); }
+  #movimientos.on, #deudas.on, #metas.on { transform: translateX(0); }
+
+  /* ---------- Metas ---------- */
+  .disp {
+    background: linear-gradient(135deg, rgba(95,191,106,.18), rgba(95,191,106,.05));
+    border: 1px solid rgba(95,191,106,.25); border-radius: 18px; padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .disp small { display: block; font-size: 13px; color: var(--muted); }
+  .disp b { display: block; font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .disp .logro { text-align: right; font-size: 13px; color: var(--muted); }
+  .disp .logro strong { display: block; font-size: 20px; color: var(--text); }
+  .tip-metas { font-size: 12.5px; color: var(--muted); text-align: center; margin: 10px 0 2px; line-height: 1.4; }
+  .lista-metas {
+    flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    margin: 10px -22px 0; padding: 4px 22px 24px; position: relative;
+  }
+  .meta-card {
+    position: relative; background: var(--surface); border-radius: 18px; padding: 14px 14px 14px 16px;
+    margin-bottom: 12px; -webkit-touch-callout: none; touch-action: pan-y;
+    transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .2s, background .2s;
+  }
+  .meta-card.done { background: linear-gradient(135deg, rgba(95,191,106,.16), var(--surface) 60%); }
+  .reordenando .meta-card:not(.dragging) { transition: transform .25s cubic-bezier(.2,.8,.2,1); }
+  .meta-card.dragging {
+    z-index: 5; transition: box-shadow .2s, background .2s; background: var(--surface-2);
+    box-shadow: 0 18px 40px rgba(0,0,0,.45), 0 0 0 2px rgba(95,191,106,.5);
+  }
+  .meta-card.pressing { transform: scale(.98); }
+  .mc-top { display: flex; align-items: center; gap: 10px; }
+  .rank {
+    width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0; display: grid; place-items: center;
+    font-size: 13px; font-weight: 700; background: var(--surface-2); color: var(--muted); transition: background .3s, color .3s;
+  }
+  .meta-card.activa .rank { background: var(--green); color: #fff; }
+  .meta-card.done .rank { background: var(--green-soft); color: var(--green); }
+  .mc-name { flex: 1; min-width: 0; font-size: 17px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mc-pct { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .meta-card.activa .mc-pct, .meta-card.done .mc-pct { color: var(--green); }
+  .handle {
+    width: 32px; height: 32px; margin: -4px -6px -4px 0; display: grid; place-items: center;
+    color: var(--muted); touch-action: none; border-radius: 10px; flex-shrink: 0;
+  }
+  .handle:active { background: var(--surface-2); }
+  .mc-bar { height: 14px; border-radius: 999px; background: var(--bg); margin: 12px 0 9px; overflow: hidden; position: relative; }
+  .mc-fill {
+    height: 100%; width: 0; border-radius: 999px; min-width: 0;
+    background: linear-gradient(90deg, #4aa856, #6fd27b);
+    transition: width .7s cubic-bezier(.2,.8,.2,1);
+    position: relative; overflow: hidden;
+  }
+  .meta-card.activa .mc-fill::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+    transform: translateX(-100%); animation: brillo 2.4s ease-in-out infinite;
+  }
+  @keyframes brillo { 60%, 100% { transform: translateX(100%); } }
+  .mc-bottom { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .mc-bottom b { color: var(--text); font-weight: 600; }
+  .btn-nueva { margin-left: auto; }
+
   #inicio.off { transform: translateX(-25%); opacity: .4; }
 
   /* ---------- Inicio ---------- */
@@ -88,10 +148,10 @@
   .total { display: inline-block; white-space: nowrap; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .col .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
-  .links { display: flex; justify-content: center; gap: 2px; margin: 18px auto 4px; }
+  .links { display: flex; justify-content: center; gap: 0; margin: 16px -10px 4px; }
   .link-mov {
     margin: 0; background: none; border: 0; color: var(--text);
-    font-size: 19px; font-weight: 500; padding: 12px 18px; border-radius: 14px;
+    font-size: 16.5px; font-weight: 500; padding: 12px 9px; border-radius: 14px; gap: 4px !important; white-space: nowrap;
     display: flex; align-items: center; gap: 8px;
   }
   .link-mov:active { background: var(--surface); }
@@ -339,7 +399,30 @@
       <button class="link-mov" id="abrirDeudas">Deudas
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </button>
+      <button class="link-mov" id="abrirMetas">Metas
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
     </div>
+  </section>
+
+  <!-- ========== METAS ========== -->
+  <section class="view" id="metas" aria-hidden="true">
+    <div class="top">
+      <button class="back" id="cerrarMetas">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <h2>Metas</h2>
+      <button class="btn-resp btn-nueva" id="nuevaMeta">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Nueva
+      </button>
+    </div>
+    <div class="disp">
+      <div><small>Ganancia para tus metas</small><b class="pos" id="metaDisp">$0</b></div>
+      <div class="logro"><strong id="metaLogro">0/0</strong>completadas</div>
+    </div>
+    <div class="tip-metas" id="tipMetas"></div>
+    <div class="lista-metas" id="listaMetas"></div>
   </section>
 
   <!-- ========== DEUDAS ========== -->
@@ -436,11 +519,11 @@
     <h3>Respaldo</h3>
     <button class="opcion" id="btnExportar">
       <span class="ico v"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></span>
-      <span><b>Exportar respaldo</b><small>Crea un archivo con tus movimientos y deudas. Guárdalo en Archivos, iCloud o envíatelo por WhatsApp.</small></span>
+      <span><b>Exportar respaldo</b><small>Crea un archivo con tus movimientos, deudas y metas. Guárdalo en Archivos, iCloud o envíatelo por WhatsApp.</small></span>
     </button>
     <button class="opcion" id="btnImportar">
       <span class="ico a"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></span>
-      <span><b>Importar respaldo</b><small>Recupera tus movimientos y deudas desde un archivo. No se duplican los que ya tienes.</small></span>
+      <span><b>Importar respaldo</b><small>Recupera tus movimientos, deudas y metas desde un archivo. No se duplican los que ya tienes.</small></span>
     </button>
     <input type="file" id="inArchivo" accept=".json,application/json,text/plain" hidden>
     <div class="ultimo" id="ultimoResp"></div>
@@ -510,6 +593,45 @@
     <div class="botones" id="detDeudaPaso2" hidden>
       <button type="button" class="btn sec" id="btnCancelarPaso2">Cancelar</button>
       <button type="button" class="btn" id="btnConfirmarPaso2"></button>
+    </div>
+  </div>
+
+  <!-- ========== HOJA: NUEVA / EDITAR META ========== -->
+  <form class="hoja" id="hojaMetaForm" autocomplete="off">
+    <div class="agarre"></div>
+    <h3 id="tituloMeta">Nueva meta</h3>
+    <label class="campo">
+      <span>Nombre <em class="opc req">(obligatorio)</em></span>
+      <input id="mNombre" type="text" maxlength="30" placeholder="Ej. Celular, Viaje, Laptop…" enterkeyhint="next">
+    </label>
+    <label class="campo monto">
+      <span>Monto de la meta ($)</span>
+      <input id="mMonto" type="text" inputmode="decimal" placeholder="0.00" enterkeyhint="done">
+    </label>
+    <div class="info-deuda" id="infoMeta">Se agregará al final de tu lista. Puedes arrastrarla para darle más prioridad.</div>
+    <div class="error" id="errMeta"></div>
+    <div class="botones">
+      <button type="button" class="btn sec" id="cancelarMeta">Cancelar</button>
+      <button type="submit" class="btn verde" id="guardarMeta">Guardar</button>
+    </div>
+  </form>
+
+  <!-- ========== HOJA: DETALLE DE META ========== -->
+  <div class="hoja" id="hojaMeta">
+    <div class="agarre"></div>
+    <h3 id="detMetaTitulo"></h3>
+    <div class="fichas" id="detMetaFichas"></div>
+    <div class="aviso" id="detMetaAviso" hidden>¿Eliminar esta meta? No se puede deshacer. Tus movimientos no cambian.</div>
+    <div class="acciones-deuda" id="detMetaPaso1">
+      <div class="fila">
+        <button type="button" class="btn sec borrar-deuda" id="btnBorrarMeta">Eliminar</button>
+        <button type="button" class="btn sec" id="btnEditarMeta">Editar</button>
+      </div>
+      <button type="button" class="btn sec full" id="btnCerrarMeta">Cerrar</button>
+    </div>
+    <div class="botones" id="detMetaPaso2" hidden>
+      <button type="button" class="btn sec" id="btnCancelarMeta2">Cancelar</button>
+      <button type="button" class="btn rojo" id="btnConfirmarMeta2">Sí, eliminar</button>
     </div>
   </div>
 
@@ -998,6 +1120,230 @@
     cerrarHoja(); pintarDeudas(); pintarInicio();
   };
 
+  /* =================== METAS =================== */
+  /* La ganancia (ingresos − gastos) llena las metas en orden: la de arriba primero. */
+  const KEY_METAS = 'cuadre_metas_v1';
+  let memMetas = [];
+  function cargarMetas() {
+    try { const d = JSON.parse(localStorage.getItem(KEY_METAS) || '[]'); return Array.isArray(d) ? d : []; }
+    catch (e) { return memMetas; }
+  }
+  function guardarMetas() { memMetas = metas; try { localStorage.setItem(KEY_METAS, JSON.stringify(metas)); } catch (e) {} }
+  let metas = cargarMetas();
+
+  const ganancia = () => movs.reduce((a, m) => a + (m.tipo === 'ingreso' ? m.monto : -m.monto), 0);
+  // Reparte la ganancia disponible entre las metas según el orden dado
+  function repartir(orden) {
+    let resto = Math.max(0, r2(ganancia()));
+    const res = {};
+    orden.forEach(m => { const a = Math.min(m.monto, resto); res[m.id] = r2(a); resto = r2(resto - a); });
+    return res;
+  }
+  const icoHandle = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg>';
+
+  // Aplica a una tarjeta el estado de progreso (se usa al pintar y en vivo al arrastrar)
+  function aplicarProgreso(card, m, asignado, rank, activaId) {
+    const pct = m.monto > 0 ? Math.min(100, (asignado / m.monto) * 100) : 0;
+    const done = asignado >= m.monto;
+    card.classList.toggle('done', done);
+    card.classList.toggle('activa', m.id === activaId);
+    card.querySelector('.rank').textContent = rank;
+    card.querySelector('.mc-fill').style.width = pct + '%';
+    card.querySelector('.mc-pct').textContent = done ? '✓ Lista' : Math.floor(pct) + '%';
+    card.querySelector('.mc-ahorro').innerHTML = `<b>${fmt(asignado)}</b> de ${fmt(m.monto)}`;
+    card.querySelector('.mc-falta').textContent = done ? '¡Meta cumplida! 🎉' : `Faltan ${fmt(r2(m.monto - asignado))}`;
+  }
+  const activaDe = (orden, rep) => { const a = orden.find(m => rep[m.id] < m.monto); return a ? a.id : null; };
+
+  function pintarMetas(animar) {
+    const g = r2(ganancia());
+    $('metaDisp').textContent = fmt(Math.max(0, g));
+    $('metaDisp').className = g > 0 ? 'pos' : '';
+    const rep = repartir(metas);
+    const hechas = metas.filter(m => rep[m.id] >= m.monto).length;
+    $('metaLogro').textContent = `${hechas}/${metas.length}`;
+    $('tipMetas').textContent = g < 0 ? 'Tu ganancia está en negativo, por eso tus metas no avanzan.'
+      : metas.length > 1 ? 'Se llenan de arriba hacia abajo. Mantén presionada una meta y arrástrala para cambiar su prioridad.'
+      : metas.length === 1 ? 'Tu ganancia va llenando la barra de tu meta.' : '';
+    const cont = $('listaMetas');
+    if (!metas.length) {
+      cont.innerHTML = '<div class="vacio" style="margin-top:22%">Aún no tienes metas.<br>Toca <b>+ Nueva</b> para crear tu primera meta.</div>';
+      return;
+    }
+    cont.innerHTML = metas.map(m => `
+      <div class="meta-card" data-id="${m.id}">
+        <div class="mc-top">
+          <span class="rank"></span>
+          <div class="mc-name">${esc(m.nombre)}</div>
+          <span class="mc-pct"></span>
+          <span class="handle" aria-label="Arrastrar">${icoHandle}</span>
+        </div>
+        <div class="mc-bar"><div class="mc-fill"></div></div>
+        <div class="mc-bottom"><span class="mc-ahorro"></span><span class="mc-falta"></span></div>
+      </div>`).join('');
+    const activa = activaDe(metas, rep);
+    const cards = [...cont.children];
+    const pintar = () => cards.forEach((c, i) => aplicarProgreso(c, metas[i], rep[metas[i].id], i + 1, activa));
+    if (animar) {
+      cards.forEach(c => { c.querySelector('.mc-fill').style.transition = 'none'; });
+      pintar(); const finales = cards.map(c => c.querySelector('.mc-fill').style.width);
+      cards.forEach(c => { c.querySelector('.mc-fill').style.width = '0%'; });
+      requestAnimationFrame(() => requestAnimationFrame(() => cards.forEach((c, i) => {
+        const f = c.querySelector('.mc-fill'); f.style.transition = ''; f.style.width = finales[i];
+      })));
+    } else {
+      cards.forEach(c => { c.querySelector('.mc-fill').style.transition = 'none'; });
+      pintar();
+      requestAnimationFrame(() => cards.forEach(c => { c.querySelector('.mc-fill').style.transition = ''; }));
+    }
+  }
+
+  $('abrirMetas').onclick = () => { abrirVista('metas'); pintarMetas(true); };
+  $('cerrarMetas').onclick = () => cerrarVista('metas');
+
+  /* ----- Arrastrar para reordenar ----- */
+  const lista = $('listaMetas');
+  let drag = null, pend = null, timer = null, recienArrastrado = false;
+  const GAP = 12;
+
+  function empezarDrag(p) {
+    const cards = [...lista.querySelectorAll('.meta-card')];
+    const idx = cards.indexOf(p.card); if (idx < 0) return;
+    drag = {
+      card: p.card, idx, nuevo: idx, cards, y0: p.y, lastY: p.y, scroll0: lista.scrollTop,
+      tops: cards.map(c => c.offsetTop), alto: p.card.offsetHeight
+    };
+    p.card.classList.remove('pressing');
+    p.card.classList.add('dragging'); lista.classList.add('reordenando');
+    try { p.card.setPointerCapture(p.id); } catch (e) {}
+    bucleScroll();
+  }
+  function moverDrag(y) {
+    const d = drag; d.lastY = y;
+    let dy = y - d.y0 + (lista.scrollTop - d.scroll0);
+    // No dejar que la tarjeta salga del área de la lista
+    dy = Math.max(d.tops[0] - d.tops[d.idx] - 4, Math.min(d.tops[d.tops.length - 1] - d.tops[d.idx] + 4, dy));
+    d.card.style.transform = `translateY(${dy}px) scale(1.03)`;
+    const centro = d.tops[d.idx] + d.alto / 2 + dy;
+    let n = 0;
+    d.cards.forEach((c, j) => { if (j !== d.idx && d.tops[j] + d.alto / 2 < centro) n++; });
+    if (n === d.nuevo) return;
+    d.nuevo = n;
+    const paso = d.alto + GAP;
+    d.cards.forEach((c, j) => {
+      if (j === d.idx) return;
+      let t = 0;
+      if (d.idx < n && j > d.idx && j <= n) t = -paso;
+      if (d.idx > n && j >= n && j < d.idx) t = paso;
+      c.style.transform = t ? `translateY(${t}px)` : '';
+    });
+    // Vista previa en vivo: cómo quedarían las barras con este orden
+    const orden = metas.slice(); const [mv] = orden.splice(d.idx, 1); orden.splice(n, 0, mv);
+    const rep = repartir(orden), activa = activaDe(orden, rep);
+    orden.forEach((m, i) => {
+      const c = d.cards[metas.indexOf(m)];
+      aplicarProgreso(c, m, rep[m.id], i + 1, activa);
+    });
+  }
+  function bucleScroll() {
+    if (!drag) return;
+    const r = lista.getBoundingClientRect();
+    let v = 0;
+    if (drag.lastY < r.top + 70) v = -7; else if (drag.lastY > r.bottom - 70) v = 7;
+    if (v) { const antes = lista.scrollTop; lista.scrollTop += v; if (lista.scrollTop !== antes) moverDrag(drag.lastY); }
+    requestAnimationFrame(bucleScroll);
+  }
+  function terminarDrag() {
+    const d = drag; drag = null;
+    lista.classList.remove('reordenando');
+    const cambio = d.nuevo !== d.idx;
+    if (cambio) { const [mv] = metas.splice(d.idx, 1); metas.splice(d.nuevo, 0, mv); guardarMetas(); }
+    pintarMetas(false);
+    recienArrastrado = true; setTimeout(() => { recienArrastrado = false; }, 350);
+    if (cambio) toast('Prioridad actualizada');
+  }
+  function cancelarPend() { clearTimeout(timer); if (pend) pend.card.classList.remove('pressing'); pend = null; }
+
+  lista.addEventListener('pointerdown', e => {
+    const card = e.target.closest('.meta-card'); if (!card || drag) return;
+    const p = { card, id: e.pointerId, x: e.clientX, y: e.clientY };
+    if (e.target.closest('.handle')) { e.preventDefault(); empezarDrag(p); return; }
+    pend = p; card.classList.add('pressing');
+    timer = setTimeout(() => { if (pend) { const q = pend; pend = null; empezarDrag(q); } }, 380);
+  });
+  lista.addEventListener('pointermove', e => {
+    if (drag) { e.preventDefault(); moverDrag(e.clientY); return; }
+    if (pend && (Math.abs(e.clientX - pend.x) > 8 || Math.abs(e.clientY - pend.y) > 8)) cancelarPend();
+  });
+  const soltar = () => { if (drag) terminarDrag(); else cancelarPend(); };
+  lista.addEventListener('pointerup', soltar);
+  lista.addEventListener('pointercancel', soltar);
+  // En iPhone: mientras se arrastra, que la lista no haga scroll
+  lista.addEventListener('touchmove', e => { if (drag) e.preventDefault(); }, { passive: false });
+  lista.addEventListener('contextmenu', e => e.preventDefault());
+
+  /* ----- Tocar una meta: detalle ----- */
+  let metaSel = null;
+  lista.addEventListener('click', e => {
+    if (recienArrastrado || drag) return;
+    const card = e.target.closest('.meta-card'); if (!card || e.target.closest('.handle')) return;
+    const i = metas.findIndex(m => m.id === card.dataset.id); if (i < 0) return;
+    const m = metas[i]; metaSel = m;
+    const a = repartir(metas)[m.id];
+    const pct = Math.min(100, Math.floor((a / m.monto) * 100));
+    $('detMetaTitulo').textContent = m.nombre;
+    $('detMetaFichas').innerHTML = `
+      <div class="ficha"><span>Prioridad</span><b>#${i + 1} de ${metas.length}</b></div>
+      <div class="ficha"><span>Meta</span><b>${fmt(m.monto)}</b></div>
+      <div class="ficha"><span>Avance</span><b class="pos">${fmt(a)} · ${pct}%</b></div>
+      <div class="ficha"><span>Falta</span><b>${a >= m.monto ? '¡Nada! 🎉' : fmt(r2(m.monto - a))}</b></div>
+      <div class="ficha"><span>Creada</span><b>${fmtFecha(m.fecha)}</b></div>`;
+    $('detMetaPaso1').hidden = false; $('detMetaPaso2').hidden = true; $('detMetaAviso').hidden = true;
+    abrirHoja($('hojaMeta'));
+  });
+  $('btnCerrarMeta').onclick = cerrarHoja;
+  $('btnBorrarMeta').onclick = () => { $('detMetaPaso1').hidden = true; $('detMetaPaso2').hidden = false; $('detMetaAviso').hidden = false; };
+  $('btnCancelarMeta2').onclick = () => { $('detMetaPaso1').hidden = false; $('detMetaPaso2').hidden = true; $('detMetaAviso').hidden = true; };
+  $('btnConfirmarMeta2').onclick = () => {
+    if (!metaSel) return;
+    metas = metas.filter(m => m.id !== metaSel.id); guardarMetas(); metaSel = null;
+    cerrarHoja(); pintarMetas(false); toast('Meta eliminada');
+  };
+
+  /* ----- Crear / editar ----- */
+  let metaEdit = null;
+  function abrirFormMeta(m) {
+    metaEdit = m || null;
+    $('tituloMeta').textContent = m ? 'Editar meta' : 'Nueva meta';
+    $('infoMeta').hidden = !!m;
+    $('mNombre').value = m ? m.nombre : ''; $('mMonto').value = m ? String(m.monto) : ''; $('errMeta').textContent = '';
+    abrirHoja($('hojaMetaForm'));
+  }
+  $('nuevaMeta').onclick = () => abrirFormMeta(null);
+  $('btnEditarMeta').onclick = () => { const m = metaSel; cerrarHoja(); setTimeout(() => abrirFormMeta(m), 280); };
+  $('cancelarMeta').onclick = cerrarHoja;
+  $('mNombre').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('mMonto').focus(); } });
+  $('hojaMetaForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const nombre = $('mNombre').value.trim();
+    const monto = parseMonto($('mMonto').value);
+    if (!nombre) { $('errMeta').textContent = 'Escribe un nombre para tu meta.'; $('mNombre').focus(); return; }
+    if (!(monto > 0)) { $('errMeta').textContent = 'Escribe un monto mayor a 0.'; return; }
+    if (monto > 999999999999) { $('errMeta').textContent = 'El monto es demasiado grande.'; return; }
+    if (metaEdit) {
+      const m = metas.find(x => x.id === metaEdit.id);
+      if (m) { m.nombre = nombre; m.monto = r2(monto); }
+      toast('Meta actualizada');
+    } else {
+      metas.push({ id: nuevoId(), nombre, monto: r2(monto), fecha: Date.now() });
+      toast('Meta creada');
+    }
+    guardarMetas(); metaEdit = null;
+    cerrarHoja(); pintarMetas(false);
+    if (!$('listaMetas').querySelector('.meta-card:last-child')) return;
+    $('listaMetas').scrollTop = $('listaMetas').scrollHeight;
+  });
+
   function toast(msg) {
     const t = $('toast'); t.textContent = msg; t.classList.add('on');
     clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), 2200);
@@ -1015,11 +1361,11 @@
   $('cerrarResp').onclick = cerrarHoja;
 
   $('btnExportar').onclick = async () => {
-    if (!movs.length && !deudas.length) { toast('No hay datos para respaldar'); return; }
+    if (!movs.length && !deudas.length && !metas.length) { toast('No hay datos para respaldar'); return; }
     const hoy = new Date();
     const f = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
     const nombre = `Cuadre-respaldo-${f}.json`;
-    const datos = JSON.stringify({ app: 'Cuadre', version: 2, exportado: Date.now(), movimientos: movs, deudas }, null, 1);
+    const datos = JSON.stringify({ app: 'Cuadre', version: 2, exportado: Date.now(), movimientos: movs, deudas, metas }, null, 1);
     const marcar = () => { try { localStorage.setItem(KEY_RESP, String(Date.now())); } catch (e) {} pintarUltimo(); };
     try {
       const file = new File([datos], nombre, { type: 'application/json' });
@@ -1039,7 +1385,7 @@
     } catch (e) { toast('No se pudo exportar'); }
   };
 
-  let pendientes = null, deudasPend = [];
+  let pendientes = null, deudasPend = [], metasPend = [];
   $('btnImportar').onclick = () => { $('inArchivo').value = ''; $('inArchivo').click(); };
   $('inArchivo').addEventListener('change', async () => {
     const file = $('inArchivo').files[0]; if (!file) return;
@@ -1052,16 +1398,20 @@
           estado: x.estado === 'cerrada' ? 'cerrada' : 'activa', fechaCierre: +x.fechaCierre || undefined, gastado: x.gastado != null ? r2(+x.gastado) : undefined }));
       const dIds = new Set(deudas.map(x => x.id));
       deudasPend = dVal.filter(x => !dIds.has(x.id));
+      const mIds = new Set(metas.map(x => x.id));
+      metasPend = (Array.isArray(d.metas) ? d.metas : []).filter(x => x && x.id && typeof x.nombre === 'string' && +x.monto > 0 && !mIds.has(String(x.id)))
+        .map(x => ({ id: String(x.id), nombre: x.nombre.slice(0, 30), monto: r2(+x.monto), fecha: +x.fecha || Date.now() }));
       const validos = lista.filter(m => m && (m.tipo === 'ingreso' || m.tipo === 'gasto') && typeof m.nombre === 'string' && +m.monto > 0 && m.id)
         .map(m => ({ id: String(m.id), tipo: m.tipo, categoria: typeof m.categoria === 'string' ? m.categoria.slice(0, 30) : undefined, nombre: m.nombre.slice(0, 40), monto: Math.round(+m.monto * 100) / 100, fecha: +m.fecha || Date.now(), deudaId: m.deudaId ? String(m.deudaId) : undefined }));
-      if (!validos.length && !dVal.length) throw 0;
+      if (!validos.length && !dVal.length && !metasPend.length && !(Array.isArray(d.metas) && d.metas.length)) throw 0;
       const ids = new Set(movs.map(m => m.id));
       pendientes = validos.filter(m => !ids.has(m.id));
-      if (!pendientes.length && !deudasPend.length) { cerrarHoja(); toast('Ya tienes todos esos datos'); return; }
+      if (!pendientes.length && !deudasPend.length && !metasPend.length) { cerrarHoja(); toast('Ya tienes todos esos datos'); return; }
       const pl = (n, a, b) => `${n} ${n === 1 ? a : b}`;
       const partes = [];
       if (pendientes.length) partes.push(pl(pendientes.length, 'movimiento', 'movimientos'));
       if (deudasPend.length) partes.push(pl(deudasPend.length, 'deuda', 'deudas'));
+      if (metasPend.length) partes.push(pl(metasPend.length, 'meta', 'metas'));
       $('detImport').textContent = `Se añadirán ${partes.join(' y ')} que no tienes. Lo que ya tienes se mantiene.`;
       cerrarHoja();
       setTimeout(() => abrirHoja($('hojaImport')), 280);
@@ -1074,6 +1424,7 @@
     if (!pendientes) return;
     movs = movs.concat(pendientes); guardar(movs);
     deudas = deudas.concat(deudasPend); guardarDeudas();
+    metas = metas.concat(metasPend); guardarMetas(); metasPend = [];
     pendientes = null; deudasPend = [];
     cerrarHoja(); pintarLista(); pintarDeudas(); pintarInicio();
     toast('Respaldo importado');
