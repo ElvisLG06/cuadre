@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Cuadre</title>
+<meta name="wyt-app" content="ok">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cuadre">
+<meta name="theme-color" content="#1a1f2b">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<style>
+  :root {
+    --bg: #1a1f2b;          /* azul pizarra oscuro, suave a la vista */
+    --surface: #232a38;
+    --surface-2: #2c3445;
+    --text: #e6e8ee;
+    --muted: #8a93a6;
+    --green: #5fbf6a;
+    --green-soft: rgba(95,191,106,.16);
+    --red: #e0574f;
+    --red-soft: rgba(224,87,79,.16);
+    --safe-top: env(safe-area-inset-top);
+    --safe-bottom: env(safe-area-inset-bottom);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    color: var(--text); overflow: hidden;
+    -webkit-user-select: none; user-select: none;
+  }
+  button { font-family: inherit; cursor: pointer; }
+
+  /* ---------- Vistas ---------- */
+  .view {
+    position: fixed; inset: 0; background: var(--bg);
+    padding: calc(var(--safe-top) + 20px) 22px calc(var(--safe-bottom) + 16px);
+    display: flex; flex-direction: column;
+    transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .35s;
+  }
+  #movimientos { transform: translateX(100%); }
+  #movimientos.on { transform: translateX(0); }
+  #inicio.off { transform: translateX(-25%); opacity: .4; }
+
+  /* ---------- Inicio ---------- */
+  .acciones { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+  .pill {
+    border: 0; border-radius: 999px; height: 62px;
+    font-size: 21px; font-weight: 600; color: #fff;
+    transition: transform .1s, filter .1s;
+  }
+  .pill:active { transform: scale(.96); filter: brightness(.92); }
+  .pill.ingreso { background: var(--green); }
+  .pill.gasto { background: var(--red); }
+
+  .balance { text-align: center; margin-top: 30px; width: 100%; }
+  .balance .label { font-size: 16px; color: var(--muted); letter-spacing: .3px; }
+  .monto-wrap { width: 100%; height: 92px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 2px; }
+  .balance .monto {
+    display: inline-block; white-space: nowrap;
+    font-size: 84px; font-weight: 700; letter-spacing: -0.03em;
+    line-height: 1; font-variant-numeric: tabular-nums;
+    transition: color .3s;
+  }
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+
+  .barras {
+    flex: 1; min-height: 160px; margin-top: 26px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  }
+  .col { display: flex; flex-direction: column; align-items: center; min-height: 0; min-width: 0; }
+  /* La barra vive dentro de su "pista" y nunca puede salir de ella */
+  .pista { flex: 1; width: 100%; position: relative; min-height: 0; overflow: hidden; }
+  .barra {
+    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: min(118px, 64%); border-radius: 999px; min-height: 26px; height: 0%; max-height: 100%;
+    transition: height .6s cubic-bezier(.2,.8,.2,1);
+  }
+  .col.ingreso .barra { background: var(--green); }
+  .col.gasto .barra { background: var(--red); }
+  .total-wrap { width: 100%; height: 30px; margin-top: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .total { display: inline-block; white-space: nowrap; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .col .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  .link-mov {
+    margin: 18px auto 4px; background: none; border: 0; color: var(--text);
+    font-size: 19px; font-weight: 500; padding: 12px 18px; border-radius: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .link-mov:active { background: var(--surface); }
+
+  /* ---------- Movimientos ---------- */
+  .top { display: flex; align-items: center; gap: 6px; margin: -6px 0 16px -8px; }
+  .back { background: none; border: 0; color: var(--text); font-size: 17px; padding: 8px; display: flex; align-items: center; gap: 2px; }
+  .top h2 { font-size: 28px; font-weight: 700; margin-left: 8px; }
+  .lista { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; margin: 0 -22px; padding: 0 22px 20px; }
+  .item {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface); border-radius: 16px; padding: 14px 16px; margin-bottom: 10px;
+  }
+  .item:active { background: var(--surface-2); }
+  .tag {
+    font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 999px; flex-shrink: 0;
+  }
+  .tag.ingreso { background: var(--green-soft); color: var(--green); }
+  .tag.gasto { background: var(--red-soft); color: var(--red); }
+  .item .info { flex: 1; min-width: 0; }
+  .item .nombre { font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .fecha { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .item .valor { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; flex-shrink: 0; white-space: nowrap; }
+  .item .info { overflow: hidden; }
+  .item .meta { display: flex; align-items: center; gap: 8px; margin-top: 5px; min-width: 0; }
+  .item .meta .tag { font-size: 11px; padding: 3px 8px; }
+  .item .meta .fecha { margin-top: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .item { padding-right: 8px; }
+  .borrar {
+    flex-shrink: 0; width: 40px; height: 40px; border: 0; border-radius: 12px;
+    background: transparent; color: var(--muted); display: grid; place-items: center;
+  }
+  .borrar:active { background: var(--red-soft); color: var(--red); }
+  .aviso {
+    background: var(--red-soft); color: #f0a29c; border-radius: 12px;
+    padding: 12px 14px; font-size: 14px; line-height: 1.4; margin: -6px 0 18px;
+  }
+  .toast {
+    position: fixed; left: 50%; bottom: calc(var(--safe-bottom) + 24px); z-index: 20;
+    transform: translate(-50%, 140%); opacity: 0;
+    background: var(--surface-2); color: var(--text); font-size: 15px; font-weight: 500;
+    padding: 12px 20px; border-radius: 999px; transition: transform .3s, opacity .3s;
+    box-shadow: 0 8px 24px rgba(0,0,0,.35); white-space: nowrap;
+  }
+  .toast.on { transform: translate(-50%, 0); opacity: 1; }
+  .vacio { text-align: center; color: var(--muted); margin-top: 30%; font-size: 16px; line-height: 1.5; }
+
+  /* ---------- Hoja inferior (formulario) ---------- */
+  .velo {
+    position: fixed; inset: 0; background: rgba(5,8,14,.55);
+    opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 10;
+  }
+  .velo.on { opacity: 1; pointer-events: auto; }
+  .hoja {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 11;
+    background: var(--surface); border-radius: 24px 24px 0 0;
+    padding: 10px 22px calc(var(--safe-bottom) + 22px);
+    transform: translateY(105%); transition: transform .32s cubic-bezier(.2,.8,.2,1);
+  }
+  .hoja.on { transform: translateY(0); }
+  .agarre { width: 40px; height: 5px; border-radius: 3px; background: var(--surface-2); margin: 0 auto 16px; }
+  .hoja h3 { font-size: 22px; font-weight: 700; margin-bottom: 16px; }
+  .campo { display: block; margin-bottom: 12px; }
+  .campo span { display: block; font-size: 13px; color: var(--muted); margin: 0 0 6px 4px; }
+  .campo input {
+    width: 100%; height: 54px; border-radius: 14px; border: 1.5px solid transparent;
+    background: var(--bg); color: var(--text); padding: 0 16px;
+    font-size: 18px; font-family: inherit; outline: none;
+    -webkit-user-select: text; user-select: text;
+  }
+  .campo input:focus { border-color: var(--muted); }
+  .campo.monto input { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .error { color: var(--red); font-size: 13px; min-height: 18px; margin: -4px 0 6px 4px; }
+  .botones { display: grid; grid-template-columns: 1fr 1.6fr; gap: 10px; margin-top: 6px; }
+  .btn { height: 54px; border: 0; border-radius: 14px; font-size: 17px; font-weight: 600; color: #fff; }
+  .btn.sec { background: var(--surface-2); color: var(--text); }
+  .btn.verde { background: var(--green); }
+  .btn.rojo { background: var(--red); }
+  .btn:active { filter: brightness(.9); }
+  .hoja p.det { color: var(--muted); font-size: 15px; margin: -8px 0 18px; line-height: 1.4; }
+
+  /* ---------- Respaldo ---------- */
+  .btn-resp {
+    margin-left: auto; background: var(--surface); border: 0; color: var(--text);
+    font-size: 15px; font-weight: 500; padding: 9px 14px; border-radius: 999px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-resp:active { background: var(--surface-2); }
+  .opcion {
+    width: 100%; display: flex; align-items: center; gap: 14px; text-align: left;
+    background: var(--bg); border: 0; border-radius: 16px; padding: 16px; margin-bottom: 10px; color: var(--text);
+  }
+  .opcion:active { background: var(--surface-2); }
+  .opcion .ico { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; }
+  .opcion .ico.v { background: var(--green-soft); color: var(--green); }
+  .opcion .ico.a { background: rgba(120,150,230,.16); color: #9db2f0; }
+  .opcion b { display: block; font-size: 16px; font-weight: 600; }
+  .opcion small { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+  .ultimo { font-size: 13px; color: var(--muted); text-align: center; margin: 4px 0 14px; }
+  .btn.full { width: 100%; }
+
+  /* ---------- Aviso de nueva versión ---------- */
+  .update {
+    position: fixed; left: 16px; right: 16px; bottom: calc(var(--safe-bottom) + 14px); z-index: 30;
+    background: var(--surface-2); border-radius: 16px; padding: 12px 12px 12px 16px;
+    display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.4);
+    transform: translateY(160%); transition: transform .35s cubic-bezier(.2,.8,.2,1);
+  }
+  .update.on { transform: translateY(0); }
+  .update span { flex: 1; font-size: 15px; }
+  .update button { border: 0; border-radius: 10px; background: var(--green); color: #fff; font-size: 15px; font-weight: 600; padding: 10px 14px; }
+</style>
+</head>
+<body>
+
+  <!-- ========== INICIO ========== -->
+  <section class="view" id="inicio">
+    <div class="acciones">
+      <button class="pill ingreso" data-tipo="ingreso">Ingreso</button>
+      <button class="pill gasto" data-tipo="gasto">Gasto</button>
+    </div>
+
+    <div class="balance">
+      <div class="label" id="lblBalance">Ganancia</div>
+      <div class="monto-wrap"><div class="monto pos" id="montoBalance">$0</div></div>
+    </div>
+
+    <div class="barras">
+      <div class="col ingreso">
+        <div class="pista"><div class="barra" id="barraIng"></div></div>
+        <div class="total-wrap"><div class="total" id="totIng">$0</div></div>
+        <div class="sub">Ingresos</div>
+      </div>
+      <div class="col gasto">
+        <div class="pista"><div class="barra" id="barraGas"></div></div>
+        <div class="total-wrap"><div class="total" id="totGas">$0</div></div>
+        <div class="sub">Gastos</div>
+      </div>
+    </div>
+
+    <button class="link-mov" id="abrirMov">Movimientos
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </button>
+  </section>
+
+  <!-- ========== MOVIMIENTOS ========== -->
+  <section class="view" id="movimientos" aria-hidden="true">
+    <div class="top">
+      <button class="back" id="cerrarMov">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <h2>Movimientos</h2>
+      <button class="btn-resp" id="abrirResp">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        Respaldo
+      </button>
+    </div>
+    <div class="lista" id="lista"></div>
+  </section>
+
+  <!-- ========== HOJA: NUEVO MOVIMIENTO ========== -->
+  <div class="velo" id="velo"></div>
+  <form class="hoja" id="hojaForm" autocomplete="off">
+    <div class="agarre"></div>
+    <h3 id="tituloForm">Nuevo ingreso</h3>
+    <label class="campo">
+      <span>Nombre</span>
+      <input id="inNombre" type="text" maxlength="40" placeholder="Ej. Sueldo, Comida…" enterkeyhint="next">
+    </label>
+    <label class="campo monto">
+      <span>Monto ($)</span>
+      <input id="inMonto" type="text" inputmode="decimal" placeholder="0.00" enterkeyhint="done">
+    </label>
+    <div class="error" id="errForm"></div>
+    <div class="botones">
+      <button type="button" class="btn sec" id="cancelarForm">Cancelar</button>
+      <button type="submit" class="btn verde" id="guardarForm">Guardar</button>
+    </div>
+  </form>
+
+  <!-- ========== HOJA: BORRAR MOVIMIENTO ========== -->
+  <div class="hoja" id="hojaBorrar">
+    <div class="agarre"></div>
+    <h3 id="tituloBorrar">¿Eliminar movimiento?</h3>
+    <p class="det" id="detBorrar"></p>
+    <div class="aviso" id="avisoBorrar" hidden>Esta acción no se puede deshacer. El monto se quitará de tus totales.</div>
+    <div class="botones">
+      <button type="button" class="btn sec" id="cancelarBorrar">Cancelar</button>
+      <button type="button" class="btn rojo" id="confirmarBorrar">Eliminar</button>
+    </div>
+  </div>
+
+  <!-- ========== HOJA: RESPALDO ========== -->
+  <div class="hoja" id="hojaResp">
+    <div class="agarre"></div>
+    <h3>Respaldo</h3>
+    <button class="opcion" id="btnExportar">
+      <span class="ico v"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></span>
+      <span><b>Exportar respaldo</b><small>Crea un archivo con todos tus movimientos. Guárdalo en Archivos, iCloud o envíatelo por WhatsApp.</small></span>
+    </button>
+    <button class="opcion" id="btnImportar">
+      <span class="ico a"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></span>
+      <span><b>Importar respaldo</b><small>Recupera tus movimientos desde un archivo de respaldo. No se duplican los que ya tienes.</small></span>
+    </button>
+    <input type="file" id="inArchivo" accept=".json,application/json,text/plain" hidden>
+    <div class="ultimo" id="ultimoResp"></div>
+    <button type="button" class="btn sec full" id="cerrarResp">Cerrar</button>
+  </div>
+
+  <!-- ========== HOJA: CONFIRMAR IMPORTACIÓN ========== -->
+  <div class="hoja" id="hojaImport">
+    <div class="agarre"></div>
+    <h3>¿Importar respaldo?</h3>
+    <p class="det" id="detImport"></p>
+    <div class="botones">
+      <button type="button" class="btn sec" id="cancelarImport">Cancelar</button>
+      <button type="button" class="btn verde" id="confirmarImport">Importar</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Movimiento eliminado</div>
+
+  <div class="update" id="avisoUpdate">
+    <span>Nueva versión disponible</span>
+    <button id="btnUpdate">Actualizar</button>
+  </div>
+
+<script>
+(() => {
+  /* ---------- Almacenamiento local (solo en este iPhone) ---------- */
+  const KEY = 'wyt_movimientos_v1';
+  let memoria = [];
+  function cargar() {
+    try { const d = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(d) ? d : []; }
+    catch (e) { return memoria; }
+  }
+  function guardar(lista) {
+    memoria = lista;
+    try { localStorage.setItem(KEY, JSON.stringify(lista)); } catch (e) {}
+  }
+  let movs = cargar();
+
+  /* ---------- Utilidades ---------- */
+  const $ = id => document.getElementById(id);
+  const fmt = n => {
+    const abs = Math.abs(n);
+    const s = abs.toLocaleString('en-US', { minimumFractionDigits: abs % 1 ? 2 : 0, maximumFractionDigits: 2 });
+    return (n < 0 ? '-$' : '$') + s;
+  };
+  const fmtFecha = ts => {
+    const d = new Date(ts);
+    const dia = d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' }).replace('.', '');
+    const hora = d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return `${dia} · ${hora}`;
+  };
+  const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  /* ---------- Pintar pantalla de inicio ---------- */
+  function pintarInicio() {
+    const ing = movs.filter(m => m.tipo === 'ingreso').reduce((a, m) => a + m.monto, 0);
+    const gas = movs.filter(m => m.tipo === 'gasto').reduce((a, m) => a + m.monto, 0);
+    const dif = Math.round((ing - gas) * 100) / 100;
+
+    $('lblBalance').textContent = dif < 0 ? 'Pérdida' : 'Ganancia';
+    const mb = $('montoBalance');
+    mb.textContent = fmt(dif);
+    mb.className = 'monto ' + (dif < 0 ? 'neg' : 'pos');
+
+    $('totIng').textContent = fmt(ing);
+    $('totGas').textContent = fmt(gas);
+
+    // La barra mayor ocupa el 100% de su espacio; la otra es proporcional (nunca se sale)
+    const max = Math.max(ing, gas);
+    const pct = v => max > 0 ? (v / max) * 100 : 0;
+    $('barraIng').style.height = pct(ing) + '%';
+    $('barraGas').style.height = pct(gas) + '%';
+
+    ajustarTextos();
+  }
+
+  /* ---------- Achicar montos grandes para que entren en el ancho ---------- */
+  function ajustar(el, maxPx) {
+    el.style.fontSize = maxPx + 'px';
+    const disponible = el.parentElement.clientWidth - 4;
+    const real = el.scrollWidth;
+    if (real > disponible && disponible > 0) el.style.fontSize = Math.floor(maxPx * disponible / real) + 'px';
+  }
+  function ajustarTextos() {
+    ajustar($('montoBalance'), Math.min(84, Math.round(window.innerWidth * 0.2)));
+    ajustar($('totIng'), 22);
+    ajustar($('totGas'), 22);
+  }
+
+  /* ---------- Pintar lista de movimientos ---------- */
+  function pintarLista() {
+    const cont = $('lista');
+    if (!movs.length) {
+      cont.innerHTML = '<div class="vacio">Aún no hay movimientos.<br>Registra un ingreso o un gasto desde el inicio.</div>';
+      return;
+    }
+    cont.innerHTML = [...movs].sort((a, b) => b.fecha - a.fecha).map(m => `
+      <div class="item" data-id="${m.id}">
+        <div class="info">
+          <div class="nombre">${esc(m.nombre)}</div>
+          <div class="meta"><span class="tag ${m.tipo}">${m.tipo === 'ingreso' ? 'Ingreso' : 'Gasto'}</span><span class="fecha">${fmtFecha(m.fecha)}</span></div>
+        </div>
+        <div class="valor ${m.tipo === 'ingreso' ? 'pos' : 'neg'}">${m.tipo === 'ingreso' ? '+' : '-'}${fmt(m.monto)}</div>
+        <button class="borrar" aria-label="Eliminar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
+        </button>
+      </div>`).join('');
+  }
+
+  /* ---------- Navegación ---------- */
+  $('abrirMov').onclick = () => { pintarLista(); $('inicio').classList.add('off'); $('movimientos').classList.add('on'); };
+  $('cerrarMov').onclick = () => { $('inicio').classList.remove('off'); $('movimientos').classList.remove('on'); };
+
+  /* ---------- Hojas inferiores ---------- */
+  let hojaAbierta = null;
+  function abrirHoja(el) { hojaAbierta = el; $('velo').classList.add('on'); el.classList.add('on'); }
+  function cerrarHoja() {
+    if (!hojaAbierta) return;
+    document.activeElement && document.activeElement.blur();
+    hojaAbierta.classList.remove('on'); $('velo').classList.remove('on'); hojaAbierta = null;
+  }
+  $('velo').onclick = cerrarHoja;
+
+  /* ---------- Formulario Ingreso / Gasto ---------- */
+  let tipoActual = 'ingreso';
+  document.querySelectorAll('.pill').forEach(b => b.onclick = () => {
+    tipoActual = b.dataset.tipo;
+    $('tituloForm').textContent = tipoActual === 'ingreso' ? 'Nuevo ingreso' : 'Nuevo gasto';
+    $('guardarForm').className = 'btn ' + (tipoActual === 'ingreso' ? 'verde' : 'rojo');
+    $('inNombre').value = ''; $('inMonto').value = ''; $('errForm').textContent = '';
+    abrirHoja($('hojaForm'));
+    setTimeout(() => $('inNombre').focus(), 320);
+  });
+  $('cancelarForm').onclick = cerrarHoja;
+  $('inNombre').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('inMonto').focus(); } });
+
+  $('hojaForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const nombre = $('inNombre').value.trim();
+    const monto = parseFloat($('inMonto').value.replace(/[^0-9.,]/g, '').replace(',', '.'));
+    if (!nombre) { $('errForm').textContent = 'Escribe un nombre.'; return; }
+    if (!(monto > 0)) { $('errForm').textContent = 'Escribe un monto mayor a 0.'; return; }
+    if (monto > 999999999999) { $('errForm').textContent = 'El monto es demasiado grande.'; return; }
+    movs.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tipo: tipoActual, nombre, monto: Math.round(monto * 100) / 100, fecha: Date.now() });
+    guardar(movs);
+    cerrarHoja();
+    pintarInicio();
+  });
+
+  /* ---------- Eliminar con doble verificación ---------- */
+  let idBorrar = null, paso = 1;
+  function pasoBorrar(n) {
+    paso = n;
+    $('tituloBorrar').textContent = n === 1 ? '¿Eliminar movimiento?' : '¿Estás seguro?';
+    $('avisoBorrar').hidden = n === 1;
+    $('confirmarBorrar').textContent = n === 1 ? 'Eliminar' : 'Sí, eliminar';
+  }
+  $('lista').addEventListener('click', e => {
+    const it = e.target.closest('.item'); if (!it) return;
+    const m = movs.find(x => x.id === it.dataset.id); if (!m) return;
+    idBorrar = m.id;
+    $('detBorrar').textContent = `${m.tipo === 'ingreso' ? 'Ingreso' : 'Gasto'} · ${m.nombre} · ${fmt(m.monto)}`;
+    pasoBorrar(1);
+    abrirHoja($('hojaBorrar'));
+  });
+  $('cancelarBorrar').onclick = cerrarHoja;
+  $('confirmarBorrar').onclick = () => {
+    if (paso === 1) { pasoBorrar(2); return; }        // 1ª confirmación → pide la 2ª
+    movs = movs.filter(m => m.id !== idBorrar); guardar(movs);  // 2ª confirmación → borra
+    cerrarHoja(); pintarLista(); pintarInicio();
+    toast('Movimiento eliminado');
+  };
+
+  function toast(msg) {
+    const t = $('toast'); t.textContent = msg; t.classList.add('on');
+    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), 2200);
+  }
+
+  /* ---------- Respaldo: exportar / importar ---------- */
+  const KEY_RESP = 'wyt_ultimo_respaldo';
+  function pintarUltimo() {
+    let ts = 0; try { ts = +localStorage.getItem(KEY_RESP) || 0; } catch (e) {}
+    if (!ts) { $('ultimoResp').textContent = 'Aún no has hecho ningún respaldo.'; return; }
+    const dias = Math.floor((Date.now() - ts) / 86400000);
+    $('ultimoResp').textContent = 'Último respaldo: ' + (dias === 0 ? 'hoy' : dias === 1 ? 'ayer' : `hace ${dias} días`);
+  }
+  $('abrirResp').onclick = () => { pintarUltimo(); abrirHoja($('hojaResp')); };
+  $('cerrarResp').onclick = cerrarHoja;
+
+  $('btnExportar').onclick = async () => {
+    if (!movs.length) { toast('No hay movimientos para respaldar'); return; }
+    const hoy = new Date();
+    const f = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+    const nombre = `Cuadre-respaldo-${f}.json`;
+    const datos = JSON.stringify({ app: 'Cuadre', version: 1, exportado: Date.now(), movimientos: movs }, null, 1);
+    const marcar = () => { try { localStorage.setItem(KEY_RESP, String(Date.now())); } catch (e) {} pintarUltimo(); };
+    try {
+      const file = new File([datos], nombre, { type: 'application/json' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Respaldo Cuadre' });
+        marcar(); toast('Respaldo exportado'); return;
+      }
+    } catch (e) {
+      if (e && e.name === 'AbortError') return; // el usuario cerró el menú
+    }
+    try { // alternativa: descarga directa
+      const url = URL.createObjectURL(new Blob([datos], { type: 'application/json' }));
+      const a = document.createElement('a'); a.href = url; a.download = nombre;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      marcar(); toast('Respaldo exportado');
+    } catch (e) { toast('No se pudo exportar'); }
+  };
+
+  let pendientes = null;
+  $('btnImportar').onclick = () => { $('inArchivo').value = ''; $('inArchivo').click(); };
+  $('inArchivo').addEventListener('change', async () => {
+    const file = $('inArchivo').files[0]; if (!file) return;
+    try {
+      const d = JSON.parse(await file.text());
+      const lista = Array.isArray(d) ? d : d.movimientos;
+      if (!Array.isArray(lista)) throw 0;
+      const validos = lista.filter(m => m && (m.tipo === 'ingreso' || m.tipo === 'gasto') && typeof m.nombre === 'string' && +m.monto > 0 && m.id)
+        .map(m => ({ id: String(m.id), tipo: m.tipo, nombre: m.nombre.slice(0, 40), monto: Math.round(+m.monto * 100) / 100, fecha: +m.fecha || Date.now() }));
+      if (!validos.length) throw 0;
+      const ids = new Set(movs.map(m => m.id));
+      pendientes = validos.filter(m => !ids.has(m.id));
+      if (!pendientes.length) { cerrarHoja(); toast('Ya tienes todos esos movimientos'); return; }
+      $('detImport').textContent = `El archivo tiene ${validos.length} movimiento${validos.length > 1 ? 's' : ''}. ${pendientes.length === 1 ? 'Se añadirá 1 que no tienes.' : `Se añadirán ${pendientes.length} que no tienes.`} Tus movimientos actuales se mantienen.`;
+      cerrarHoja();
+      setTimeout(() => abrirHoja($('hojaImport')), 280);
+    } catch (e) {
+      cerrarHoja(); toast('Ese archivo no es un respaldo válido');
+    }
+  });
+  $('cancelarImport').onclick = () => { pendientes = null; cerrarHoja(); };
+  $('confirmarImport').onclick = () => {
+    if (!pendientes) return;
+    movs = movs.concat(pendientes); guardar(movs);
+    const n = pendientes.length; pendientes = null;
+    cerrarHoja(); pintarLista(); pintarInicio();
+    toast(`Se añadieron ${n} movimiento${n > 1 ? 's' : ''}`);
+  };
+
+  /* ---------- Arranque ---------- */
+  window.addEventListener('resize', ajustarTextos);
+  window.addEventListener('pageshow', pintarInicio);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) pintarInicio(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustarTextos);
+  pintarInicio();
+  requestAnimationFrame(pintarInicio);
+
+  /* ---------- Pedir al iPhone que no borre los datos ---------- */
+  try { navigator.storage && navigator.storage.persist && navigator.storage.persist().catch(() => {}); } catch (e) {}
+
+  /* ---------- Copia guardada + aviso de nueva versión ---------- */
+  try {
+    if ('serviceWorker' in navigator) {
+      let recargando = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (recargando) return; recargando = true; location.reload();
+      });
+      navigator.serviceWorker.register('sw.js').then(reg => {
+        const mostrar = w => {
+          if (!w || !navigator.serviceWorker.controller) return; // primera instalación: nada que avisar
+          $('avisoUpdate').classList.add('on');
+          $('btnUpdate').onclick = () => { $('btnUpdate').textContent = '…'; w.postMessage('ACTIVAR'); };
+        };
+        if (reg.waiting) mostrar(reg.waiting);
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          nw && nw.addEventListener('statechange', () => { if (nw.state === 'installed') mostrar(nw); });
+        });
+        // Revisar si hay versión nueva cada vez que se vuelve a la app
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
+      }).catch(() => {});
+    }
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
