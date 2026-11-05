@@ -133,6 +133,32 @@
   .campo input:disabled, .select-wrap select:disabled { opacity: .5; }
   .nota-bloqueo { font-size: 12.5px; color: var(--muted); margin: -2px 0 10px 4px; }
 
+  /* Resumen de deudas en el inicio */
+  .res-deudas {
+    display: inline-flex; gap: 6px; align-items: center; margin-top: 6px; padding: 5px 12px; border-radius: 999px;
+    background: var(--surface); border: 0; color: var(--muted); font-size: 13px; font-family: inherit; font-weight: 500;
+  }
+  .res-deudas b { font-weight: 700; font-variant-numeric: tabular-nums; }
+  /* Abonos */
+  .abonos-lista { margin: -6px 0 16px; background: var(--bg); border-radius: 14px; padding: 6px 14px; }
+  .abonos-lista .t { font-size: 12px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); padding: 6px 0 2px; }
+  .abono { display: flex; justify-content: space-between; font-size: 14px; padding: 7px 0; border-top: 1px solid var(--surface-2); }
+  .abono:first-of-type { border-top: 0; }
+  .abono span { color: var(--muted); }
+  .abono b { font-variant-numeric: tabular-nums; }
+  /* Metas logradas */
+  .logradas-t { display: flex; justify-content: space-between; align-items: center; margin: 22px 4px 10px; font-size: 13px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: #d9b64a; }
+  .meta-lograda {
+    display: flex; align-items: center; gap: 12px; background: linear-gradient(135deg, rgba(217,182,74,.14), var(--surface) 70%);
+    border-radius: 16px; padding: 13px 16px; margin-bottom: 10px;
+  }
+  .meta-lograda .ico { font-size: 22px; }
+  .meta-lograda .info { flex: 1; min-width: 0; }
+  .meta-lograda .nombre { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meta-lograda small { display: block; font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .meta-lograda b { font-variant-numeric: tabular-nums; font-size: 15px; }
+  .nota-meta { font-size: 13px; color: var(--muted); text-align: center; margin: -4px 0 12px; }
+
   /* ---------- Metas ---------- */
   .disp {
     background: linear-gradient(135deg, rgba(95,191,106,.18), rgba(95,191,106,.05));
@@ -474,6 +500,7 @@
     <div class="balance">
       <div class="label" id="lblBalance">Ganancia</div>
       <div class="monto-wrap"><div class="monto pos" id="montoBalance">$0</div></div>
+      <button class="res-deudas" id="resDeudas" hidden></button>
     </div>
 
     <div class="barras">
@@ -751,8 +778,21 @@
     <div class="acciones-deuda" id="detDeudaPaso1">
       <button type="button" class="btn full" id="btnSaldar"></button>
       <div class="fila">
+        <button type="button" class="btn sec" id="btnAbono">Registrar abono</button>
         <button type="button" class="btn sec borrar-deuda" id="btnBorrarDeuda">Eliminar</button>
-        <button type="button" class="btn sec" id="btnCerrarDeuda">Cerrar</button>
+      </div>
+      <button type="button" class="btn sec full" id="btnCerrarDeuda">Cerrar</button>
+    </div>
+    <div id="detDeudaAbono" hidden>
+      <label class="campo monto">
+        <span id="lblAbono">¿Cuánto abonaron?</span>
+        <input id="dAbono" type="text" inputmode="decimal" placeholder="0.00" enterkeyhint="done">
+      </label>
+      <small class="pista-nombre" id="pistaAbono"></small>
+      <div class="error" id="errAbono" style="margin-top:6px"></div>
+      <div class="botones">
+        <button type="button" class="btn sec" id="btnCancelarAbono">Cancelar</button>
+        <button type="button" class="btn verde" id="btnContinuarAbono">Continuar</button>
       </div>
     </div>
     <div class="botones" id="detDeudaPaso2" hidden>
@@ -823,6 +863,8 @@
     <div class="fichas" id="detMetaFichas"></div>
     <div class="aviso" id="detMetaAviso" hidden>¿Eliminar esta meta? No se puede deshacer. Tus movimientos no cambian.</div>
     <div class="acciones-deuda" id="detMetaPaso1">
+      <button type="button" class="btn verde full" id="btnComprar">🛒 Ya lo compré</button>
+      <div class="nota-meta" id="notaComprar"></div>
       <div class="fila">
         <button type="button" class="btn sec borrar-deuda" id="btnBorrarMeta">Eliminar</button>
         <button type="button" class="btn sec" id="btnEditarMeta">Editar</button>
@@ -941,6 +983,16 @@
     const mb = $('montoBalance');
     mb.textContent = fmt(dif);
     mb.className = 'monto ' + (dif < 0 ? 'neg' : 'pos');
+
+    // Resumen de deudas activas
+    const act = deudas.filter(d => d.estado !== 'cerrada');
+    const debo = r2(act.filter(d => d.tipo === 'debo').reduce((a, d) => a + pendienteDe(d), 0));
+    const meDeben = r2(act.filter(d => d.tipo === 'medeben').reduce((a, d) => a + pendienteDe(d), 0));
+    const partes = [];
+    if (debo > 0) partes.push(`Debes <b class="neg">${fmt(debo)}</b>`);
+    if (meDeben > 0) partes.push(`Te deben <b class="pos">${fmt(meDeben)}</b>`);
+    $('resDeudas').hidden = !partes.length;
+    $('resDeudas').innerHTML = partes.join(' · ');
 
     $('totIng').textContent = fmt(ing);
     $('totGas').textContent = fmt(gas);
@@ -1148,8 +1200,9 @@
     $('inMonto').value = m ? String(m.monto) : '';
     $('inFecha').value = isoDia(m ? m.fecha : Date.now());
     $('inFecha').max = isoDia(Date.now());
-    const bloqueado = !!(m && m.deudaId);
+    const bloqueado = !!(m && (m.deudaId || m.metaId));
     $('inCategoria').disabled = bloqueado; $('inMonto').disabled = bloqueado; $('notaBloqueo').hidden = !bloqueado;
+    $('notaBloqueo').textContent = `Este movimiento viene de ${m && m.metaId ? 'una meta' : 'una deuda'}: solo puedes cambiar el nombre y la fecha.`;
     $('errForm').textContent = '';
     pintarPista();
     abrirHoja($('hojaForm'));
@@ -1179,7 +1232,7 @@
     else { const [y, mo, d] = dia.split('-').map(Number); fecha = new Date(y, mo - 1, d, 12, 0, 0).getTime(); }
     if (original) {
       original.categoria = categoria; original.nombre = nombre; original.fecha = fecha;
-      if (!original.deudaId) original.monto = Math.round(monto * 100) / 100;
+      if (!original.deudaId && !original.metaId) original.monto = Math.round(monto * 100) / 100;
       toast('Movimiento actualizado');
     } else {
       movs.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tipo: tipoActual, categoria, nombre, monto: Math.round(monto * 100) / 100, fecha });
@@ -1261,6 +1314,9 @@
   })();
 
   const nuevoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const abonadoDe = d => (d.abonos || []).reduce((a, x) => a + x.monto, 0);
+  function pendienteDe(d) { return Math.round((d.monto - abonadoDe(d)) * 100) / 100; }
+  $('resDeudas').onclick = () => { vistaDeudas = 'activas'; pintarDeudas(); abrirVista('deudas'); };
   const icoPersona = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>';
   const icoChev = '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
   const fmtDia = ts => new Date(ts).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' }).replace('.', '');
@@ -1285,7 +1341,7 @@
       const cls = tipo === 'debo' ? 'neg' : 'pos';
       let cab;
       if (activas) {
-        const total = lista.reduce((a, d) => a + d.monto, 0);
+        const total = r2(lista.reduce((a, d) => a + pendienteDe(d), 0));
         cab = lista.length ? `<b class="${cls}">${fmt(total)}</b>` : '';
       } else {
         cab = `<span class="cuenta">${lista.length} ${lista.length === 1 ? 'deuda' : 'deudas'}</span>`;
@@ -1296,6 +1352,7 @@
       return `<div class="seccion"><span>${titulo}</span>${cab}</div>` +
         (lista.length ? lista.map(d => {
           let sub = esc(d.persona);
+          if (activas && d.abonos && d.abonos.length) sub += ` <span class="estado">· abonado ${fmt(r2(abonadoDe(d)))} de ${fmt(d.monto)}</span>`;
           if (!activas) {
             sub += ` <span class="estado">· pagada ${fmtDia(d.fechaCierre || d.fecha)}</span>`;
             if (d.tipo === 'debo' && d.gastado != null && d.gastado < d.monto) sub += ` <span class="estado">· gastaste ${fmt(d.gastado)}</span>`;
@@ -1306,7 +1363,7 @@
               <div class="nombre">${esc(d.nombre)}</div>
               <div class="persona">${icoPersona}<span>${sub}</span></div>
             </div>
-            <div class="valor ${cls}">${fmt(d.monto)}</div>
+            <div class="valor ${cls}">${fmt(activas ? pendienteDe(d) : d.monto)}</div>
             ${icoChev}
           </div>`;
         }).join('') : `<div class="vacio-sec">${vacio}</div>`);
@@ -1355,9 +1412,10 @@
 
   /* ----- Detalle de una deuda ----- */
   let deudaSel = null, accion = null, gastado = null;
-  function detallePaso(n) {             // 1: opciones · 'g': cuánto gastaste · 2: confirmación
+  function detallePaso(n) {             // 1: opciones · 'g': cuánto gastaste · 'a': abono · 2: confirmación
     $('detDeudaPaso1').hidden = n !== 1;
     $('detDeudaGasto').hidden = n !== 'g';
+    $('detDeudaAbono').hidden = n !== 'a';
     $('detDeudaPaso2').hidden = n !== 2;
     $('detDeudaAviso').hidden = n !== 2;
   }
@@ -1372,6 +1430,8 @@
       <div class="ficha"><span>${debo ? 'Le debo a' : 'Me debe'}</span><b>${esc(d.persona)}</b></div>
       <div class="ficha"><span>Monto</span><b>${fmt(d.monto)}</b></div>
       <div class="ficha"><span>Desde</span><b>${fmtFecha(d.fecha)}</b></div>`;
+    const abonos = d.abonos || [];
+    if (abonos.length && !cerrada) fichas += `<div class="ficha"><span>Pendiente</span><b class="${debo ? 'neg' : 'pos'}">${fmt(pendienteDe(d))}</b></div>`;
     if (cerrada) {
       fichas += `<div class="ficha"><span>${debo ? 'Pagada' : 'Me pagaron'}</span><b>${fmtFecha(d.fechaCierre || d.fecha)}</b></div>`;
       if (debo && d.gastado != null) {
@@ -1379,8 +1439,10 @@
         if (d.gastado < d.monto) fichas += `<div class="ficha"><span>Devuelto sin usar</span><b>${fmt(r2(d.monto - d.gastado))}</b></div>`;
       }
     }
-    $('detDeudaFichas').innerHTML = fichas;
+    $('detDeudaFichas').innerHTML = fichas + (abonos.length ? `<div class="abonos-lista"><div class="t">Abonos</div>` +
+      abonos.map(x => `<div class="abono"><span>${fmtFecha(x.fecha)}</span><b>${fmt(x.monto)}</b></div>`).join('') + '</div>' : '');
     $('btnSaldar').hidden = cerrada;
+    $('btnAbono').hidden = cerrada;
     $('btnSaldar').textContent = debo ? '✓ Ya pagué' : '✓ Ya me pagaron';
     $('btnSaldar').className = 'btn full ' + (debo ? 'rojo' : 'verde');
     $('btnBorrarDeuda').textContent = cerrada ? 'Quitar del historial' : 'Eliminar';
@@ -1397,12 +1459,14 @@
     $('detDeudaAviso').className = 'aviso ok';
     if (debo) {
       const devuelto = r2(d.monto - gastado);
-      $('detDeudaAviso').textContent = `¿Confirmas que ya le pagaste ${fmt(d.monto)} a ${d.persona}? ` +
+      const pend = pendienteDe(d);
+      $('detDeudaAviso').textContent = `¿Confirmas que ya le pagaste ${pend < d.monto ? 'lo pendiente (' + fmt(pend) + ')' : fmt(d.monto)} a ${d.persona}? ` +
         (gastado > 0 ? `Se registrará un gasto de ${fmt(gastado)} en Movimientos` : 'No se registrará ningún gasto') +
         (devuelto > 0 && gastado > 0 ? ` (los otros ${fmt(devuelto)} los devolviste sin usar).` : '.') +
         ' La deuda pasará a Cerradas.';
     } else {
-      $('detDeudaAviso').textContent = `¿Confirmas que ${d.persona} ya te pagó ${fmt(d.monto)}? Se registrará un ingreso de ${fmt(d.monto)} en Movimientos y la deuda pasará a Cerradas.`;
+      const pend = pendienteDe(d);
+      $('detDeudaAviso').textContent = `¿Confirmas que ${d.persona} ya te pagó ${pend < d.monto ? 'lo pendiente' : 'todo'} (${fmt(pend)})? Se registrará un ingreso de ${fmt(pend)} en Movimientos y la deuda pasará a Cerradas.`;
     }
     $('btnConfirmarPaso2').textContent = debo ? 'Sí, ya pagué' : 'Sí, ya me pagaron';
     $('btnConfirmarPaso2').className = 'btn ' + (debo ? 'rojo' : 'verde');
@@ -1433,6 +1497,35 @@
   };
   $('dGastado').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('btnContinuarGasto').click(); } });
 
+  // ----- Abonos -----
+  let abonoMonto = 0;
+  $('btnAbono').onclick = () => {
+    const d = deudaSel; if (!d) return;
+    const medeben = d.tipo === 'medeben';
+    $('lblAbono').textContent = medeben ? `¿Cuánto te abonó ${d.persona}?` : `¿Cuánto le abonaste a ${d.persona}?`;
+    $('pistaAbono').textContent = `Pendiente: ${fmt(pendienteDe(d))}.` + (medeben ? ' El abono se registrará como ingreso.' : ' El gasto se registra al cerrar la deuda.');
+    $('dAbono').value = ''; $('errAbono').textContent = '';
+    detallePaso('a');
+  };
+  $('btnCancelarAbono').onclick = () => detallePaso(1);
+  $('dAbono').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('btnContinuarAbono').click(); } });
+  $('btnContinuarAbono').onclick = () => {
+    const d = deudaSel; if (!d) return;
+    const a = parseMonto($('dAbono').value), pend = pendienteDe(d);
+    if (!(a > 0)) { $('errAbono').textContent = 'Escribe un monto mayor a 0.'; return; }
+    if (a >= pend) { $('errAbono').textContent = `Eso cubre todo lo pendiente: usa «${d.tipo === 'debo' ? 'Ya pagué' : 'Ya me pagaron'}».`; return; }
+    abonoMonto = r2(a); accion = 'abono';
+    document.activeElement && document.activeElement.blur();
+    const medeben = d.tipo === 'medeben', queda = r2(pend - abonoMonto);
+    $('detDeudaAviso').className = 'aviso ok';
+    $('detDeudaAviso').textContent = medeben
+      ? `¿Confirmas que ${d.persona} te abonó ${fmt(abonoMonto)}? Se registrará un ingreso de ${fmt(abonoMonto)} y quedarán ${fmt(queda)} pendientes.`
+      : `¿Confirmas que le abonaste ${fmt(abonoMonto)} a ${d.persona}? Quedarán ${fmt(queda)} pendientes.`;
+    $('btnConfirmarPaso2').textContent = 'Sí, registrar abono';
+    $('btnConfirmarPaso2').className = 'btn verde';
+    detallePaso(2);
+  };
+
   $('btnBorrarDeuda').onclick = () => {
     const d = deudaSel; if (!d) return; accion = 'borrar';
     $('detDeudaAviso').className = 'aviso';
@@ -1440,9 +1533,9 @@
       $('detDeudaAviso').textContent = '¿Quitar esta deuda del historial? Tus movimientos no cambian.';
       $('btnConfirmarPaso2').textContent = 'Sí, quitar';
     } else {
-      const tieneMov = d.movId && movs.some(m => m.id === d.movId);
+      const n = movs.filter(m => m.deudaId === d.id || m.id === d.movId).length;
       $('detDeudaAviso').textContent = '¿Eliminar esta deuda? No se puede deshacer.' +
-        (tieneMov ? ` También se quitará el gasto de ${fmt(d.monto)} que se registró al crearla.` : '');
+        (n ? ` También se quitará${n > 1 ? 'n los ' + n + ' movimientos' : ' el movimiento'} que generó (gasto inicial${n > 1 ? ' y abonos' : ''}).` : '');
       $('btnConfirmarPaso2').textContent = 'Sí, eliminar';
     }
     $('btnConfirmarPaso2').className = 'btn rojo';
@@ -1457,16 +1550,26 @@
         if (gastado > 0) movs.push({ id: nuevoId(), tipo: 'gasto', categoria: 'Deuda', nombre: `${d.nombre} · ${d.persona}`, monto: gastado, fecha: Date.now(), deudaId: d.id });
         d.gastado = gastado;
       } else {
-        movs.push({ id: nuevoId(), tipo: 'ingreso', categoria: 'Deuda', nombre: `${d.nombre} · ${d.persona}`, monto: d.monto, fecha: Date.now(), deudaId: d.id });
+        const pend = pendienteDe(d);
+        if (pend > 0) movs.push({ id: nuevoId(), tipo: 'ingreso', categoria: 'Deuda', nombre: `${d.nombre} · ${d.persona}`, monto: pend, fecha: Date.now(), deudaId: d.id });
       }
       guardar(movs);
       d.estado = 'cerrada'; d.fechaCierre = Date.now();
       toast(debo ? (gastado > 0 ? `Deuda pagada · gasto ${fmt(gastado)}` : 'Deuda pagada') : 'Te pagaron · +ingreso');
+    } else if (accion === 'abono') {
+      const medeben = d.tipo === 'medeben';
+      const ab = { monto: abonoMonto, fecha: Date.now() };
+      if (medeben) {
+        const mov = { id: nuevoId(), tipo: 'ingreso', categoria: 'Deuda', nombre: `Abono · ${d.nombre} · ${d.persona}`, monto: abonoMonto, fecha: Date.now(), deudaId: d.id };
+        ab.movId = mov.id; movs.push(mov); guardar(movs);
+      }
+      d.abonos = (d.abonos || []).concat(ab);
+      toast(`Abono de ${fmt(abonoMonto)} registrado`);
     } else if (d.estado === 'cerrada') {
       deudas = deudas.filter(x => x.id !== d.id);
       toast('Quitada del historial');
     } else {
-      if (d.movId) { movs = movs.filter(m => m.id !== d.movId); guardar(movs); }
+      movs = movs.filter(m => m.deudaId !== d.id && m.id !== d.movId); guardar(movs);
       deudas = deudas.filter(x => x.id !== d.id);
       toast('Deuda eliminada');
     }
@@ -1658,6 +1761,9 @@
   }
   function guardarMetas() { memMetas = metas; try { localStorage.setItem(KEY_METAS, JSON.stringify(metas)); } catch (e) {} }
   let metas = cargarMetas();
+  const KEY_LOGRADAS = 'cuadre_metas_logradas_v1';
+  let logradas = []; try { logradas = JSON.parse(localStorage.getItem(KEY_LOGRADAS) || '[]'); if (!Array.isArray(logradas)) logradas = []; } catch (e) {}
+  function guardarLogradas() { try { localStorage.setItem(KEY_LOGRADAS, JSON.stringify(logradas)); } catch (e) {} }
 
   const ganancia = () => movs.reduce((a, m) => a + (m.tipo === 'ingreso' ? m.monto : -m.monto), 0);
   // Reparte la ganancia disponible entre las metas según el orden dado
@@ -1694,8 +1800,15 @@
       : metas.length > 1 ? 'Se llenan de arriba hacia abajo. Mantén presionada una meta y arrástrala para cambiar su prioridad.'
       : metas.length === 1 ? 'Tu ganancia va llenando la barra de tu meta.' : '';
     const cont = $('listaMetas');
+    const htmlLogradas = logradas.length ? `<div class="logradas-t"><span>🏆 Logradas</span><span>${logradas.length}</span></div>` +
+      logradas.slice().sort((a, b) => b.fechaLograda - a.fechaLograda).map(m => `
+        <div class="meta-lograda" data-lid="${m.id}">
+          <span class="ico">🏆</span>
+          <div class="info"><div class="nombre">${esc(m.nombre)}</div><small>Lograda el ${fmtDia(m.fechaLograda)}</small></div>
+          <b>${fmt(m.monto)}</b>
+        </div>`).join('') : '';
     if (!metas.length) {
-      cont.innerHTML = '<div class="vacio" style="margin-top:22%">Aún no tienes metas.<br>Toca <b>+ Nueva</b> para crear tu primera meta.</div>';
+      cont.innerHTML = '<div class="vacio" style="margin-top:' + (logradas.length ? '12%' : '22%') + '">Aún no tienes metas activas.<br>Toca <b>+ Nueva</b> para crear una.</div>' + htmlLogradas;
       return;
     }
     cont.innerHTML = metas.map(m => `
@@ -1710,7 +1823,8 @@
         <div class="mc-bottom"><span class="mc-ahorro"></span><span class="mc-falta"></span></div>
       </div>`).join('');
     const activa = activaDe(metas, rep);
-    const cards = [...cont.children];
+    const cards = [...cont.querySelectorAll('.meta-card')];
+    cont.insertAdjacentHTML('beforeend', htmlLogradas);
     const pintar = () => cards.forEach((c, i) => aplicarProgreso(c, metas[i], rep[metas[i].id], i + 1, activa));
     if (animar) {
       cards.forEach(c => { c.querySelector('.mc-fill').style.transition = 'none'; });
@@ -1812,8 +1926,25 @@
 
   /* ----- Tocar una meta: detalle ----- */
   let metaSel = null;
+  let logradaSel = null;
   lista.addEventListener('click', e => {
     if (recienArrastrado || drag) return;
+    const lg = e.target.closest('.meta-lograda');
+    if (lg) {
+      const m = logradas.find(x => x.id === lg.dataset.lid); if (!m) return;
+      logradaSel = m; metaSel = null;
+      $('detMetaTitulo').textContent = '🏆 ' + m.nombre;
+      $('detMetaFichas').innerHTML = `
+        <div class="ficha"><span>Monto</span><b>${fmt(m.monto)}</b></div>
+        <div class="ficha"><span>Creada</span><b>${fmtFecha(m.fecha)}</b></div>
+        <div class="ficha"><span>Lograda</span><b>${fmtFecha(m.fechaLograda)}</b></div>`;
+      $('btnComprar').hidden = true; $('notaComprar').hidden = true; $('btnEditarMeta').hidden = true;
+      $('btnBorrarMeta').textContent = 'Quitar del historial';
+      $('detMetaAviso').textContent = '¿Quitar esta meta del historial? Tus movimientos no cambian.';
+      $('detMetaPaso1').hidden = false; $('detMetaPaso2').hidden = true; $('detMetaAviso').hidden = true;
+      abrirHoja($('hojaMeta'));
+      return;
+    }
     const card = e.target.closest('.meta-card'); if (!card || e.target.closest('.handle')) return;
     const i = metas.findIndex(m => m.id === card.dataset.id); if (i < 0) return;
     const m = metas[i]; metaSel = m;
@@ -1826,16 +1957,51 @@
       <div class="ficha"><span>Avance</span><b class="pos">${fmt(a)} · ${pct}%</b></div>
       <div class="ficha"><span>Falta</span><b>${a >= m.monto ? '¡Nada! 🎉' : fmt(r2(m.monto - a))}</b></div>
       <div class="ficha"><span>Creada</span><b>${fmtFecha(m.fecha)}</b></div>`;
+    logradaSel = null;
+    const completa = a >= m.monto;
+    $('btnComprar').hidden = !completa; $('notaComprar').hidden = completa; $('btnEditarMeta').hidden = false;
+    $('notaComprar').textContent = 'Cuando la barra esté completa podrás marcarla como comprada.';
+    $('btnBorrarMeta').textContent = 'Eliminar';
+    $('btnConfirmarMeta2').textContent = 'Sí, eliminar'; $('btnConfirmarMeta2').className = 'btn rojo';
+    $('detMetaAviso').className = 'aviso';
+    $('detMetaAviso').textContent = '¿Eliminar esta meta? No se puede deshacer. Tus movimientos no cambian.';
+    accionMeta = 'borrar';
     $('detMetaPaso1').hidden = false; $('detMetaPaso2').hidden = true; $('detMetaAviso').hidden = true;
     abrirHoja($('hojaMeta'));
   });
   $('btnCerrarMeta').onclick = cerrarHoja;
-  $('btnBorrarMeta').onclick = () => { $('detMetaPaso1').hidden = true; $('detMetaPaso2').hidden = false; $('detMetaAviso').hidden = false; };
+  let accionMeta = 'borrar';
+  $('btnBorrarMeta').onclick = () => {
+    accionMeta = 'borrar';
+    $('detMetaAviso').className = 'aviso';
+    $('btnConfirmarMeta2').textContent = logradaSel ? 'Sí, quitar' : 'Sí, eliminar'; $('btnConfirmarMeta2').className = 'btn rojo';
+    $('detMetaPaso1').hidden = true; $('detMetaPaso2').hidden = false; $('detMetaAviso').hidden = false;
+  };
+  $('btnComprar').onclick = () => {
+    const m = metaSel; if (!m) return;
+    accionMeta = 'comprar';
+    $('detMetaAviso').className = 'aviso ok';
+    $('detMetaAviso').textContent = `¿Ya compraste «${m.nombre}»? Se registrará un gasto de ${fmt(m.monto)} (categoría Meta) y la meta pasará a Logradas 🏆. Tus otras metas se recalcularán con la ganancia que quede.`;
+    $('btnConfirmarMeta2').textContent = 'Sí, lo compré'; $('btnConfirmarMeta2').className = 'btn verde';
+    $('detMetaPaso1').hidden = true; $('detMetaPaso2').hidden = false; $('detMetaAviso').hidden = false;
+  };
   $('btnCancelarMeta2').onclick = () => { $('detMetaPaso1').hidden = false; $('detMetaPaso2').hidden = true; $('detMetaAviso').hidden = true; };
   $('btnConfirmarMeta2').onclick = () => {
+    if (logradaSel) {
+      logradas = logradas.filter(m => m.id !== logradaSel.id); guardarLogradas(); logradaSel = null;
+      cerrarHoja(); pintarMetas(false); toast('Quitada del historial'); return;
+    }
     if (!metaSel) return;
-    metas = metas.filter(m => m.id !== metaSel.id); guardarMetas(); metaSel = null;
-    cerrarHoja(); pintarMetas(false); toast('Meta eliminada');
+    const m = metaSel;
+    metas = metas.filter(x => x.id !== m.id); guardarMetas(); metaSel = null;
+    if (accionMeta === 'comprar') {
+      const mov = { id: nuevoId(), tipo: 'gasto', categoria: 'Meta', nombre: m.nombre, monto: m.monto, fecha: Date.now(), metaId: m.id };
+      movs.push(mov); guardar(movs);
+      logradas.push(Object.assign({}, m, { fechaLograda: Date.now(), movId: mov.id })); guardarLogradas();
+      cerrarHoja(); pintarMetas(false); pintarInicio(); toast('¡Meta lograda! 🏆');
+    } else {
+      cerrarHoja(); pintarMetas(false); toast('Meta eliminada');
+    }
   };
 
   /* ----- Crear / editar ----- */
@@ -1893,7 +2059,7 @@
     const hoy = new Date();
     const f = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
     const nombre = `Cuadre-respaldo-${f}.json`;
-    const datos = JSON.stringify({ app: 'Cuadre', version: 2, exportado: Date.now(), movimientos: movs, deudas, metas, categorias: catsData }, null, 1);
+    const datos = JSON.stringify({ app: 'Cuadre', version: 2, exportado: Date.now(), movimientos: movs, deudas, metas, logradas, categorias: catsData }, null, 1);
     const marcar = () => { try { localStorage.setItem(KEY_RESP, String(Date.now())); } catch (e) {} pintarUltimo(); };
     try {
       const file = new File([datos], nombre, { type: 'application/json' });
@@ -1913,7 +2079,7 @@
     } catch (e) { toast('No se pudo exportar'); }
   };
 
-  let pendientes = null, deudasPend = [], metasPend = [], catsPend = null;
+  let pendientes = null, deudasPend = [], metasPend = [], catsPend = null, logradasPend = [];
   $('btnImportar').onclick = () => { $('inArchivo').value = ''; $('inArchivo').click(); };
   $('inArchivo').addEventListener('change', async () => {
     const file = $('inArchivo').files[0]; if (!file) return;
@@ -1923,19 +2089,23 @@
       if (!Array.isArray(lista)) throw 0;
       const dVal = (Array.isArray(d.deudas) ? d.deudas : []).filter(x => x && x.id && (x.tipo === 'debo' || x.tipo === 'medeben') && typeof x.nombre === 'string' && typeof x.persona === 'string' && +x.monto > 0)
         .map(x => ({ id: String(x.id), tipo: x.tipo, nombre: x.nombre.slice(0, 40), persona: x.persona.slice(0, 30), monto: Math.round(+x.monto * 100) / 100, fecha: +x.fecha || Date.now(), movId: x.movId ? String(x.movId) : undefined,
-          estado: x.estado === 'cerrada' ? 'cerrada' : 'activa', fechaCierre: +x.fechaCierre || undefined, gastado: x.gastado != null ? r2(+x.gastado) : undefined }));
+          estado: x.estado === 'cerrada' ? 'cerrada' : 'activa', fechaCierre: +x.fechaCierre || undefined, gastado: x.gastado != null ? r2(+x.gastado) : undefined,
+          abonos: Array.isArray(x.abonos) ? x.abonos.filter(a => a && +a.monto > 0).map(a => ({ monto: r2(+a.monto), fecha: +a.fecha || Date.now(), movId: a.movId ? String(a.movId) : undefined })) : undefined }));
       const dIds = new Set(deudas.map(x => x.id));
       deudasPend = dVal.filter(x => !dIds.has(x.id));
       catsPend = d.categorias && typeof d.categorias === 'object' ? d.categorias : null;
       const mIds = new Set(metas.map(x => x.id));
       metasPend = (Array.isArray(d.metas) ? d.metas : []).filter(x => x && x.id && typeof x.nombre === 'string' && +x.monto > 0 && !mIds.has(String(x.id)))
         .map(x => ({ id: String(x.id), nombre: x.nombre.slice(0, 30), monto: r2(+x.monto), fecha: +x.fecha || Date.now() }));
+      const lIds = new Set(logradas.map(x => x.id));
+      logradasPend = (Array.isArray(d.logradas) ? d.logradas : []).filter(x => x && x.id && typeof x.nombre === 'string' && +x.monto > 0 && !lIds.has(String(x.id)))
+        .map(x => ({ id: String(x.id), nombre: x.nombre.slice(0, 30), monto: r2(+x.monto), fecha: +x.fecha || Date.now(), fechaLograda: +x.fechaLograda || Date.now(), movId: x.movId ? String(x.movId) : undefined }));
       const validos = lista.filter(m => m && (m.tipo === 'ingreso' || m.tipo === 'gasto') && typeof m.nombre === 'string' && +m.monto > 0 && m.id)
-        .map(m => ({ id: String(m.id), tipo: m.tipo, categoria: typeof m.categoria === 'string' ? m.categoria.slice(0, 30) : undefined, nombre: m.nombre.slice(0, 40), monto: Math.round(+m.monto * 100) / 100, fecha: +m.fecha || Date.now(), deudaId: m.deudaId ? String(m.deudaId) : undefined }));
+        .map(m => ({ id: String(m.id), tipo: m.tipo, categoria: typeof m.categoria === 'string' ? m.categoria.slice(0, 30) : undefined, nombre: m.nombre.slice(0, 40), monto: Math.round(+m.monto * 100) / 100, fecha: +m.fecha || Date.now(), deudaId: m.deudaId ? String(m.deudaId) : undefined, metaId: m.metaId ? String(m.metaId) : undefined }));
       if (!validos.length && !dVal.length && !metasPend.length && !(Array.isArray(d.metas) && d.metas.length)) throw 0;
       const ids = new Set(movs.map(m => m.id));
       pendientes = validos.filter(m => !ids.has(m.id));
-      if (!pendientes.length && !deudasPend.length && !metasPend.length) { cerrarHoja(); toast('Ya tienes todos esos datos'); return; }
+      if (!pendientes.length && !deudasPend.length && !metasPend.length && !logradasPend.length) { cerrarHoja(); toast('Ya tienes todos esos datos'); return; }
       const pl = (n, a, b) => `${n} ${n === 1 ? a : b}`;
       const partes = [];
       if (pendientes.length) partes.push(pl(pendientes.length, 'movimiento', 'movimientos'));
@@ -1954,6 +2124,7 @@
     movs = movs.concat(pendientes); guardar(movs);
     deudas = deudas.concat(deudasPend); guardarDeudas();
     metas = metas.concat(metasPend); guardarMetas(); metasPend = [];
+    if (logradasPend.length) { logradas = logradas.concat(logradasPend); guardarLogradas(); logradasPend = []; }
     if (catsPend) {   // agregar las categorías del respaldo que no existan
       ['ingreso', 'gasto'].forEach(t => (catsPend[t] || []).forEach(c => {
         if (c && typeof c.nombre === 'string' && !catsData[t].some(x => norm(x.nombre) === norm(c.nombre)))
