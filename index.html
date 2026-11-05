@@ -34,6 +34,7 @@
     -webkit-user-select: none; user-select: none;
   }
   button { font-family: inherit; cursor: pointer; }
+  [hidden] { display: none !important; }
 
   /* ---------- Vistas ---------- */
   .view {
@@ -42,8 +43,8 @@
     display: flex; flex-direction: column;
     transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .35s;
   }
-  #movimientos { transform: translateX(100%); }
-  #movimientos.on { transform: translateX(0); }
+  #movimientos, #deudas { transform: translateX(100%); }
+  #movimientos.on, #deudas.on { transform: translateX(0); }
   #inicio.off { transform: translateX(-25%); opacity: .4; }
 
   /* ---------- Inicio ---------- */
@@ -87,8 +88,9 @@
   .total { display: inline-block; white-space: nowrap; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .col .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
+  .links { display: flex; justify-content: center; gap: 2px; margin: 18px auto 4px; }
   .link-mov {
-    margin: 18px auto 4px; background: none; border: 0; color: var(--text);
+    margin: 0; background: none; border: 0; color: var(--text);
     font-size: 19px; font-weight: 500; padding: 12px 18px; border-radius: 14px;
     display: flex; align-items: center; gap: 8px;
   }
@@ -136,6 +138,31 @@
   }
   .toast.on { transform: translate(-50%, 0); opacity: 1; }
   .vacio { text-align: center; color: var(--muted); margin-top: 30%; font-size: 16px; line-height: 1.5; }
+
+  /* ---------- Deudas ---------- */
+  .pill.debo { background: var(--red); }
+  .pill.medeben { background: var(--green); }
+  #deudas .acciones { margin-top: 0; }
+  .lista-deudas { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; margin: 14px -22px 0; padding: 0 22px 20px; }
+  .seccion {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin: 14px 4px 10px; font-size: 13px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: var(--muted);
+  }
+  .seccion b { font-size: 17px; letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; }
+  .item.deuda .persona { display: flex; align-items: center; gap: 5px; font-size: 13px; color: var(--muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item.deuda .persona svg { flex-shrink: 0; }
+  .item.deuda .chev { color: var(--muted); flex-shrink: 0; margin-left: -4px; }
+  .vacio-sec { color: var(--muted); font-size: 14px; padding: 14px 16px; border: 1.5px dashed var(--surface-2); border-radius: 16px; text-align: center; }
+  .info-deuda { font-size: 13px; color: var(--muted); margin: 2px 0 14px 4px; line-height: 1.4; }
+  .fichas { background: var(--bg); border-radius: 16px; padding: 4px 16px; margin: -4px 0 16px; }
+  .ficha { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; font-size: 15px; }
+  .ficha + .ficha { border-top: 1px solid var(--surface-2); }
+  .ficha span { color: var(--muted); }
+  .ficha b { font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+  .aviso.ok { background: var(--surface-2); color: var(--text); }
+  .btn.borrar-deuda { background: transparent; color: var(--red); }
+  .acciones-deuda { display: grid; gap: 10px; }
+  .acciones-deuda .fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
   /* ---------- Filtros ---------- */
   .segmento {
@@ -298,9 +325,29 @@
       </div>
     </div>
 
-    <button class="link-mov" id="abrirMov">Movimientos
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-    </button>
+    <div class="links">
+      <button class="link-mov" id="abrirMov">Movimientos
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+      <button class="link-mov" id="abrirDeudas">Deudas
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- ========== DEUDAS ========== -->
+  <section class="view" id="deudas" aria-hidden="true">
+    <div class="top">
+      <button class="back" id="cerrarDeudas">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <h2>Deudas</h2>
+    </div>
+    <div class="acciones">
+      <button class="pill debo" data-dt="debo">Debo</button>
+      <button class="pill medeben" data-dt="medeben">Me deben</button>
+    </div>
+    <div class="lista-deudas" id="listaDeudas"></div>
   </section>
 
   <!-- ========== MOVIMIENTOS ========== -->
@@ -377,11 +424,11 @@
     <h3>Respaldo</h3>
     <button class="opcion" id="btnExportar">
       <span class="ico v"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></span>
-      <span><b>Exportar respaldo</b><small>Crea un archivo con todos tus movimientos. Guárdalo en Archivos, iCloud o envíatelo por WhatsApp.</small></span>
+      <span><b>Exportar respaldo</b><small>Crea un archivo con tus movimientos y deudas. Guárdalo en Archivos, iCloud o envíatelo por WhatsApp.</small></span>
     </button>
     <button class="opcion" id="btnImportar">
       <span class="ico a"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></span>
-      <span><b>Importar respaldo</b><small>Recupera tus movimientos desde un archivo de respaldo. No se duplican los que ya tienes.</small></span>
+      <span><b>Importar respaldo</b><small>Recupera tus movimientos y deudas desde un archivo. No se duplican los que ya tienes.</small></span>
     </button>
     <input type="file" id="inArchivo" accept=".json,application/json,text/plain" hidden>
     <div class="ultimo" id="ultimoResp"></div>
@@ -396,6 +443,49 @@
     <div class="botones">
       <button type="button" class="btn sec" id="cancelarImport">Cancelar</button>
       <button type="button" class="btn verde" id="confirmarImport">Importar</button>
+    </div>
+  </div>
+
+  <!-- ========== HOJA: NUEVA DEUDA ========== -->
+  <form class="hoja" id="hojaDeudaForm" autocomplete="off">
+    <div class="agarre"></div>
+    <h3 id="tituloDeuda">Debo</h3>
+    <label class="campo">
+      <span>Nombre <em class="opc req">(obligatorio)</em></span>
+      <input id="dNombre" type="text" maxlength="40" placeholder="Ej. Préstamo, Cena, Pasaje…" enterkeyhint="next">
+    </label>
+    <label class="campo">
+      <span id="lblPersona">¿A quién le debes?</span>
+      <input id="dPersona" type="text" maxlength="30" placeholder="Nombre de la persona" enterkeyhint="next">
+    </label>
+    <label class="campo monto">
+      <span>Monto ($)</span>
+      <input id="dMonto" type="text" inputmode="decimal" placeholder="0.00" enterkeyhint="done">
+    </label>
+    <div class="info-deuda" id="infoDeuda"></div>
+    <div class="error" id="errDeuda"></div>
+    <div class="botones">
+      <button type="button" class="btn sec" id="cancelarDeuda">Cancelar</button>
+      <button type="submit" class="btn rojo" id="guardarDeuda">Guardar</button>
+    </div>
+  </form>
+
+  <!-- ========== HOJA: DETALLE DE DEUDA ========== -->
+  <div class="hoja" id="hojaDeuda">
+    <div class="agarre"></div>
+    <h3 id="detDeudaTitulo"></h3>
+    <div class="fichas" id="detDeudaFichas"></div>
+    <div class="aviso" id="detDeudaAviso" hidden></div>
+    <div class="acciones-deuda" id="detDeudaPaso1">
+      <button type="button" class="btn full" id="btnSaldar"></button>
+      <div class="fila">
+        <button type="button" class="btn sec borrar-deuda" id="btnBorrarDeuda">Eliminar</button>
+        <button type="button" class="btn sec" id="btnCerrarDeuda">Cerrar</button>
+      </div>
+    </div>
+    <div class="botones" id="detDeudaPaso2" hidden>
+      <button type="button" class="btn sec" id="btnCancelarPaso2">Cancelar</button>
+      <button type="button" class="btn" id="btnConfirmarPaso2"></button>
     </div>
   </div>
 
@@ -483,7 +573,7 @@
     const wrap = $('chipsWrap'), chips = $('chips');
     if (fTipo === 'todos') { wrap.classList.remove('on'); return; }
     const delTipo = movs.filter(m => m.tipo === fTipo);
-    const cats = CATEGORIAS[fTipo];
+    const cats = CATEGORIAS[fTipo].concat('Deuda');
     const x = chips.dataset.t === fTipo ? chips.scrollLeft : 0;
     chips.className = 'chips ' + fTipo; chips.dataset.t = fTipo;
     chips.innerHTML =
@@ -548,8 +638,12 @@
   });
 
   /* ---------- Navegación ---------- */
-  $('abrirMov').onclick = () => { pintarLista(); $('inicio').classList.add('off'); $('movimientos').classList.add('on'); };
-  $('cerrarMov').onclick = () => { $('inicio').classList.remove('off'); $('movimientos').classList.remove('on'); };
+  function abrirVista(id) { $('inicio').classList.add('off'); $(id).classList.add('on'); }
+  function cerrarVista(id) { $('inicio').classList.remove('off'); $(id).classList.remove('on'); }
+  $('abrirMov').onclick = () => { pintarLista(); abrirVista('movimientos'); };
+  $('cerrarMov').onclick = () => cerrarVista('movimientos');
+  $('abrirDeudas').onclick = () => { pintarDeudas(); abrirVista('deudas'); };
+  $('cerrarDeudas').onclick = () => cerrarVista('deudas');
 
   /* ---------- Hojas inferiores ---------- */
   let hojaAbierta = null;
@@ -626,6 +720,10 @@
     idBorrar = m.id;
     $('detBorrar').textContent = `${m.tipo === 'ingreso' ? 'Ingreso' : 'Gasto'} · ${m.nombre} · ${fmt(m.monto)}`;
     pasoBorrar(1);
+    const ligada = m.deudaId && deudas.some(d => d.id === m.deudaId);
+    $('avisoBorrar').textContent = ligada
+      ? 'Este movimiento es de una deuda pendiente. La deuda seguirá en Deudas; si quieres quitar todo, elimínala desde allí.'
+      : 'Esta acción no se puede deshacer. El monto se quitará de tus totales.';
     abrirHoja($('hojaBorrar'));
   });
   $('cancelarBorrar').onclick = cerrarHoja;
@@ -634,6 +732,145 @@
     movs = movs.filter(m => m.id !== idBorrar); guardar(movs);  // 2ª confirmación → borra
     cerrarHoja(); pintarLista(); pintarInicio();
     toast('Movimiento eliminado');
+  };
+
+  /* =================== DEUDAS =================== */
+  const KEY_DEUDAS = 'cuadre_deudas_v1';
+  let memDeudas = [];
+  function cargarDeudas() {
+    try { const d = JSON.parse(localStorage.getItem(KEY_DEUDAS) || '[]'); return Array.isArray(d) ? d : []; }
+    catch (e) { return memDeudas; }
+  }
+  function guardarDeudas() {
+    memDeudas = deudas;
+    try { localStorage.setItem(KEY_DEUDAS, JSON.stringify(deudas)); } catch (e) {}
+  }
+  let deudas = cargarDeudas();
+  const nuevoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const icoPersona = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>';
+  const icoChev = '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+
+  function pintarDeudas() {
+    const cont = $('listaDeudas');
+    const sec = (tipo, titulo) => {
+      const lista = deudas.filter(d => d.tipo === tipo).sort((a, b) => b.fecha - a.fecha);
+      const total = lista.reduce((a, d) => a + d.monto, 0);
+      const cls = tipo === 'debo' ? 'neg' : 'pos';
+      return `<div class="seccion"><span>${titulo}</span>${lista.length ? `<b class="${cls}">${fmt(total)}</b>` : ''}</div>` +
+        (lista.length ? lista.map(d => `
+          <div class="item deuda" data-id="${d.id}">
+            <div class="info">
+              <div class="nombre">${esc(d.nombre)}</div>
+              <div class="persona">${icoPersona}${esc(d.persona)}</div>
+            </div>
+            <div class="valor ${cls}">${fmt(d.monto)}</div>
+            ${icoChev}
+          </div>`).join('')
+        : `<div class="vacio-sec">${tipo === 'debo' ? 'No le debes a nadie 🎉' : 'Nadie te debe por ahora'}</div>`);
+    };
+    cont.innerHTML = sec('debo', 'Debo') + sec('medeben', 'Me deben');
+  }
+
+  /* ----- Nueva deuda ----- */
+  let tipoDeuda = 'debo';
+  document.querySelectorAll('[data-dt]').forEach(b => b.onclick = () => {
+    tipoDeuda = b.dataset.dt;
+    const debo = tipoDeuda === 'debo';
+    $('tituloDeuda').textContent = debo ? 'Debo' : 'Me deben';
+    $('lblPersona').textContent = debo ? '¿A quién le debes?' : '¿Quién te debe?';
+    $('infoDeuda').textContent = debo
+      ? 'Se registrará como ingreso (Deuda) en Movimientos. Cuando pagues, se registrará como gasto.'
+      : 'Se registrará como gasto (Deuda) en Movimientos. Cuando te paguen, se registrará como ingreso.';
+    $('guardarDeuda').className = 'btn ' + (debo ? 'rojo' : 'verde');
+    $('dNombre').value = ''; $('dPersona').value = ''; $('dMonto').value = ''; $('errDeuda').textContent = '';
+    abrirHoja($('hojaDeudaForm'));
+  });
+  $('cancelarDeuda').onclick = cerrarHoja;
+  $('dNombre').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('dPersona').focus(); } });
+  $('dPersona').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('dMonto').focus(); } });
+
+  $('hojaDeudaForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const nombre = $('dNombre').value.trim();
+    const persona = $('dPersona').value.trim();
+    const monto = parseFloat($('dMonto').value.replace(/[^0-9.,]/g, '').replace(',', '.'));
+    const err = t => { $('errDeuda').textContent = t; };
+    if (!nombre) { err('Escribe un nombre para la deuda.'); $('dNombre').focus(); return; }
+    if (!persona) { err(tipoDeuda === 'debo' ? 'Escribe a quién le debes.' : 'Escribe quién te debe.'); $('dPersona').focus(); return; }
+    if (!(monto > 0)) { err('Escribe un monto mayor a 0.'); return; }
+    if (monto > 999999999999) { err('El monto es demasiado grande.'); return; }
+    const m = Math.round(monto * 100) / 100;
+    const d = { id: nuevoId(), tipo: tipoDeuda, nombre, persona, monto: m, fecha: Date.now() };
+    // Debo → recibí dinero (ingreso). Me deben → presté dinero (gasto).
+    const mov = { id: nuevoId(), tipo: tipoDeuda === 'debo' ? 'ingreso' : 'gasto', categoria: 'Deuda', nombre: `${nombre} · ${persona}`, monto: m, fecha: Date.now(), deudaId: d.id };
+    d.movId = mov.id;
+    deudas.push(d); guardarDeudas();
+    movs.push(mov); guardar(movs);
+    cerrarHoja(); pintarDeudas(); pintarInicio();
+    toast(tipoDeuda === 'debo' ? 'Deuda registrada · +ingreso' : 'Deuda registrada · +gasto');
+  });
+
+  /* ----- Detalle: saldar o eliminar (doble verificación) ----- */
+  let deudaSel = null, accion = null;
+  function detallePaso(n) {
+    $('detDeudaPaso1').hidden = n !== 1;
+    $('detDeudaPaso2').hidden = n !== 2;
+    $('detDeudaAviso').hidden = n !== 2;
+  }
+  $('listaDeudas').addEventListener('click', e => {
+    const it = e.target.closest('.item.deuda'); if (!it) return;
+    const d = deudas.find(x => x.id === it.dataset.id); if (!d) return;
+    deudaSel = d; accion = null;
+    const debo = d.tipo === 'debo';
+    $('detDeudaTitulo').textContent = d.nombre;
+    $('detDeudaFichas').innerHTML = `
+      <div class="ficha"><span>Tipo</span><b class="${debo ? 'neg' : 'pos'}">${debo ? 'Debo' : 'Me deben'}</b></div>
+      <div class="ficha"><span>${debo ? 'Le debo a' : 'Me debe'}</span><b>${esc(d.persona)}</b></div>
+      <div class="ficha"><span>Monto</span><b>${fmt(d.monto)}</b></div>
+      <div class="ficha"><span>Desde</span><b>${fmtFecha(d.fecha)}</b></div>`;
+    $('btnSaldar').textContent = debo ? '✓ Ya pagué' : '✓ Ya me pagaron';
+    $('btnSaldar').className = 'btn full ' + (debo ? 'rojo' : 'verde');
+    detallePaso(1);
+    abrirHoja($('hojaDeuda'));
+  });
+  $('btnCerrarDeuda').onclick = cerrarHoja;
+  $('btnCancelarPaso2').onclick = () => detallePaso(1);
+
+  $('btnSaldar').onclick = () => {
+    const d = deudaSel; if (!d) return; accion = 'saldar';
+    $('detDeudaAviso').className = 'aviso ok';
+    const debo = d.tipo === 'debo';
+    $('detDeudaAviso').textContent = debo
+      ? `¿Confirmas que ya le pagaste ${fmt(d.monto)} a ${d.persona}? Se registrará un gasto de ${fmt(d.monto)} en Movimientos y la deuda se cerrará.`
+      : `¿Confirmas que ${d.persona} ya te pagó ${fmt(d.monto)}? Se registrará un ingreso de ${fmt(d.monto)} en Movimientos y la deuda se cerrará.`;
+    $('btnConfirmarPaso2').textContent = debo ? 'Sí, ya pagué' : 'Sí, ya me pagaron';
+    $('btnConfirmarPaso2').className = 'btn ' + (debo ? 'rojo' : 'verde');
+    detallePaso(2);
+  };
+  $('btnBorrarDeuda').onclick = () => {
+    const d = deudaSel; if (!d) return; accion = 'borrar';
+    $('detDeudaAviso').className = 'aviso';
+    const tieneMov = movs.some(m => m.id === d.movId);
+    $('detDeudaAviso').textContent = `¿Eliminar esta deuda? No se puede deshacer.` +
+      (tieneMov ? ` También se quitará el ${d.tipo === 'debo' ? 'ingreso' : 'gasto'} de ${fmt(d.monto)} que se registró al crearla.` : '');
+    $('btnConfirmarPaso2').textContent = 'Sí, eliminar';
+    $('btnConfirmarPaso2').className = 'btn rojo';
+    detallePaso(2);
+  };
+  $('btnConfirmarPaso2').onclick = () => {
+    const d = deudaSel; if (!d || !accion) return;
+    if (accion === 'saldar') {
+      const debo = d.tipo === 'debo';
+      movs.push({ id: nuevoId(), tipo: debo ? 'gasto' : 'ingreso', categoria: 'Deuda', nombre: `${d.nombre} · ${d.persona}`, monto: d.monto, fecha: Date.now(), deudaId: d.id });
+      guardar(movs);
+      toast(debo ? 'Deuda pagada · +gasto' : 'Te pagaron · +ingreso');
+    } else {
+      movs = movs.filter(m => m.id !== d.movId); guardar(movs);
+      toast('Deuda eliminada');
+    }
+    deudas = deudas.filter(x => x.id !== d.id); guardarDeudas();
+    deudaSel = null; accion = null;
+    cerrarHoja(); pintarDeudas(); pintarInicio();
   };
 
   function toast(msg) {
@@ -653,11 +890,11 @@
   $('cerrarResp').onclick = cerrarHoja;
 
   $('btnExportar').onclick = async () => {
-    if (!movs.length) { toast('No hay movimientos para respaldar'); return; }
+    if (!movs.length && !deudas.length) { toast('No hay datos para respaldar'); return; }
     const hoy = new Date();
     const f = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
     const nombre = `Cuadre-respaldo-${f}.json`;
-    const datos = JSON.stringify({ app: 'Cuadre', version: 1, exportado: Date.now(), movimientos: movs }, null, 1);
+    const datos = JSON.stringify({ app: 'Cuadre', version: 2, exportado: Date.now(), movimientos: movs, deudas }, null, 1);
     const marcar = () => { try { localStorage.setItem(KEY_RESP, String(Date.now())); } catch (e) {} pintarUltimo(); };
     try {
       const file = new File([datos], nombre, { type: 'application/json' });
@@ -677,21 +914,29 @@
     } catch (e) { toast('No se pudo exportar'); }
   };
 
-  let pendientes = null;
+  let pendientes = null, deudasPend = [];
   $('btnImportar').onclick = () => { $('inArchivo').value = ''; $('inArchivo').click(); };
   $('inArchivo').addEventListener('change', async () => {
     const file = $('inArchivo').files[0]; if (!file) return;
     try {
       const d = JSON.parse(await file.text());
-      const lista = Array.isArray(d) ? d : d.movimientos;
+      const lista = Array.isArray(d) ? d : (d.movimientos || []);
       if (!Array.isArray(lista)) throw 0;
+      const dVal = (Array.isArray(d.deudas) ? d.deudas : []).filter(x => x && x.id && (x.tipo === 'debo' || x.tipo === 'medeben') && typeof x.nombre === 'string' && typeof x.persona === 'string' && +x.monto > 0)
+        .map(x => ({ id: String(x.id), tipo: x.tipo, nombre: x.nombre.slice(0, 40), persona: x.persona.slice(0, 30), monto: Math.round(+x.monto * 100) / 100, fecha: +x.fecha || Date.now(), movId: x.movId ? String(x.movId) : undefined }));
+      const dIds = new Set(deudas.map(x => x.id));
+      deudasPend = dVal.filter(x => !dIds.has(x.id));
       const validos = lista.filter(m => m && (m.tipo === 'ingreso' || m.tipo === 'gasto') && typeof m.nombre === 'string' && +m.monto > 0 && m.id)
-        .map(m => ({ id: String(m.id), tipo: m.tipo, categoria: typeof m.categoria === 'string' ? m.categoria.slice(0, 30) : undefined, nombre: m.nombre.slice(0, 40), monto: Math.round(+m.monto * 100) / 100, fecha: +m.fecha || Date.now() }));
-      if (!validos.length) throw 0;
+        .map(m => ({ id: String(m.id), tipo: m.tipo, categoria: typeof m.categoria === 'string' ? m.categoria.slice(0, 30) : undefined, nombre: m.nombre.slice(0, 40), monto: Math.round(+m.monto * 100) / 100, fecha: +m.fecha || Date.now(), deudaId: m.deudaId ? String(m.deudaId) : undefined }));
+      if (!validos.length && !dVal.length) throw 0;
       const ids = new Set(movs.map(m => m.id));
       pendientes = validos.filter(m => !ids.has(m.id));
-      if (!pendientes.length) { cerrarHoja(); toast('Ya tienes todos esos movimientos'); return; }
-      $('detImport').textContent = `El archivo tiene ${validos.length} movimiento${validos.length > 1 ? 's' : ''}. ${pendientes.length === 1 ? 'Se añadirá 1 que no tienes.' : `Se añadirán ${pendientes.length} que no tienes.`} Tus movimientos actuales se mantienen.`;
+      if (!pendientes.length && !deudasPend.length) { cerrarHoja(); toast('Ya tienes todos esos datos'); return; }
+      const pl = (n, a, b) => `${n} ${n === 1 ? a : b}`;
+      const partes = [];
+      if (pendientes.length) partes.push(pl(pendientes.length, 'movimiento', 'movimientos'));
+      if (deudasPend.length) partes.push(pl(deudasPend.length, 'deuda', 'deudas'));
+      $('detImport').textContent = `Se añadirán ${partes.join(' y ')} que no tienes. Lo que ya tienes se mantiene.`;
       cerrarHoja();
       setTimeout(() => abrirHoja($('hojaImport')), 280);
     } catch (e) {
@@ -702,9 +947,10 @@
   $('confirmarImport').onclick = () => {
     if (!pendientes) return;
     movs = movs.concat(pendientes); guardar(movs);
-    const n = pendientes.length; pendientes = null;
-    cerrarHoja(); pintarLista(); pintarInicio();
-    toast(`Se añadieron ${n} movimiento${n > 1 ? 's' : ''}`);
+    deudas = deudas.concat(deudasPend); guardarDeudas();
+    pendientes = null; deudasPend = [];
+    cerrarHoja(); pintarLista(); pintarDeudas(); pintarInicio();
+    toast('Respaldo importado');
   };
 
   /* ---------- Arranque ---------- */
