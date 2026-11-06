@@ -705,8 +705,8 @@
       <button data-t="cerradas">Cerradas</button>
     </div>
     <div class="acciones" id="accDeudas">
-      <button class="pill debo" data-dt="debo">Debo</button>
       <button class="pill medeben" data-dt="medeben">Me deben</button>
+      <button class="pill debo" data-dt="debo">Debo</button>
     </div>
     <div class="lista-deudas" id="listaDeudas"></div>
   </section>
@@ -1222,7 +1222,7 @@
     chips.innerHTML =
       `<button class="chip ${fCat === null ? 'on' : ''}" data-c="">Todas <span class="n">${delTipo.length}</span></button>` +
       cats.map(c => ({ c, n: delTipo.filter(m => m.categoria === c).length }))
-        .sort((a, b) => b.n - a.n || a.c.localeCompare(b.c, 'es', { sensitivity: 'base' }))
+        .sort((a, b) => (a.c === 'Otros') - (b.c === 'Otros') || b.n - a.n || a.c.localeCompare(b.c, 'es', { sensitivity: 'base' }))
         .map(({ c, n }) => `<button class="chip ${fCat === c ? 'on' : ''} ${n ? '' : 'cero'}" data-c="${esc(c)}">${esc(c)} <span class="n">${n}</span></button>`).join('');
     chips.scrollLeft = x;
     wrap.classList.add('on');
@@ -1344,9 +1344,11 @@
   $('velo').onclick = cerrarHoja;
 
   /* ---------- Formulario Ingreso / Gasto ---------- */
+  // «Otros» siempre va al final
+  const otrosAlFinal = arr => arr.filter(c => (c.nombre || c) !== 'Otros').concat(arr.filter(c => (c.nombre || c) === 'Otros'));
   const CATEGORIAS = {
-    get ingreso() { return catsData.ingreso.map(c => c.nombre); },
-    get gasto() { return catsData.gasto.map(c => c.nombre); }
+    get ingreso() { return otrosAlFinal(catsData.ingreso).map(c => c.nombre); },
+    get gasto() { return otrosAlFinal(catsData.gasto).map(c => c.nombre); }
   };
   let tipoActual = 'ingreso';
 
@@ -1555,7 +1557,7 @@
           </div>`;
         }).join('') : `<div class="vacio-sec">${vacio}</div>`);
     };
-    cont.innerHTML = sec('debo', 'Debo') + sec('medeben', 'Me deben');
+    cont.innerHTML = sec('medeben', 'Me deben') + sec('debo', 'Debo');
   }
 
   /* ----- Nueva deuda ----- */
@@ -1865,7 +1867,7 @@
   function pintarCats() {
     pintarSeg($('segCats'), tipoCats);
     const g = tipoCats === 'gasto';
-    $('listaCats').innerHTML = catsData[tipoCats].map(c => `
+    $('listaCats').innerHTML = otrosAlFinal(catsData[tipoCats]).map(c => `
       <button class="cat-fila" data-id="${c.id}">
         <span class="pt" style="background:${colorCat(tipoCats, c.nombre)}"></span>
         <span class="nm">${esc(c.nombre)}</span>
