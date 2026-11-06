@@ -205,6 +205,15 @@
   .frec b { display: block; font-size: 14px; font-weight: 600; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .frec small { display: block; font-size: 12px; color: var(--muted); margin-top: 1px; white-space: nowrap; }
   .frec.on { border-color: var(--green); background: var(--green-soft); }
+  .frec.nuevo { border-style: dashed; color: var(--green); display: flex; align-items: center; }
+  .frec.nuevo b { color: var(--green); }
+  #hojaForm.gasto .frec.nuevo, #hojaForm.gasto .frec.nuevo b { color: var(--red); }
+  .frec-acc { display: flex; align-items: center; gap: 14px; margin: 10px 26px 0; font-size: 13.5px; color: var(--muted); }
+  .frec-acc .txt { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .frec-acc button { border: 0; background: none; font-family: inherit; font-size: 14px; font-weight: 600; padding: 2px 0; color: var(--green); flex-shrink: 0; }
+  .frec-acc button.rojo { color: var(--red); }
+  #frecEleccion .det { margin: 0 0 12px; }
+  #frecEleccion .btn-link { display: block; margin: 4px auto 0; color: var(--muted); }
   #hojaForm.gasto .frec.on { border-color: var(--red); background: var(--red-soft); }
   /* Toast con Deshacer */
   .toast { display: flex; align-items: center; gap: 14px; }
@@ -632,6 +641,10 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
       <h2>Estadísticas</h2>
+      <button class="btn-resp" id="abrirResp">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        Datos
+      </button>
     </div>
     <div class="periodo" data-per>
       <button class="per-todo">Todo</button>
@@ -705,10 +718,6 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
       <h2>Movimientos</h2>
-      <button class="btn-resp" id="abrirResp">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
-        Respaldo
-      </button>
     </div>
     <div class="fila-filtros" id="filaFiltros">
       <div class="periodo" data-per>
@@ -748,6 +757,7 @@
     <div class="frec-wrap" id="frecWrap" hidden>
       <div class="t">Frecuentes</div>
       <div class="frec-fila" id="frecFila"></div>
+      <div class="frec-acc" id="frecAcc" hidden></div>
     </div>
     <label class="campo">
       <span>Categoría</span>
@@ -771,7 +781,15 @@
     </label>
     <div class="nota-bloqueo" id="notaBloqueo" hidden>Este movimiento viene de una deuda: solo puedes cambiar el nombre y la fecha.</div>
     <div class="error" id="errForm"></div>
-    <div class="botones">
+    <div id="frecEleccion" hidden>
+      <p class="det" id="frecEleccionTxt">Es un frecuente nuevo. ¿Qué quieres hacer?</p>
+      <div class="acciones-deuda">
+        <button type="button" class="btn sec full" id="frecSolo">⭐ Solo guardar en frecuentes</button>
+        <button type="button" class="btn verde full" id="frecRegistrar">Guardar y registrar ahora</button>
+      </div>
+      <button type="button" class="btn-link" id="frecVolver">Volver</button>
+    </div>
+    <div class="botones" id="botonesForm">
       <button type="button" class="btn sec" id="cancelarForm">Cancelar</button>
       <button type="submit" class="btn verde" id="guardarForm">Guardar</button>
     </div>
@@ -806,7 +824,7 @@
   <!-- ========== HOJA: RESPALDO ========== -->
   <div class="hoja" id="hojaResp">
     <div class="agarre"></div>
-    <h3>Respaldo</h3>
+    <h3>Datos</h3>
     <button class="opcion" id="btnExportar">
       <span class="ico v"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></span>
       <span><b>Exportar respaldo</b><small>Crea un archivo con tus movimientos, deudas y metas. Guárdalo en Archivos, iCloud o envíatelo por WhatsApp.</small></span>
@@ -1016,7 +1034,7 @@
       </div></details>
       <details><summary>➕ Ingresos y gastos</summary><div class="cuerpo">
         <p>Toca <b>Ingreso</b> o <b>Gasto</b>, elige la <b>categoría</b>, el monto y la fecha. El nombre es opcional: si lo dejas vacío se guarda con el nombre de la categoría. En <b>Otros</b> el nombre es obligatorio.</p>
-        <p><b>Frecuentes:</b> lo que registras seguido aparece arriba del formulario. Tócalo y se llenan los datos solos; solo revisa el monto y guarda.</p>
+        <p><b>Frecuentes:</b> guarda lo que se repite (tu sueldo, el alquiler…) con <b>+ Nuevo frecuente</b>. Luego solo tócalo y se llenan los datos; tócalo otra vez para limpiarlos. Con un frecuente seleccionado puedes <b>Editarlo</b> o <b>Eliminarlo</b>.</p>
       </div></details>
       <details><summary>📋 Movimientos</summary><div class="cuerpo">
         <p>Tu historial agrupado por día. Filtra por <b>Ingresos / Gastos</b> y por categoría; abajo verás el total del filtro. Usa la 🔍 para buscar.</p>
@@ -1035,8 +1053,8 @@
         <p>El gráfico muestra en qué categorías se va (o de dónde viene) tu dinero. Toca una categoría para ver sus movimientos.</p>
         <p>En <b>Administrar categorías</b> puedes crear, renombrar o borrar categorías y ponerles un <b>presupuesto mensual</b>: la barra se pone amarilla al 80% y roja si te pasas.</p>
       </div></details>
-      <details><summary>💾 Respaldo</summary><div class="cuerpo">
-        <p>En <b>Movimientos → Respaldo</b>: <b>Exportar</b> crea un archivo con todos tus datos (guárdalo en Archivos o iCloud). <b>Importar</b> los recupera sin duplicar nada. También puedes exportar a <b>Excel</b>.</p>
+      <details><summary>💾 Datos y respaldo</summary><div class="cuerpo">
+        <p>En <b>Estadísticas → Datos</b>: <b>Exportar</b> crea un archivo con todos tus datos (guárdalo en Archivos o iCloud). <b>Importar</b> los recupera sin duplicar nada. También puedes exportar a <b>Excel</b>.</p>
         <p>Si borras el ícono de la app o cambias de iPhone, <b>solo un respaldo</b> te permite recuperar tus datos. La app te recordará hacerlo.</p>
       </div></details>
     </div>
@@ -1391,6 +1409,7 @@
     const dia = $('inFecha').value;
     if (!dia) { $('errForm').textContent = 'Elige una fecha.'; return; }
     if (dia > isoDia(Date.now())) { $('errForm').textContent = 'La fecha no puede ser futura.'; return; }
+    if (!editId && manejarFrecuente({ categoria, nombre, monto: Math.round(monto * 100) / 100 })) return;
     const original = editId ? movs.find(x => x.id === editId) : null;
     // Hoy → hora actual; otro día → mediodía de ese día; si al editar no cambió el día, se conserva la hora
     let fecha;
@@ -2249,7 +2268,7 @@
     const hoy = new Date();
     const f = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
     const nombre = `Cuadre-respaldo-${f}.json`;
-    const datos = JSON.stringify({ app: 'Cuadre', version: 2, exportado: Date.now(), movimientos: movs, deudas, metas, logradas, categorias: catsData }, null, 1);
+    const datos = JSON.stringify({ app: 'Cuadre', version: 2, exportado: Date.now(), movimientos: movs, deudas, metas, logradas, categorias: catsData, frecuentes }, null, 1);
     const marcar = () => { try { localStorage.setItem(KEY_RESP, String(Date.now())); } catch (e) {} pintarUltimo(); };
     try {
       const file = new File([datos], nombre, { type: 'application/json' });
@@ -2269,7 +2288,7 @@
     } catch (e) { toast('No se pudo exportar'); }
   };
 
-  let pendientes = null, deudasPend = [], metasPend = [], catsPend = null, logradasPend = [];
+  let pendientes = null, deudasPend = [], metasPend = [], catsPend = null, logradasPend = [], frecPend = [];
   $('btnImportar').onclick = () => { $('inArchivo').value = ''; $('inArchivo').click(); };
   $('inArchivo').addEventListener('change', async () => {
     const file = $('inArchivo').files[0]; if (!file) return;
@@ -2284,6 +2303,9 @@
       const dIds = new Set(deudas.map(x => x.id));
       deudasPend = dVal.filter(x => !dIds.has(x.id));
       catsPend = d.categorias && typeof d.categorias === 'object' ? d.categorias : null;
+      const fIds = new Set(frecuentes.map(x => x.id));
+      frecPend = (Array.isArray(d.frecuentes) ? d.frecuentes : []).filter(x => x && x.id && !fIds.has(String(x.id)) && (x.tipo === 'ingreso' || x.tipo === 'gasto') && typeof x.nombre === 'string' && typeof x.categoria === 'string' && +x.monto > 0)
+        .map(x => ({ id: String(x.id), tipo: x.tipo, categoria: x.categoria.slice(0, 24), nombre: x.nombre.slice(0, 40), monto: r2(+x.monto) }));
       const mIds = new Set(metas.map(x => x.id));
       metasPend = (Array.isArray(d.metas) ? d.metas : []).filter(x => x && x.id && typeof x.nombre === 'string' && +x.monto > 0 && !mIds.has(String(x.id)))
         .map(x => ({ id: String(x.id), nombre: x.nombre.slice(0, 30), monto: r2(+x.monto), fecha: +x.fecha || Date.now() }));
@@ -2295,13 +2317,14 @@
       if (!validos.length && !dVal.length && !metasPend.length && !(Array.isArray(d.metas) && d.metas.length)) throw 0;
       const ids = new Set(movs.map(m => m.id));
       pendientes = validos.filter(m => !ids.has(m.id));
-      if (!pendientes.length && !deudasPend.length && !metasPend.length && !logradasPend.length) { cerrarHoja(); toast('Ya tienes todos esos datos'); return; }
+      if (!pendientes.length && !deudasPend.length && !metasPend.length && !logradasPend.length && !frecPend.length) { cerrarHoja(); toast('Ya tienes todos esos datos'); return; }
       const pl = (n, a, b) => `${n} ${n === 1 ? a : b}`;
       const partes = [];
       if (pendientes.length) partes.push(pl(pendientes.length, 'movimiento', 'movimientos'));
       if (deudasPend.length) partes.push(pl(deudasPend.length, 'deuda', 'deudas'));
       if (metasPend.length) partes.push(pl(metasPend.length, 'meta', 'metas'));
       if (logradasPend.length) partes.push(pl(logradasPend.length, 'meta lograda', 'metas logradas'));
+      if (frecPend.length) partes.push(pl(frecPend.length, 'frecuente', 'frecuentes'));
       $('detImport').textContent = `Se añadirán ${partes.length > 1 ? partes.slice(0, -1).join(', ') + ' y ' + partes[partes.length - 1] : partes[0]} que no tienes. Lo que ya tienes se mantiene.`;
       cerrarHoja();
       setTimeout(() => abrirHoja($('hojaImport')), 280);
@@ -2316,6 +2339,7 @@
     deudas = deudas.concat(deudasPend); guardarDeudas();
     metas = metas.concat(metasPend); guardarMetas(); metasPend = [];
     if (logradasPend.length) { logradas = logradas.concat(logradasPend); guardarLogradas(); logradasPend = []; }
+    if (frecPend.length) { frecuentes = frecuentes.concat(frecPend); guardarFrec(); frecPend = []; }
     if (catsPend) {   // agregar las categorías del respaldo que no existan
       ['ingreso', 'gasto'].forEach(t => (catsPend[t] || []).forEach(c => {
         if (!c || typeof c.nombre !== 'string') return;
@@ -2477,12 +2501,13 @@
   });
 
   /* =================== DESHACER =================== */
-  function foto() { return JSON.stringify({ movs, deudas, metas, logradas, catsData }); }
+  function foto() { return JSON.stringify({ movs, deudas, metas, logradas, catsData, frecuentes }); }
   function restaurar(snap) {
     const d = JSON.parse(snap);
     movs = d.movs; guardar(movs); deudas = d.deudas; guardarDeudas();
     metas = d.metas; guardarMetas(); logradas = d.logradas; guardarLogradas();
     catsData = d.catsData; guardarCats();
+    if (Array.isArray(d.frecuentes)) { frecuentes = d.frecuentes; guardarFrec(); }
     pintarInicio();
     if ($('movimientos').classList.contains('on')) pintarLista();
     if ($('deudas').classList.contains('on')) pintarDeudas();
@@ -2500,42 +2525,130 @@
     clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), 5500);
   }
 
-  /* =================== FRECUENTES =================== */
-  // Se calculan solos: lo que más registras (misma categoría y nombre), con el último monto usado; desde el primer registro
-  let frecs = [];
+  /* =================== FRECUENTES (los elige el usuario) =================== */
+  const KEY_FREC = 'cuadre_frecuentes_v1';
+  let frecuentes = leer(KEY_FREC, []); if (!Array.isArray(frecuentes)) frecuentes = [];
+  const guardarFrec = () => escribir(KEY_FREC, frecuentes);
+  let frecTipo = null, frecSel = null, modoFrec = null, borrandoFrec = false;   // modoFrec: null | 'nuevo' | 'editar'
+
+  function limpiarCampos() {
+    $('inCategoria').value = ''; $('inNombre').value = ''; $('inMonto').value = '';
+    $('inFecha').value = isoDia(Date.now()); $('errForm').textContent = ''; pintarPista();
+  }
+  function textosForm() {
+    const ing = frecTipo === 'ingreso';
+    $('tituloForm').textContent = modoFrec === 'nuevo' ? `Nuevo frecuente · ${ing ? 'ingreso' : 'gasto'}`
+      : modoFrec === 'editar' ? 'Editar frecuente' : (ing ? 'Nuevo ingreso' : 'Nuevo gasto');
+    $('guardarForm').textContent = modoFrec === 'editar' ? 'Guardar frecuente' : 'Guardar';
+  }
+  function mostrarEleccion(si) { $('frecEleccion').hidden = !si; $('botonesForm').hidden = si; }
+
   function pintarFrecuentes(tipo) {
     const wrap = $('frecWrap');
+    frecTipo = tipo; frecSel = null; modoFrec = null; borrandoFrec = false; mostrarEleccion(false);
     if (!tipo) { wrap.hidden = true; return; }
-    const grupos = {};
-    movs.filter(m => m.tipo === tipo && !m.deudaId && !m.metaId && m.categoria).forEach(m => {
-      const k = m.categoria + '|' + m.nombre;
-      const g = grupos[k] || (grupos[k] = { categoria: m.categoria, nombre: m.nombre, n: 0, fecha: 0, monto: 0 });
-      g.n++; if (m.fecha > g.fecha) { g.fecha = m.fecha; g.monto = m.monto; }
-    });
-    frecs = Object.values(grupos).sort((a, b) => b.n - a.n || b.fecha - a.fecha).slice(0, 8);
-    wrap.hidden = !frecs.length;
-    $('frecFila').innerHTML = frecs.map((f, i) => `<button type="button" class="frec" data-i="${i}"><b>${esc(f.nombre)}</b><small>${fmt(f.monto)}${f.nombre !== f.categoria ? ' · ' + esc(f.categoria) : ''}</small></button>`).join('');
-    $('frecFila').scrollLeft = 0;
+    wrap.hidden = false;
+    pintarChips();
   }
-  $('frecFila').addEventListener('click', e => {
-    const b = e.target.closest('.frec'); if (!b) return;
-    const f = frecs[+b.dataset.i]; if (!f) return;
+  function pintarChips() {
+    const lista = frecuentes.filter(f => f.tipo === frecTipo);
+    $('frecFila').innerHTML =
+      `<button type="button" class="frec nuevo ${modoFrec === 'nuevo' ? 'on' : ''}" data-nuevo="1"><b>+ Nuevo frecuente</b></button>` +
+      lista.map(f => `<button type="button" class="frec ${frecSel === f.id ? 'on' : ''}" data-id="${f.id}"><b>${esc(f.nombre)}</b><small>${fmt(f.monto)}${f.nombre !== f.categoria ? ' · ' + esc(f.categoria) : ''}</small></button>`).join('');
+    pintarAcciones();
+    textosForm();
+  }
+  function pintarAcciones() {
+    const acc = $('frecAcc'), f = frecuentes.find(x => x.id === frecSel);
+    if (!f) { acc.hidden = true; return; }
+    acc.hidden = false;
+    if (modoFrec === 'editar') {
+      acc.innerHTML = `<span class="txt">Cambia los datos y toca «Guardar frecuente»</span><button type="button" data-a="cancelar-ed">Cancelar</button>`;
+    } else if (borrandoFrec) {
+      acc.innerHTML = `<span class="txt">¿Eliminar «${esc(f.nombre)}»?</span><button type="button" class="rojo" data-a="si-borrar">Sí, eliminar</button><button type="button" data-a="no-borrar" style="color:var(--muted)">No</button>`;
+    } else {
+      acc.innerHTML = `<span class="txt">⭐ ${esc(f.nombre)}</span><button type="button" data-a="editar">Editar</button><button type="button" class="rojo" data-a="borrar">Eliminar</button>`;
+    }
+  }
+  function llenarCon(f) {
     const sel = $('inCategoria');
     if (![...sel.options].some(o => o.value === f.categoria)) sel.insertAdjacentHTML('beforeend', `<option value="${esc(f.categoria)}">${esc(f.categoria)}</option>`);
     sel.value = f.categoria;
     $('inNombre').value = f.nombre === f.categoria ? '' : f.nombre;
     $('inMonto').value = String(f.monto);
     $('inFecha').value = isoDia(Date.now());
-    $('frecFila').querySelectorAll('.frec').forEach(x => x.classList.toggle('on', x === b));
-    pintarPista();
+    $('errForm').textContent = ''; pintarPista();
+  }
+  $('frecFila').addEventListener('click', e => {
+    const b = e.target.closest('.frec'); if (!b) return;
+    mostrarEleccion(false); borrandoFrec = false;
+    if (b.dataset.nuevo) {
+      if (modoFrec === 'nuevo') { modoFrec = null; limpiarCampos(); }          // tocar de nuevo → se cancela
+      else { modoFrec = 'nuevo'; frecSel = null; limpiarCampos(); }
+    } else {
+      const f = frecuentes.find(x => x.id === b.dataset.id); if (!f) return;
+      if (frecSel === f.id) { frecSel = null; modoFrec = null; limpiarCampos(); }   // tocar otra vez → se limpian los datos
+      else { frecSel = f.id; modoFrec = null; llenarCon(f); }
+    }
+    pintarChips();
   });
+  $('frecAcc').addEventListener('click', e => {
+    const b = e.target.closest('button[data-a]'); if (!b) return;
+    const f = frecuentes.find(x => x.id === frecSel); if (!f) return;
+    const a = b.dataset.a;
+    if (a === 'editar') { modoFrec = 'editar'; llenarCon(f); }
+    else if (a === 'cancelar-ed') { modoFrec = null; llenarCon(f); }
+    else if (a === 'borrar') { borrandoFrec = true; }
+    else if (a === 'no-borrar') { borrandoFrec = false; }
+    else if (a === 'si-borrar') {
+      frecuentes = frecuentes.filter(x => x.id !== f.id); guardarFrec();
+      frecSel = null; borrandoFrec = false; limpiarCampos(); toast('Frecuente eliminado');
+    }
+    pintarChips();
+  });
+
+  // Llamado desde el envío del formulario. Devuelve true si ya se manejó (no registrar movimiento todavía).
+  let frecPendiente = null, frecRegistrando = false;
+  function manejarFrecuente(datos) {
+    if (frecRegistrando) { frecRegistrando = false; return false; }
+    if (modoFrec === 'editar') {
+      const f = frecuentes.find(x => x.id === frecSel);
+      if (f) { Object.assign(f, { categoria: datos.categoria, nombre: datos.nombre, monto: datos.monto }); guardarFrec(); }
+      modoFrec = null; pintarChips(); toast('Frecuente actualizado');
+      return true;
+    }
+    if (modoFrec === 'nuevo') {
+      frecPendiente = { id: 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), tipo: frecTipo, categoria: datos.categoria, nombre: datos.nombre, monto: datos.monto };
+      $('frecEleccionTxt').textContent = `«${datos.nombre}» · ${fmt(datos.monto)} es un frecuente nuevo. ¿Qué quieres hacer?`;
+      $('frecRegistrar').className = 'btn full ' + (frecTipo === 'ingreso' ? 'verde' : 'rojo');
+      document.activeElement && document.activeElement.blur();
+      mostrarEleccion(true);
+      return true;
+    }
+    return false;
+  }
+  $('frecVolver').onclick = () => { frecPendiente = null; mostrarEleccion(false); };
+  $('frecSolo').onclick = () => {
+    if (!frecPendiente) return;
+    frecuentes.push(frecPendiente); guardarFrec();
+    frecSel = frecPendiente.id; modoFrec = null; frecPendiente = null;
+    mostrarEleccion(false); pintarChips(); toast('Guardado en frecuentes ⭐');
+  };
+  $('frecRegistrar').onclick = () => {
+    if (!frecPendiente) return;
+    frecuentes.push(frecPendiente); guardarFrec();
+    frecSel = frecPendiente.id; modoFrec = null; frecPendiente = null;
+    mostrarEleccion(false);
+    frecRegistrando = true;
+    $('hojaForm').requestSubmit ? $('hojaForm').requestSubmit() : $('guardarForm').click();
+  };
 
   /* =================== BORRAR TODOS LOS DATOS =================== */
   let pasoBT = 1;
   $('btnBorrarTodo').onclick = () => {
     pasoBT = 1;
     const n = movs.length, d = deudas.length, m = metas.length + logradas.length;
-    $('detBT').textContent = `Se borrarán ${n} movimiento${n === 1 ? '' : 's'}, ${d} deuda${d === 1 ? '' : 's'}, ${m} meta${m === 1 ? '' : 's'} y tus categorías personalizadas (vuelven las de siempre). Te recomendamos exportar un respaldo antes.`;
+    $('detBT').textContent = `Se borrarán ${n} movimiento${n === 1 ? '' : 's'}, ${d} deuda${d === 1 ? '' : 's'}, ${m} meta${m === 1 ? '' : 's'}, tus frecuentes y tus categorías personalizadas (vuelven las de siempre). Te recomendamos exportar un respaldo antes.`;
     $('avisoBT').hidden = true; $('confirmarBT').textContent = 'Continuar';
     cerrarHoja(); setTimeout(() => abrirHoja($('hojaBorrarTodo')), 280);
   };
@@ -2549,6 +2662,7 @@
     }
     const snap = foto();
     movs = []; guardar(movs); deudas = []; guardarDeudas(); metas = []; guardarMetas(); logradas = []; guardarLogradas();
+    frecuentes = []; guardarFrec();
     catsData = {
       ingreso: CATS_DEF.ingreso.map(n => ({ id: idCat(), nombre: n })),
       gasto: CATS_DEF.gasto.map(n => ({ id: idCat(), nombre: n, presupuesto: 0 }))
