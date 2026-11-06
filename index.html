@@ -2501,7 +2501,7 @@
   }
 
   /* =================== FRECUENTES =================== */
-  // Se calculan solos: lo que registraste 2 veces o más (misma categoría y nombre), con el último monto usado
+  // Se calculan solos: lo que más registras (misma categoría y nombre), con el último monto usado; desde el primer registro
   let frecs = [];
   function pintarFrecuentes(tipo) {
     const wrap = $('frecWrap');
@@ -2512,7 +2512,7 @@
       const g = grupos[k] || (grupos[k] = { categoria: m.categoria, nombre: m.nombre, n: 0, fecha: 0, monto: 0 });
       g.n++; if (m.fecha > g.fecha) { g.fecha = m.fecha; g.monto = m.monto; }
     });
-    frecs = Object.values(grupos).filter(g => g.n >= 2).sort((a, b) => b.n - a.n || b.fecha - a.fecha).slice(0, 8);
+    frecs = Object.values(grupos).sort((a, b) => b.n - a.n || b.fecha - a.fecha).slice(0, 8);
     wrap.hidden = !frecs.length;
     $('frecFila').innerHTML = frecs.map((f, i) => `<button type="button" class="frec" data-i="${i}"><b>${esc(f.nombre)}</b><small>${fmt(f.monto)}${f.nombre !== f.categoria ? ' · ' + esc(f.categoria) : ''}</small></button>`).join('');
     $('frecFila').scrollLeft = 0;
