@@ -12,6 +12,21 @@
 <meta name="theme-color" content="#1a1f2b">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="manifest" href="manifest.json">
+<!-- Pantalla de carga del iPhone (en vez de negro) -->
+<link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash/splash-640x1136.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash/splash-750x1334.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1242x2208.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1125x2436.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash/splash-828x1792.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1242x2688.png">
+<link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1170x2532.png">
+<link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1284x2778.png">
+<link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1179x2556.png">
+<link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1290x2796.png">
+<link rel="apple-touch-startup-image" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1206x2622.png">
+<link rel="apple-touch-startup-image" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1320x2868.png">
+<link rel="apple-touch-startup-image" media="(device-width: 420px) and (device-height: 912px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1260x2736.png">
+<link rel="apple-touch-startup-image" media="(device-width: 360px) and (device-height: 780px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1080x2340.png">
 <style>
   :root {
     --bg: #1a1f2b;          /* azul pizarra oscuro, suave a la vista */
@@ -489,9 +504,36 @@
   .update.on { transform: translateY(0); }
   .update span { flex: 1; font-size: 15px; }
   .update button { border: 0; border-radius: 10px; background: var(--green); color: #fff; font-size: 15px; font-weight: 600; padding: 10px 14px; }
+
+  /* ---------- Animación de entrada ---------- */
+  #splash {
+    position: fixed; inset: 0; z-index: 100; background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity .38s ease, transform .38s ease;
+  }
+  #splash.fuera { opacity: 0; transform: scale(1.06); pointer-events: none; }
+  #splash .logo { position: relative; width: 110px; height: 114px; }
+  #splash .b { position: absolute; bottom: 0; width: 46px; border-radius: 23px; transform-origin: 50% 100%; }
+  #splash .b.g { left: 0; height: 114px; background: #5fbf6a; animation: rebote-g .9s cubic-bezier(.3,.7,.3,1) .05s both; }
+  #splash .b.r { left: 64px; height: 74px; background: #e0574f; animation: rebote-r .9s cubic-bezier(.3,.7,.3,1) .15s both; }
+  #splash .nombre-app {
+    position: absolute; left: 50%; top: calc(50% + 78px); transform: translate(-50%, 8px);
+    font-size: 26px; font-weight: 700; letter-spacing: .5px; color: var(--text); opacity: 0;
+    animation: aparece .5s ease .35s forwards;
+  }
+  @keyframes rebote-g { 0% { transform: scaleY(1); } 30% { transform: scaleY(.45); } 62% { transform: scaleY(1.1); } 82% { transform: scaleY(.96); } 100% { transform: scaleY(1); } }
+  @keyframes rebote-r { 0% { transform: scaleY(1); } 30% { transform: scaleY(1.45); } 62% { transform: scaleY(.8); } 82% { transform: scaleY(1.05); } 100% { transform: scaleY(1); } }
+  @keyframes aparece { to { opacity: 1; transform: translate(-50%, 0); } }
+  @media (prefers-reduced-motion: reduce) { #splash .b, #splash .nombre-app { animation: none; opacity: 1; } }
 </style>
 </head>
 <body>
+  <!-- Animación de entrada: continúa la imagen de carga del iPhone -->
+  <div id="splash" aria-hidden="true">
+    <div class="logo"><span class="b g"></span><span class="b r"></span></div>
+    <div class="nombre-app">Cuadre</div>
+  </div>
+
 
   <!-- ========== INICIO ========== -->
   <section class="view" id="inicio">
@@ -2328,7 +2370,10 @@
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustarTextos);
   pintarInicio();
   requestAnimationFrame(pintarInicio);
-  setTimeout(revisarAvisos, 900);
+  // Quitar la animación de entrada (mínimo ~1.1 s para que se vea completa)
+  const splash = $('splash');
+  setTimeout(() => { splash.classList.add('fuera'); setTimeout(() => splash.remove(), 420); }, 1150);
+  setTimeout(revisarAvisos, 1700);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(revisarAvisos, 600); });
 
   /* ---------- Pedir al iPhone que no borre los datos ---------- */
