@@ -275,6 +275,14 @@
   .aviso-card .acc { display: flex; gap: 16px; flex-wrap: wrap; }
   .aviso-card .acc button { margin-top: 8px; }
 
+  /* Punto rojo en «Deudas →» */
+  .punto {
+    min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px; background: var(--red); color: #fff;
+    font-size: 11.5px; font-weight: 700; display: inline-grid; place-items: center; line-height: 1; margin-left: 2px;
+    box-shadow: 0 0 0 3px rgba(224,87,79,.18); animation: latido 2.4s ease-in-out infinite;
+  }
+  @keyframes latido { 0%, 100% { box-shadow: 0 0 0 3px rgba(224,87,79,.18); } 50% { box-shadow: 0 0 0 6px rgba(224,87,79,.06); } }
+
   /* ---------- Metas ---------- */
   .disp {
     background: linear-gradient(135deg, rgba(95,191,106,.18), rgba(95,191,106,.05));
@@ -665,7 +673,7 @@
       <button class="link-mov" id="abrirMov">Movimientos
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </button>
-      <button class="link-mov" id="abrirDeudas">Deudas
+      <button class="link-mov" id="abrirDeudas">Deudas<span class="punto" id="puntoDeudas" hidden></span>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </button>
       <button class="link-mov" id="abrirMetas">Metas
@@ -1261,6 +1269,7 @@
     if (meDeben > 0) partes.push(`Te deben <b class="pos">${fmt(meDeben)}</b>`);
     if (debo > 0) partes.push(`Debes <b class="neg">${fmt(debo)}</b>`);
     $('resDeudas').hidden = !partes.length;
+    actualizarPunto();
     $('resDeudas').innerHTML = partes.join(' · ');
 
     $('totIng').textContent = fmt(ing);
@@ -1603,7 +1612,14 @@
     vistaDeudas = b.dataset.t; pintarDeudas(); $('listaDeudas').scrollTop = 0;
   });
 
+  // Punto rojo en el inicio: cuántas deudas activas vencen hoy o están vencidas
+  function actualizarPunto() {
+    const n = deudas.filter(d => d.estado !== 'cerrada' && d.fechaPago && diasHasta(d.fechaPago) <= 0).length;
+    const el = $('puntoDeudas'); el.hidden = !n; el.textContent = n;
+    $('abrirDeudas').setAttribute('aria-label', n ? `Deudas, ${n} por cobrar o pagar hoy o vencidas` : 'Deudas');
+  }
   function pintarDeudas() {
+    actualizarPunto();
     const seg = $('segDeudas'); seg.dataset.t = vistaDeudas;
     seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === vistaDeudas));
     const activas = vistaDeudas === 'activas';
