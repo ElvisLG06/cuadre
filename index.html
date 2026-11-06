@@ -2204,7 +2204,8 @@
       if (pendientes.length) partes.push(pl(pendientes.length, 'movimiento', 'movimientos'));
       if (deudasPend.length) partes.push(pl(deudasPend.length, 'deuda', 'deudas'));
       if (metasPend.length) partes.push(pl(metasPend.length, 'meta', 'metas'));
-      $('detImport').textContent = `Se añadirán ${partes.join(' y ')} que no tienes. Lo que ya tienes se mantiene.`;
+      if (logradasPend.length) partes.push(pl(logradasPend.length, 'meta lograda', 'metas logradas'));
+      $('detImport').textContent = `Se añadirán ${partes.length > 1 ? partes.slice(0, -1).join(', ') + ' y ' + partes[partes.length - 1] : partes[0]} que no tienes. Lo que ya tienes se mantiene.`;
       cerrarHoja();
       setTimeout(() => abrirHoja($('hojaImport')), 280);
     } catch (e) {
@@ -2220,8 +2221,10 @@
     if (logradasPend.length) { logradas = logradas.concat(logradasPend); guardarLogradas(); logradasPend = []; }
     if (catsPend) {   // agregar las categorías del respaldo que no existan
       ['ingreso', 'gasto'].forEach(t => (catsPend[t] || []).forEach(c => {
-        if (c && typeof c.nombre === 'string' && !catsData[t].some(x => norm(x.nombre) === norm(c.nombre)))
-          catsData[t].push(t === 'gasto' ? { id: idCat(), nombre: c.nombre.slice(0, 24), presupuesto: +c.presupuesto > 0 ? r2(+c.presupuesto) : 0 } : { id: idCat(), nombre: c.nombre.slice(0, 24) });
+        if (!c || typeof c.nombre !== 'string') return;
+        const ya = catsData[t].find(x => norm(x.nombre) === norm(c.nombre));
+        if (ya) { if (t === 'gasto' && !(ya.presupuesto > 0) && +c.presupuesto > 0) ya.presupuesto = r2(+c.presupuesto); return; }
+        catsData[t].push(t === 'gasto' ? { id: idCat(), nombre: c.nombre.slice(0, 24), presupuesto: +c.presupuesto > 0 ? r2(+c.presupuesto) : 0 } : { id: idCat(), nombre: c.nombre.slice(0, 24) });
       }));
       guardarCats(); catsPend = null;
     }

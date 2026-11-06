@@ -4,7 +4,7 @@
    - Una versión nueva solo se guarda si se descargó completa y es realmente la app.
    - Los movimientos NO están aquí: viven aparte en la memoria del iPhone.
    Cambia VERSION en cada actualización para que los iPhones la detecten. */
-const VERSION = 'cuadre-v17';
+const VERSION = 'cuadre-v18';
 const ARCHIVOS = ['./', 'index.html', 'manifest.json', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 const MARCA = 'name="wyt-app"';
 
