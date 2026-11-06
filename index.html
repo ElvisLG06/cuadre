@@ -5,6 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <title>Cuadre</title>
 <meta name="wyt-app" content="ok">
+<script>
+  /* Al abrir desde el ícono, iOS informa una altura menor a la real (le resta la barra de estado)
+     y todo termina antes del borde inferior. Medimos la diferencia y estiramos la app hasta abajo. */
+  (function () {
+    function ajustarAlto() {
+      var standalone = window.navigator.standalone === true ||
+        (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+      var a = 0, H = window.screen && window.screen.height, h = window.innerHeight;
+      if (standalone && H && h > window.innerWidth && H > h && H - h < 140) a = h - H;   // negativo
+      document.documentElement.style.setProperty('--ajuste', a + 'px');
+    }
+    ajustarAlto();
+    window.addEventListener('resize', ajustarAlto);
+    window.addEventListener('orientationchange', function () { setTimeout(ajustarAlto, 300); });
+    window.addEventListener('pageshow', ajustarAlto);
+  })();
+</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -40,6 +57,7 @@
     --red-soft: rgba(224,87,79,.16);
     --safe-top: env(safe-area-inset-top);
     --safe-bottom: env(safe-area-inset-bottom);
+    --ajuste: 0px;   /* corrección de altura en iPhone (ver script del <head>) */
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; background: var(--bg); }
@@ -53,7 +71,7 @@
 
   /* ---------- Vistas ---------- */
   .view {
-    position: fixed; inset: 0; background: var(--bg);
+    position: fixed; top: 0; left: 0; right: 0; bottom: var(--ajuste); background: var(--bg);
     padding: calc(var(--safe-top) + 20px) 22px calc(var(--safe-bottom) + 16px);
     display: flex; flex-direction: column;
     transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .35s;
@@ -121,7 +139,7 @@
   .per-next:disabled { opacity: .25; }
   .per-label { padding: 0 4px; font-size: 14.5px; font-weight: 600; min-width: 128px; }
   .periodo.todo .per-todo, .periodo:not(.todo) .per-mes { background: var(--surface-2); color: var(--text); }
-  #inicio { padding-top: calc(var(--safe-top) + 14px); padding-bottom: calc(var(--safe-bottom) * .6 + 6px); }
+  #inicio { padding-top: calc(var(--safe-top) + 14px); padding-bottom: calc(var(--safe-bottom) * .55 + 4px); }
   #inicio .periodo { margin-top: 12px; }
   #inicio .balance { margin-top: 8px; }
   #inicio .monto-wrap { height: 84px; }
@@ -334,7 +352,7 @@
     padding: 12px 14px; font-size: 14px; line-height: 1.4; margin: -6px 0 18px;
   }
   .toast {
-    position: fixed; left: 50%; bottom: calc(var(--safe-bottom) + 24px); z-index: 20;
+    position: fixed; left: 50%; bottom: calc(var(--safe-bottom) + 24px + var(--ajuste)); z-index: 20;
     transform: translate(-50%, 140%); opacity: 0;
     background: var(--surface-2); color: var(--text); font-size: 15px; font-weight: 500;
     padding: 12px 20px; border-radius: 999px; transition: transform .3s, opacity .3s;
@@ -432,18 +450,18 @@
 
   /* ---------- Hoja inferior (formulario) ---------- */
   .velo {
-    position: fixed; inset: 0; background: rgba(5,8,14,.55);
+    position: fixed; top: 0; left: 0; right: 0; bottom: var(--ajuste); background: rgba(5,8,14,.55);
     opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 10;
   }
   .velo.on { opacity: 1; pointer-events: auto; }
   .hoja {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 11;
+    position: fixed; left: 0; right: 0; bottom: var(--ajuste); z-index: 11;
     background: var(--surface); border-radius: 24px 24px 0 0;
     padding: 10px 22px calc(var(--safe-bottom) + 22px);
     transform: translateY(105%); transition: transform .32s cubic-bezier(.2,.8,.2,1);
   }
   .hoja.on { transform: translateY(0); }
-  .hoja.alta { max-height: 88vh; display: flex; flex-direction: column; }
+  .hoja.alta { max-height: calc(88vh - var(--ajuste)); display: flex; flex-direction: column; }
   .hoja.alta .scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; margin: 0 -22px; padding: 0 22px; flex: 1; min-height: 0; }
   .agarre { width: 40px; height: 5px; border-radius: 3px; background: var(--surface-2); margin: 0 auto 16px; }
   .hoja h3 { font-size: 22px; font-weight: 700; margin-bottom: 16px; }
@@ -501,7 +519,7 @@
 
   /* ---------- Aviso de nueva versión ---------- */
   .update {
-    position: fixed; left: 16px; right: 16px; bottom: calc(var(--safe-bottom) + 14px); z-index: 30;
+    position: fixed; left: 16px; right: 16px; bottom: calc(var(--safe-bottom) + 14px + var(--ajuste)); z-index: 30;
     background: var(--surface-2); border-radius: 16px; padding: 12px 12px 12px 16px;
     display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.4);
     transform: translateY(calc(100% + var(--safe-bottom) + 40px)); opacity: 0; visibility: hidden;
@@ -513,7 +531,7 @@
 
   /* ---------- Animación de entrada ---------- */
   #splash {
-    position: fixed; inset: 0; z-index: 100; background: var(--bg);
+    position: fixed; top: 0; left: 0; right: 0; bottom: var(--ajuste); z-index: 100; background: var(--bg);
     display: flex; align-items: center; justify-content: center;
     transition: opacity .38s ease, transform .38s ease;
   }
