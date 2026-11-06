@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <title>Cuadre</title>
 <meta name="wyt-app" content="ok">
 
@@ -46,6 +46,8 @@
   html, body { height: 100%; background: var(--bg); }
   /* iOS 26: en apps instaladas, height:100% se queda corto (franja muerta abajo). 100vh sí llega al borde real. */
   @media (display-mode: standalone) { html, body { height: 100vh; } }
+  html { overflow: hidden; }
+  html, body { overscroll-behavior: none; touch-action: pan-x pan-y; }   /* sin zoom con pellizco ni doble toque */
   body {
     position: relative; margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
@@ -444,9 +446,10 @@
     position: absolute; left: 0; right: 0; bottom: 0; z-index: 11;
     background: var(--surface); border-radius: 24px 24px 0 0;
     padding: 10px 22px calc(var(--safe-bottom) + 22px);
-    transform: translateY(105%); transition: transform .32s cubic-bezier(.2,.8,.2,1);
+    transform: translateY(105%); visibility: hidden;
+    transition: transform .32s cubic-bezier(.2,.8,.2,1), visibility 0s .32s;
   }
-  .hoja.on { transform: translateY(0); }
+  .hoja.on { transform: translateY(0); visibility: visible; transition: transform .32s cubic-bezier(.2,.8,.2,1); }
   .hoja.alta { max-height: 88vh; display: flex; flex-direction: column; }
   .hoja.alta .scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; margin: 0 -22px; padding: 0 22px; flex: 1; min-height: 0; }
   .agarre { width: 40px; height: 5px; border-radius: 3px; background: var(--surface-2); margin: 0 auto 16px; }
@@ -2372,6 +2375,10 @@
       else { vistaDeudas = 'activas'; pintarDeudas(); abrirVista('deudas'); }
     }, 280);
   });
+
+  /* ---------- Sin zoom (pellizco) ---------- */
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
+  document.addEventListener('touchmove', e => { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false });
 
   /* ---------- Arranque ---------- */
   window.addEventListener('resize', ajustarTextos);
