@@ -193,6 +193,36 @@
   .aviso-card small { display: block; font-size: 13px; color: var(--muted); margin-top: 3px; line-height: 1.35; }
   .aviso-card button { margin-top: 8px; border: 0; background: none; color: var(--green); font-size: 14.5px; font-weight: 600; font-family: inherit; padding: 0; }
 
+  /* Frecuentes */
+  .frec-wrap { margin: -4px -22px 14px; }
+  .frec-wrap .t { font-size: 12px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); margin: 0 26px 8px; }
+  .frec-fila { display: flex; gap: 8px; overflow-x: auto; padding: 0 22px 2px; scrollbar-width: none; }
+  .frec-fila::-webkit-scrollbar { display: none; }
+  .frec {
+    flex-shrink: 0; border: 1.5px solid var(--surface-2); background: var(--bg); color: var(--text); border-radius: 14px;
+    padding: 8px 12px; font-family: inherit; text-align: left; transition: border-color .15s, background .15s;
+  }
+  .frec b { display: block; font-size: 14px; font-weight: 600; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .frec small { display: block; font-size: 12px; color: var(--muted); margin-top: 1px; white-space: nowrap; }
+  .frec.on { border-color: var(--green); background: var(--green-soft); }
+  #hojaForm.gasto .frec.on { border-color: var(--red); background: var(--red-soft); }
+  /* Toast con Deshacer */
+  .toast { display: flex; align-items: center; gap: 14px; }
+  .toast button { border: 0; background: none; color: var(--green); font-size: 15px; font-weight: 700; font-family: inherit; padding: 0; }
+  .toast.on { pointer-events: auto; }
+  /* Guía */
+  .link-guia { display: block; margin: 14px auto 4px; background: none; border: 0; color: var(--muted); font-size: 14px; font-family: inherit; text-decoration: underline; text-underline-offset: 3px; }
+  .guia details { background: var(--bg); border-radius: 14px; margin-bottom: 8px; overflow: hidden; }
+  .guia summary { list-style: none; padding: 14px 16px; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .guia summary::-webkit-details-marker { display: none; }
+  .guia summary::after { content: '›'; margin-left: auto; color: var(--muted); font-size: 20px; transition: transform .2s; }
+  .guia details[open] summary::after { transform: rotate(90deg); }
+  .guia .cuerpo { padding: 0 16px 14px; font-size: 14.5px; line-height: 1.5; color: #c4c9d4; }
+  .guia .cuerpo p { margin-bottom: 8px; }
+  .guia .cuerpo b { color: var(--text); }
+  .guia .intro { font-size: 14.5px; color: var(--muted); line-height: 1.5; margin: -6px 0 14px; }
+  .opcion .ico.r { background: var(--red-soft); color: var(--red); }
+
   /* ---------- Metas ---------- */
   .disp {
     background: linear-gradient(135deg, rgba(95,191,106,.18), rgba(95,191,106,.05));
@@ -624,6 +654,7 @@
       <button class="btn sec full" id="abrirCats" style="margin-bottom:6px">
         Administrar categorías y presupuestos
       </button>
+      <button class="link-guia" id="abrirGuia">¿Cómo funciona Cuadre?</button>
     </div>
   </section>
 
@@ -714,6 +745,10 @@
   <form class="hoja" id="hojaForm" autocomplete="off">
     <div class="agarre"></div>
     <h3 id="tituloForm">Nuevo ingreso</h3>
+    <div class="frec-wrap" id="frecWrap" hidden>
+      <div class="t">Frecuentes</div>
+      <div class="frec-fila" id="frecFila"></div>
+    </div>
     <label class="campo">
       <span>Categoría</span>
       <div class="select-wrap">
@@ -783,6 +818,10 @@
     <button class="opcion" id="btnExcel">
       <span class="ico v" style="background:rgba(91,141,239,.16);color:#8fb0f5"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/></svg></span>
       <span><b>Exportar a Excel</b><small>Resumen por mes, movimientos, categorías, deudas y metas en un archivo .xlsx.</small></span>
+    </button>
+    <button class="opcion" id="btnBorrarTodo">
+      <span class="ico r"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></span>
+      <span><b style="color:var(--red)">Borrar todos los datos</b><small>Deja la app como recién instalada. Se pide confirmar dos veces.</small></span>
     </button>
     <input type="file" id="inArchivo" accept=".json,application/json,text/plain" hidden>
     <div class="ultimo" id="ultimoResp"></div>
@@ -950,6 +989,58 @@
     <h3>Avisos</h3>
     <div class="scroll" id="listaAvisos"></div>
     <button type="button" class="btn sec full" id="cerrarAvisos" style="margin-top:6px">Entendido</button>
+  </div>
+
+  <!-- ========== HOJA: BORRAR TODO ========== -->
+  <div class="hoja" id="hojaBorrarTodo">
+    <div class="agarre"></div>
+    <h3 id="tituloBT">Borrar todos los datos</h3>
+    <p class="det" id="detBT"></p>
+    <div class="aviso" id="avisoBT" hidden></div>
+    <div class="botones">
+      <button type="button" class="btn sec" id="cancelarBT">Cancelar</button>
+      <button type="button" class="btn rojo" id="confirmarBT">Continuar</button>
+    </div>
+  </div>
+
+  <!-- ========== HOJA: GUÍA ========== -->
+  <div class="hoja alta guia" id="hojaGuia">
+    <div class="agarre"></div>
+    <h3>¿Cómo funciona Cuadre?</h3>
+    <div class="scroll">
+      <p class="intro">Todo lo que registras se guarda solo en este iPhone. Nadie más lo ve y no necesita internet.</p>
+      <details open><summary>🏠 Inicio</summary><div class="cuerpo">
+        <p>El número grande es tu <b>Ganancia</b> (ingresos − gastos). Si gastas más de lo que ingresa, cambia a <b>Pérdida</b> en rojo.</p>
+        <p>La barra <b>verde</b> son tus ingresos y la <b>roja</b> tus gastos. Con <b>Todo / ‹ Mes ›</b> eliges si ves todo o solo un mes.</p>
+        <p>Debajo de la ganancia verás cuánto <b>te deben</b> y cuánto <b>debes</b>; tócalo para ir a Deudas.</p>
+      </div></details>
+      <details><summary>➕ Ingresos y gastos</summary><div class="cuerpo">
+        <p>Toca <b>Ingreso</b> o <b>Gasto</b>, elige la <b>categoría</b>, el monto y la fecha. El nombre es opcional: si lo dejas vacío se guarda con el nombre de la categoría. En <b>Otros</b> el nombre es obligatorio.</p>
+        <p><b>Frecuentes:</b> lo que registras seguido aparece arriba del formulario. Tócalo y se llenan los datos solos; solo revisa el monto y guarda.</p>
+      </div></details>
+      <details><summary>📋 Movimientos</summary><div class="cuerpo">
+        <p>Tu historial agrupado por día. Filtra por <b>Ingresos / Gastos</b> y por categoría; abajo verás el total del filtro. Usa la 🔍 para buscar.</p>
+        <p>Toca un movimiento para <b>editarlo</b> o <b>eliminarlo</b>. Si eliminas algo por error, toca <b>Deshacer</b> en el aviso de abajo (tienes unos segundos).</p>
+      </div></details>
+      <details><summary>🤝 Deudas</summary><div class="cuerpo">
+        <p><b>Me deben</b> (tú prestaste): al crearla se resta de tu ganancia; cuando te pagan, vuelve a sumarse.</p>
+        <p><b>Debo</b> (alguien pagó algo por ti): al crearla <b>no cambia</b> tu ganancia. Al marcar <b>Ya pagué</b>, indicas cuánto de ese préstamo gastaste y solo eso se registra como gasto.</p>
+        <p>Puedes registrar <b>abonos</b> (pagos parciales). Las deudas pagadas pasan a <b>Cerradas</b>.</p>
+      </div></details>
+      <details><summary>🎯 Metas</summary><div class="cuerpo">
+        <p>Tu ganancia total llena tus metas <b>de arriba hacia abajo</b>: primero la #1, luego la #2… </p>
+        <p><b>Mantén presionada</b> una meta y arrástrala para cambiar su prioridad. Cuando una se complete, toca <b>Ya lo compré</b>: se registra el gasto y pasa a <b>Logradas</b> 🏆.</p>
+      </div></details>
+      <details><summary>📊 Estadísticas y presupuestos</summary><div class="cuerpo">
+        <p>El gráfico muestra en qué categorías se va (o de dónde viene) tu dinero. Toca una categoría para ver sus movimientos.</p>
+        <p>En <b>Administrar categorías</b> puedes crear, renombrar o borrar categorías y ponerles un <b>presupuesto mensual</b>: la barra se pone amarilla al 80% y roja si te pasas.</p>
+      </div></details>
+      <details><summary>💾 Respaldo</summary><div class="cuerpo">
+        <p>En <b>Movimientos → Respaldo</b>: <b>Exportar</b> crea un archivo con todos tus datos (guárdalo en Archivos o iCloud). <b>Importar</b> los recupera sin duplicar nada. También puedes exportar a <b>Excel</b>.</p>
+        <p>Si borras el ícono de la app o cambias de iPhone, <b>solo un respaldo</b> te permite recuperar tus datos. La app te recordará hacerlo.</p>
+      </div></details>
+    </div>
+    <button type="button" class="btn sec full" id="cerrarGuia" style="margin-top:8px">Entendido</button>
   </div>
 
   <div class="toast" id="toast">Movimiento eliminado</div>
@@ -1279,6 +1370,8 @@
     $('notaBloqueo').textContent = `Este movimiento viene de ${m && m.metaId ? 'una meta' : 'una deuda'}: solo puedes cambiar el nombre y la fecha.`;
     $('errForm').textContent = '';
     pintarPista();
+    $('hojaForm').classList.toggle('gasto', tipo === 'gasto');
+    pintarFrecuentes(m ? null : tipo);
     abrirHoja($('hojaForm'));
   }
   document.querySelectorAll('.pill[data-tipo]').forEach(b => b.onclick = () => abrirForm(b.dataset.tipo, null));
@@ -1357,9 +1450,10 @@
   $('cancelarBorrar').onclick = cerrarHoja;
   $('confirmarBorrar').onclick = () => {
     if (paso === 1) { pasoBorrar(2); return; }        // 1ª confirmación → pide la 2ª
+    const snap = foto();
     movs = movs.filter(m => m.id !== idBorrar); guardar(movs);  // 2ª confirmación → borra
     cerrarHoja(); pintarLista(); pintarInicio();
-    toast('Movimiento eliminado');
+    toastDeshacer('Movimiento eliminado', snap);
   };
 
   /* =================== DEUDAS =================== */
@@ -1618,6 +1712,7 @@
 
   $('btnConfirmarPaso2').onclick = () => {
     const d = deudaSel; if (!d || !accion) return;
+    const snapD = foto();
     if (accion === 'saldar') {
       const debo = d.tipo === 'debo';
       if (debo) {
@@ -1641,11 +1736,11 @@
       toast(`Abono de ${fmt(abonoMonto)} registrado`);
     } else if (d.estado === 'cerrada') {
       deudas = deudas.filter(x => x.id !== d.id);
-      toast('Quitada del historial');
+      setTimeout(() => toastDeshacer('Deuda quitada del historial', snapD), 30);
     } else {
       movs = movs.filter(m => m.deudaId !== d.id && m.id !== d.movId); guardar(movs);
       deudas = deudas.filter(x => x.id !== d.id);
-      toast('Deuda eliminada');
+      setTimeout(() => toastDeshacer('Deuda eliminada', snapD), 30);
     }
     guardarDeudas();
     deudaSel = null; accion = null; gastado = null;
@@ -2062,9 +2157,10 @@
   };
   $('btnCancelarMeta2').onclick = () => { $('detMetaPaso1').hidden = false; $('detMetaPaso2').hidden = true; $('detMetaAviso').hidden = true; };
   $('btnConfirmarMeta2').onclick = () => {
+    const snapM = foto();
     if (logradaSel) {
       logradas = logradas.filter(m => m.id !== logradaSel.id); guardarLogradas(); logradaSel = null;
-      cerrarHoja(); pintarMetas(false); toast('Quitada del historial'); return;
+      cerrarHoja(); pintarMetas(false); toastDeshacer('Meta quitada del historial', snapM); return;
     }
     if (!metaSel) return;
     const m = metaSel;
@@ -2075,7 +2171,7 @@
       logradas.push(Object.assign({}, m, { fechaLograda: Date.now(), movId: mov.id })); guardarLogradas();
       cerrarHoja(); pintarMetas(false); pintarInicio(); toast('¡Meta lograda! 🏆');
     } else {
-      cerrarHoja(); pintarMetas(false); toast('Meta eliminada');
+      cerrarHoja(); pintarMetas(false); toastDeshacer('Meta eliminada', snapM);
     }
   };
 
@@ -2115,6 +2211,7 @@
 
   function toast(msg) {
     const t = $('toast'); t.textContent = msg; t.classList.add('on');
+    clearTimeout(toast._t2);
     clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), 2200);
   }
 
@@ -2378,6 +2475,96 @@
       else { vistaDeudas = 'activas'; pintarDeudas(); abrirVista('deudas'); }
     }, 280);
   });
+
+  /* =================== DESHACER =================== */
+  function foto() { return JSON.stringify({ movs, deudas, metas, logradas, catsData }); }
+  function restaurar(snap) {
+    const d = JSON.parse(snap);
+    movs = d.movs; guardar(movs); deudas = d.deudas; guardarDeudas();
+    metas = d.metas; guardarMetas(); logradas = d.logradas; guardarLogradas();
+    catsData = d.catsData; guardarCats();
+    pintarInicio();
+    if ($('movimientos').classList.contains('on')) pintarLista();
+    if ($('deudas').classList.contains('on')) pintarDeudas();
+    if ($('metas').classList.contains('on')) pintarMetas(false);
+    if ($('stats').classList.contains('on')) pintarStats();
+  }
+  function toastDeshacer(msg, snap) {
+    const t = $('toast');
+    t.innerHTML = `<span>${esc(msg)}</span><button type="button">Deshacer</button>`;
+    t.querySelector('button').onclick = () => {
+      clearTimeout(toast._t); t.classList.remove('on'); restaurar(snap);
+      setTimeout(() => toast('Listo, se deshizo'), 250);
+    };
+    t.classList.add('on');
+    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), 5500);
+  }
+
+  /* =================== FRECUENTES =================== */
+  // Se calculan solos: lo que registraste 2 veces o más (misma categoría y nombre), con el último monto usado
+  let frecs = [];
+  function pintarFrecuentes(tipo) {
+    const wrap = $('frecWrap');
+    if (!tipo) { wrap.hidden = true; return; }
+    const grupos = {};
+    movs.filter(m => m.tipo === tipo && !m.deudaId && !m.metaId && m.categoria).forEach(m => {
+      const k = m.categoria + '|' + m.nombre;
+      const g = grupos[k] || (grupos[k] = { categoria: m.categoria, nombre: m.nombre, n: 0, fecha: 0, monto: 0 });
+      g.n++; if (m.fecha > g.fecha) { g.fecha = m.fecha; g.monto = m.monto; }
+    });
+    frecs = Object.values(grupos).filter(g => g.n >= 2).sort((a, b) => b.n - a.n || b.fecha - a.fecha).slice(0, 8);
+    wrap.hidden = !frecs.length;
+    $('frecFila').innerHTML = frecs.map((f, i) => `<button type="button" class="frec" data-i="${i}"><b>${esc(f.nombre)}</b><small>${fmt(f.monto)}${f.nombre !== f.categoria ? ' · ' + esc(f.categoria) : ''}</small></button>`).join('');
+    $('frecFila').scrollLeft = 0;
+  }
+  $('frecFila').addEventListener('click', e => {
+    const b = e.target.closest('.frec'); if (!b) return;
+    const f = frecs[+b.dataset.i]; if (!f) return;
+    const sel = $('inCategoria');
+    if (![...sel.options].some(o => o.value === f.categoria)) sel.insertAdjacentHTML('beforeend', `<option value="${esc(f.categoria)}">${esc(f.categoria)}</option>`);
+    sel.value = f.categoria;
+    $('inNombre').value = f.nombre === f.categoria ? '' : f.nombre;
+    $('inMonto').value = String(f.monto);
+    $('inFecha').value = isoDia(Date.now());
+    $('frecFila').querySelectorAll('.frec').forEach(x => x.classList.toggle('on', x === b));
+    pintarPista();
+  });
+
+  /* =================== BORRAR TODOS LOS DATOS =================== */
+  let pasoBT = 1;
+  $('btnBorrarTodo').onclick = () => {
+    pasoBT = 1;
+    const n = movs.length, d = deudas.length, m = metas.length + logradas.length;
+    $('detBT').textContent = `Se borrarán ${n} movimiento${n === 1 ? '' : 's'}, ${d} deuda${d === 1 ? '' : 's'}, ${m} meta${m === 1 ? '' : 's'} y tus categorías personalizadas (vuelven las de siempre). Te recomendamos exportar un respaldo antes.`;
+    $('avisoBT').hidden = true; $('confirmarBT').textContent = 'Continuar';
+    cerrarHoja(); setTimeout(() => abrirHoja($('hojaBorrarTodo')), 280);
+  };
+  $('cancelarBT').onclick = cerrarHoja;
+  $('confirmarBT').onclick = () => {
+    if (pasoBT === 1) {
+      pasoBT = 2;
+      $('avisoBT').textContent = '¿Estás seguro? La app quedará como recién instalada.';
+      $('avisoBT').hidden = false; $('confirmarBT').textContent = 'Sí, borrar todo';
+      return;
+    }
+    const snap = foto();
+    movs = []; guardar(movs); deudas = []; guardarDeudas(); metas = []; guardarMetas(); logradas = []; guardarLogradas();
+    catsData = {
+      ingreso: CATS_DEF.ingreso.map(n => ({ id: idCat(), nombre: n })),
+      gasto: CATS_DEF.gasto.map(n => ({ id: idCat(), nombre: n, presupuesto: 0 }))
+    }; guardarCats();
+    try { [KEY_RESP, KEY_AV_RESP, KEY_AV_DEU].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+    escribir(KEY_PRIMER, Date.now());
+    cerrarHoja();
+    ['movimientos', 'deudas', 'metas', 'stats'].forEach(v => $(v).classList.remove('on'));
+    $('inicio').classList.remove('off');
+    pintarInicio();
+    setTimeout(() => toastDeshacer('Se borraron todos los datos', snap), 300);
+  };
+
+  /* =================== GUÍA =================== */
+  $('abrirGuia').onclick = () => { $('hojaGuia').querySelector('.scroll').scrollTop = 0; abrirHoja($('hojaGuia')); };
+  $('cerrarGuia').onclick = cerrarHoja;
 
   /* ---------- Sin zoom (pellizco) ---------- */
   ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
