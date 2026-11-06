@@ -724,7 +724,7 @@
     <div class="segmento" id="segSueldo" data-t="Sueldo" style="grid-template-columns:repeat(2,1fr)">
       <span class="indicador" style="width:calc((100% - 8px) / 2);transform:translateX(0);background:var(--green-soft)"></span>
       <button data-t="Sueldo" class="on" style="color:var(--green)">Sueldo Principal</button>
-      <button data-t="Segundo sueldo">Sueldo 2do trabajo</button>
+      <button data-t="Segundo sueldo">Segundo Sueldo</button>
     </div>
     <div class="scroll-stats" id="scrollSueldos"></div>
   </section>
@@ -1109,7 +1109,7 @@
       </div></details>
       <details><summary>📊 Estadísticas y presupuestos</summary><div class="cuerpo">
         <p>El gráfico muestra en qué categorías se va (o de dónde viene) tu dinero. Toca una categoría para ver sus movimientos.</p>
-        <p><b>💼 Sueldos</b> muestra cada sueldo cobrado (Principal y 2do trabajo) en un gráfico, y cuánto subió o bajó respecto al anterior.</p>
+        <p><b>💼 Sueldos</b> muestra cada sueldo cobrado (Principal y Segundo Sueldo) en un gráfico, y cuánto subió o bajó respecto al anterior.</p>
         <p>En <b>Administrar categorías</b> puedes crear, renombrar o borrar categorías y ponerles un <b>presupuesto mensual</b>: la barra se pone amarilla al 80% y roja si te pasas.</p>
       </div></details>
       <details><summary>💾 Datos y respaldo</summary><div class="cuerpo">
@@ -2032,7 +2032,7 @@
     seg.querySelectorAll('button').forEach(b => { const on = b.dataset.t === catSueldo; b.classList.toggle('on', on); b.style.color = on ? 'var(--green)' : ''; });
     seg.querySelector('.indicador').style.transform = catSueldo === 'Sueldo' ? 'translateX(0)' : 'translateX(100%)';
     const lista = movs.filter(m => m.tipo === 'ingreso' && m.categoria === catSueldo).sort((a, b) => a.fecha - b.fecha);   // todo el historial
-    const sub = catSueldo === 'Sueldo' ? 'Sueldo Principal' : 'Sueldo 2do trabajo';
+    const sub = catSueldo === 'Sueldo' ? 'Sueldo Principal' : 'Segundo Sueldo';
     const cont = $('scrollSueldos');
     if (!lista.length) {
       cont.innerHTML = `<div class="tarjeta"><div class="sub-sueldo">${sub}</div><div class="sin-datos">Aún no hay sueldos registrados.<br>Registra un ingreso con la categoría <b>${esc(catSueldo)}</b>.</div></div>`;
@@ -2050,7 +2050,7 @@
       </div>`).join('');
     const hist = lista.map((m, i) => ({ m, i })).reverse().map(({ m, i }) => `
       <div class="hist-s">
-        <div class="info"><b>${ordinal(i + 1)} sueldo</b><small>${fmtFecha(m.fecha)}${m.nombre !== m.categoria ? ' · ' + esc(m.nombre) : ''}</small></div>
+        <div class="info"><b>${ordinal(i + 1)} sueldo</b><small>${fmtFecha(m.fecha)}</small></div>
         <div class="der"><b class="pos">${fmt(m.monto)}</b>${compHtml(m.monto, i > 0 ? lista[i - 1].monto : 0)}</div>
       </div>`).join('');
     cont.innerHTML = `
