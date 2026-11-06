@@ -628,9 +628,33 @@
   @keyframes rebote-r { 0% { transform: scaleY(1); } 30% { transform: scaleY(1.45); } 62% { transform: scaleY(.8); } 82% { transform: scaleY(1.05); } 100% { transform: scaleY(1); } }
   @keyframes aparece { to { opacity: 1; transform: translate(-50%, 0); } }
   @media (prefers-reduced-motion: reduce) { #splash .b, #splash .nombre-app { animation: none; opacity: 1; } }
+
+  /* ---------- Solo vertical: en horizontal se pide girar el iPhone ---------- */
+  #girar { display: none; }
+  @media (orientation: landscape) and (max-height: 500px) {
+    #girar {
+      display: flex; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 300;
+      background: var(--bg); flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+      padding: 20px env(safe-area-inset-right) 20px env(safe-area-inset-left); text-align: center;
+    }
+  }
+  #girar .tel { width: 46px; height: 78px; border: 3px solid var(--text); border-radius: 10px; position: relative; animation: girar-tel 2.2s ease-in-out infinite; }
+  #girar .tel::after { content: ''; position: absolute; left: 50%; bottom: 5px; width: 12px; height: 3px; margin-left: -6px; border-radius: 2px; background: var(--text); }
+  #girar b { font-size: 20px; font-weight: 700; }
+  #girar small { font-size: 14px; color: var(--muted); }
+  #girar .mini { display: flex; gap: 5px; align-items: flex-end; height: 26px; margin-bottom: 4px; }
+  #girar .mini i { width: 11px; border-radius: 6px; display: block; }
+  @keyframes girar-tel { 0%, 15% { transform: rotate(-90deg); } 45%, 85% { transform: rotate(0deg); } 100% { transform: rotate(-90deg); } }
 </style>
 </head>
 <body>
+  <!-- Se muestra solo si el iPhone está en horizontal -->
+  <div id="girar" aria-live="polite">
+    <div class="mini"><i style="height:26px;background:#5fbf6a"></i><i style="height:17px;background:#e0574f"></i></div>
+    <div class="tel"></div>
+    <b>Gira tu iPhone a vertical</b>
+    <small>Cuadre está diseñada para usarse en vertical.</small>
+  </div>
   <!-- Animación de entrada: continúa la imagen de carga del iPhone -->
   <div id="splash" aria-hidden="true">
     <div class="logo"><span class="b g"></span><span class="b r"></span></div>
