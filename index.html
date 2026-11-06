@@ -66,12 +66,13 @@
   .scroll-stats { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; margin: 12px -22px 0; padding: 0 22px 24px; }
   .tarjeta { background: var(--surface); border-radius: 20px; padding: 18px; margin-bottom: 14px; }
   .tarjeta h4 { font-size: 13px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
-  .dona-wrap { position: relative; width: 190px; height: 190px; margin: 2px auto 16px; }
+  .dona-wrap { position: relative; width: 230px; height: 230px; margin: 2px auto 16px; }
   .dona-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
   .dona-wrap circle { transition: stroke-dasharray .7s cubic-bezier(.2,.8,.2,1), stroke-dashoffset .7s cubic-bezier(.2,.8,.2,1); }
   .dona-centro { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
   .dona-centro small { font-size: 12.5px; color: var(--muted); }
-  .dona-centro b { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .dona-centro .cifra { width: 128px; height: 34px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 2px; }
+  .dona-centro b { display: inline-block; white-space: nowrap; font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
   .leyenda-fila {
     display: flex; align-items: center; gap: 10px; padding: 10px 2px; border-top: 1px solid var(--surface-2);
     background: none; border-left: 0; border-right: 0; border-bottom: 0; width: 100%; color: var(--text); text-align: left; font-family: inherit;
@@ -120,8 +121,12 @@
   .per-next:disabled { opacity: .25; }
   .per-label { padding: 0 4px; font-size: 14.5px; font-weight: 600; min-width: 128px; }
   .periodo.todo .per-todo, .periodo:not(.todo) .per-mes { background: var(--surface-2); color: var(--text); }
-  #inicio .periodo { margin-top: 18px; }
-  #inicio .balance { margin-top: 14px; }
+  #inicio { padding-top: calc(var(--safe-top) + 14px); padding-bottom: calc(var(--safe-bottom) * .6 + 6px); }
+  #inicio .periodo { margin-top: 12px; }
+  #inicio .balance { margin-top: 8px; }
+  #inicio .monto-wrap { height: 84px; }
+  #inicio .barras { margin-top: 16px; }
+  #inicio .links { margin-top: 10px; }
 
   /* Fila de Movimientos: periodo + buscador */
   .fila-filtros { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; min-height: 40px; }
@@ -244,10 +249,10 @@
   #inicio.off { transform: translateX(-25%); opacity: .4; }
 
   /* ---------- Inicio ---------- */
-  .acciones { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+  .acciones { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }
   .pill {
-    border: 0; border-radius: 999px; height: 62px;
-    font-size: 21px; font-weight: 600; color: #fff;
+    border: 0; border-radius: 999px; height: 52px;
+    font-size: 19px; font-weight: 600; color: #fff;
     transition: transform .1s, filter .1s;
   }
   .pill:active { transform: scale(.96); filter: brightness(.92); }
@@ -499,9 +504,10 @@
     position: fixed; left: 16px; right: 16px; bottom: calc(var(--safe-bottom) + 14px); z-index: 30;
     background: var(--surface-2); border-radius: 16px; padding: 12px 12px 12px 16px;
     display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.4);
-    transform: translateY(160%); transition: transform .35s cubic-bezier(.2,.8,.2,1);
+    transform: translateY(calc(100% + var(--safe-bottom) + 40px)); opacity: 0; visibility: hidden;
+    transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .25s, visibility 0s .35s;
   }
-  .update.on { transform: translateY(0); }
+  .update.on { transform: translateY(0); opacity: 1; visibility: visible; transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .25s; }
   .update span { flex: 1; font-size: 15px; }
   .update button { border: 0; border-radius: 10px; background: var(--green); color: #fff; font-size: 15px; font-weight: 600; padding: 10px 14px; }
 
@@ -595,9 +601,9 @@
       <div class="per-mes"><button class="per-prev" aria-label="Mes anterior">‹</button><button class="per-label"></button><button class="per-next" aria-label="Mes siguiente">›</button></div>
     </div>
     <div class="segmento" id="segStats" data-t="gasto" style="grid-template-columns:repeat(2,1fr)">
-      <span class="indicador" style="width:calc((100% - 8px) / 2);transform:translateX(0)"></span>
-      <button data-t="gasto" class="on">Gastos</button>
+      <span class="indicador" style="width:calc((100% - 8px) / 2);transform:translateX(100%)"></span>
       <button data-t="ingreso">Ingresos</button>
+      <button data-t="gasto" class="on">Gastos</button>
     </div>
     <div class="scroll-stats" id="scrollStats">
       <div class="tarjeta">
@@ -860,9 +866,9 @@
     <div class="agarre"></div>
     <h3>Categorías</h3>
     <div class="segmento" id="segCats" data-t="gasto" style="grid-template-columns:repeat(2,1fr);margin-bottom:14px">
-      <span class="indicador" style="width:calc((100% - 8px) / 2);transform:translateX(0)"></span>
-      <button data-t="gasto" class="on">Gastos</button>
+      <span class="indicador" style="width:calc((100% - 8px) / 2);transform:translateX(100%)"></span>
       <button data-t="ingreso">Ingresos</button>
+      <button data-t="gasto" class="on">Gastos</button>
     </div>
     <div class="scroll" id="listaCats"></div>
     <button type="button" class="btn sec full" id="cerrarCats" style="margin-top:6px">Listo</button>
@@ -1051,8 +1057,8 @@
     const debo = r2(act.filter(d => d.tipo === 'debo').reduce((a, d) => a + pendienteDe(d), 0));
     const meDeben = r2(act.filter(d => d.tipo === 'medeben').reduce((a, d) => a + pendienteDe(d), 0));
     const partes = [];
-    if (debo > 0) partes.push(`Debes <b class="neg">${fmt(debo)}</b>`);
     if (meDeben > 0) partes.push(`Te deben <b class="pos">${fmt(meDeben)}</b>`);
+    if (debo > 0) partes.push(`Debes <b class="neg">${fmt(debo)}</b>`);
     $('resDeudas').hidden = !partes.length;
     $('resDeudas').innerHTML = partes.join(' · ');
 
@@ -1099,10 +1105,9 @@
     chips.className = 'chips ' + fTipo; chips.dataset.t = fTipo;
     chips.innerHTML =
       `<button class="chip ${fCat === null ? 'on' : ''}" data-c="">Todas <span class="n">${delTipo.length}</span></button>` +
-      cats.map(c => {
-        const n = delTipo.filter(m => m.categoria === c).length;
-        return `<button class="chip ${fCat === c ? 'on' : ''} ${n ? '' : 'cero'}" data-c="${c}">${c} <span class="n">${n}</span></button>`;
-      }).join('');
+      cats.map(c => ({ c, n: delTipo.filter(m => m.categoria === c).length }))
+        .sort((a, b) => b.n - a.n || a.c.localeCompare(b.c, 'es', { sensitivity: 'base' }))
+        .map(({ c, n }) => `<button class="chip ${fCat === c ? 'on' : ''} ${n ? '' : 'cero'}" data-c="${esc(c)}">${esc(c)} <span class="n">${n}</span></button>`).join('');
     chips.scrollLeft = x;
     wrap.classList.add('on');
   }
@@ -1669,17 +1674,17 @@
     if (!filas.length) {
       $('cuerpoDona').innerHTML = `<div class="sin-datos">No hay ${ing ? 'ingresos' : 'gastos'}${periodo === 'todo' ? '' : ' en ' + nombreMes(periodo)}.</div>`;
     } else {
-      const R = 70, C = 2 * Math.PI * R, gap = filas.length > 1 ? 2 : 0;
+      const R = 76, C = 2 * Math.PI * R, gap = filas.length > 1 ? 2 : 0;
       let acc = 0;
       const arcos = filas.map(([c, v]) => {
         const len = Math.max(0, (v / total) * C - gap);
-        const arco = `<circle cx="95" cy="95" r="${R}" fill="none" stroke="${colorCat(tipoStats, c)}" stroke-width="24" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-acc}"/>`;
+        const arco = `<circle cx="95" cy="95" r="${R}" fill="none" stroke="${colorCat(tipoStats, c)}" stroke-width="20" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-acc}"/>`;
         acc += (v / total) * C; return arco;
       }).join('');
       $('cuerpoDona').innerHTML = `
         <div class="dona-wrap">
-          <svg viewBox="0 0 190 190"><circle cx="95" cy="95" r="${R}" fill="none" stroke="var(--bg)" stroke-width="24"/>${arcos}</svg>
-          <div class="dona-centro"><small>Total ${ing ? 'ingresos' : 'gastos'}</small><b class="${ing ? 'pos' : 'neg'}">${fmt(total)}</b></div>
+          <svg viewBox="0 0 190 190"><circle cx="95" cy="95" r="${R}" fill="none" stroke="var(--bg)" stroke-width="20"/>${arcos}</svg>
+          <div class="dona-centro"><small>Total ${ing ? 'ingresos' : 'gastos'}</small><div class="cifra"><b id="donaTotal" class="${ing ? 'pos' : 'neg'}">${fmt(total)}</b></div></div>
         </div>` +
         filas.map(([c, v]) => `
           <button class="leyenda-fila" data-c="${esc(c)}">
@@ -1689,6 +1694,7 @@
             <span class="mt">${fmt(r2(v))}</span>
           </button>`).join('');
     }
+    if ($('donaTotal')) ajustar($('donaTotal'), 26);   // se achica si la cifra es muy larga
     pintarPresupuestos();
   }
 
