@@ -232,6 +232,43 @@
   .guia .intro { font-size: 14.5px; color: var(--muted); line-height: 1.5; margin: -6px 0 14px; }
   .opcion .ico.r { background: var(--red-soft); color: var(--red); }
 
+  /* ---------- Sueldos ---------- */
+  #sueldos { transform: translateX(100%); z-index: 2; }
+  #sueldos.on { transform: translateX(0); }
+  .btn-sueldos { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; font-family: inherit; color: var(--text);
+    background: linear-gradient(135deg, rgba(95,191,106,.16), var(--surface) 70%); border: 1px solid rgba(95,191,106,.22); border-radius: 18px; padding: 14px 16px; margin-bottom: 10px; }
+  .btn-sueldos .ic { font-size: 24px; }
+  .btn-sueldos b { display: block; font-size: 16px; font-weight: 600; }
+  .btn-sueldos small { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .btn-sueldos svg { margin-left: auto; color: var(--muted); flex-shrink: 0; }
+  .sub-sueldo { font-size: 13px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: var(--green); margin-bottom: 4px; }
+  .comp { display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .comp span { color: var(--muted); font-weight: 500; font-size: 14px; }
+  .comp.sube { color: var(--green); } .comp.baja { color: var(--red); } .comp.igual { color: var(--muted); }
+  .graf-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 14px -18px 0; padding: 0 18px; scrollbar-width: none; }
+  .graf-wrap::-webkit-scrollbar { display: none; }
+  .graf { display: flex; align-items: flex-end; gap: 12px; height: 230px; min-width: 100%; }
+  .bs { flex: 1 0 58px; max-width: 90px; display: flex; flex-direction: column; align-items: center; height: 100%; }
+  .bs .mt { font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; margin-bottom: 5px; white-space: nowrap; }
+  .bs .pista-b { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; min-height: 0; }
+  .bs .barra-s { width: 34px; height: 0; border-radius: 10px 10px 6px 6px; background: linear-gradient(180deg, #6fd27b, #4aa856); transition: height .7s cubic-bezier(.2,.8,.2,1); min-height: 4px; }
+  .bs.reciente .barra-s { box-shadow: 0 0 0 2px rgba(111,210,123,.35); }
+  .bs .lb { margin-top: 8px; font-size: 11.5px; font-weight: 600; text-align: center; line-height: 1.25; white-space: nowrap; }
+  .bs .lb small { display: block; font-weight: 500; color: var(--muted); }
+  .resumen-s { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+  .resumen-s div { background: var(--bg); border-radius: 12px; padding: 10px; text-align: center; }
+  .resumen-s small { display: block; font-size: 11.5px; color: var(--muted); }
+  .resumen-s b { display: block; font-size: 15px; font-weight: 700; margin-top: 3px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hist-s { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-top: 1px solid var(--surface-2); }
+  .hist-s:first-of-type { border-top: 0; padding-top: 2px; }
+  .hist-s .info { flex: 1; min-width: 0; }
+  .hist-s .info b { display: block; font-size: 15px; font-weight: 600; }
+  .hist-s .info small { display: block; font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .hist-s .der { text-align: right; }
+  .hist-s .der b { display: block; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .hist-s .der .comp { justify-content: flex-end; font-size: 12.5px; margin-top: 2px; }
+  .hist-s .der .comp span { font-size: 12px; }
+
   /* ---------- Metas ---------- */
   .disp {
     background: linear-gradient(135deg, rgba(95,191,106,.18), rgba(95,191,106,.05));
@@ -664,11 +701,32 @@
         <h4 id="tituloPpto">Presupuestos</h4>
         <div id="cuerpoPpto"></div>
       </div>
+      <button class="btn-sueldos" id="abrirSueldos">
+        <span class="ic">💼</span>
+        <span><b>Sueldos</b><small>Historial de tus sueldos y cuánto cambian</small></span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
       <button class="btn sec full" id="abrirCats" style="margin-bottom:6px">
         Administrar categorías y presupuestos
       </button>
       <button class="link-guia" id="abrirGuia">¿Cómo funciona Cuadre?</button>
     </div>
+  </section>
+
+  <!-- ========== SUELDOS ========== -->
+  <section class="view" id="sueldos" aria-hidden="true">
+    <div class="top">
+      <button class="back" id="cerrarSueldos">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <h2>Sueldos</h2>
+    </div>
+    <div class="segmento" id="segSueldo" data-t="Sueldo" style="grid-template-columns:repeat(2,1fr)">
+      <span class="indicador" style="width:calc((100% - 8px) / 2);transform:translateX(0);background:var(--green-soft)"></span>
+      <button data-t="Sueldo" class="on" style="color:var(--green)">Sueldo Principal</button>
+      <button data-t="Segundo sueldo">Sueldo 2do trabajo</button>
+    </div>
+    <div class="scroll-stats" id="scrollSueldos"></div>
   </section>
 
   <!-- ========== METAS ========== -->
@@ -1051,6 +1109,7 @@
       </div></details>
       <details><summary>📊 Estadísticas y presupuestos</summary><div class="cuerpo">
         <p>El gráfico muestra en qué categorías se va (o de dónde viene) tu dinero. Toca una categoría para ver sus movimientos.</p>
+        <p><b>💼 Sueldos</b> muestra cada sueldo cobrado (Principal y 2do trabajo) en un gráfico, y cuánto subió o bajó respecto al anterior.</p>
         <p>En <b>Administrar categorías</b> puedes crear, renombrar o borrar categorías y ponerles un <b>presupuesto mensual</b>: la barra se pone amarilla al 80% y roja si te pasas.</p>
       </div></details>
       <details><summary>💾 Datos y respaldo</summary><div class="cuerpo">
@@ -1087,6 +1146,7 @@
   const KEY_CATS = 'cuadre_categorias_v1';
   const CATS_DEF = { ingreso: ['Sueldo', 'Segundo sueldo', 'Otros'], gasto: ['Housing', 'Super', 'Comida', 'Entretenimiento', 'Ropa', 'Otros'] };
   const RESERVADAS = ['deuda', 'meta'];
+  const FIJAS = ['Otros', 'Sueldo', 'Segundo sueldo', 'Housing'];   // no se pueden renombrar ni eliminar
   const idCat = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
   let catsData;
   try { catsData = JSON.parse(localStorage.getItem(KEY_CATS) || 'null'); } catch (e) { catsData = null; }
@@ -1883,10 +1943,11 @@
   });
   function abrirCat(c) {
     catEdit = c; borrandoCat = false;
-    const g = tipoCats === 'gasto', otros = c && c.nombre === 'Otros';
+    const g = tipoCats === 'gasto', otros = c && FIJAS.includes(c.nombre);
     $('tituloCat').textContent = c ? 'Editar categoría' : `Nueva categoría de ${g ? 'gasto' : 'ingreso'}`;
     $('cNombre').value = c ? c.nombre : ''; $('cNombre').disabled = otros;
     $('notaOtros').hidden = !otros;
+    if (otros) $('notaOtros').textContent = `«${c.nombre}» es fija: no se puede renombrar ni eliminar.` + (g ? ' Sí puedes cambiar su presupuesto.' : '');
     $('campoPpto').hidden = !g;
     $('cPpto').value = c && c.presupuesto > 0 ? String(c.presupuesto) : '';
     $('borrarCat').hidden = !c || otros;
@@ -1941,6 +2002,78 @@
     catsData[tipoCats] = catsData[tipoCats].filter(c => c !== catEdit);
     guardarCats(); toast('Categoría eliminada'); volverACats();
   };
+
+  /* =================== SUELDOS =================== */
+  let catSueldo = 'Sueldo';
+  const ordinal = n => {
+    const u = n % 10, d = n % 100;
+    const suf = (d === 11 || d === 12) ? 'vo' : { 1: 'er', 2: 'do', 3: 'er', 4: 'to', 5: 'to', 6: 'to', 7: 'mo', 8: 'vo', 9: 'no', 0: 'mo' }[u];
+    return n + suf;
+  };
+  function compHtml(actual, anterior) {
+    if (!(anterior > 0)) return '<div class="comp igual">Primer registro</div>';
+    const pct = ((actual - anterior) / anterior) * 100;
+    const r = Math.round(pct * 10) / 10;
+    const cls = r > 0 ? 'sube' : r < 0 ? 'baja' : 'igual';
+    const ico = r > 0 ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>'
+      : r < 0 ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l6 6 4-4 8 8M15 17h6v-6"/></svg>'
+      : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12h16"/></svg>';
+    const txt = (r > 0 ? '+' : '') + r.toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+    return `<div class="comp ${cls}">${ico}${txt} <span>vs anterior</span></div>`;
+  }
+  $('abrirSueldos').onclick = () => { pintarSueldos(); $('sueldos').classList.add('on'); };
+  $('cerrarSueldos').onclick = () => $('sueldos').classList.remove('on');
+  $('segSueldo').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || b.dataset.t === catSueldo) return;
+    catSueldo = b.dataset.t; pintarSueldos();
+  });
+  function pintarSueldos() {
+    const seg = $('segSueldo'); seg.dataset.t = catSueldo;
+    seg.querySelectorAll('button').forEach(b => { const on = b.dataset.t === catSueldo; b.classList.toggle('on', on); b.style.color = on ? 'var(--green)' : ''; });
+    seg.querySelector('.indicador').style.transform = catSueldo === 'Sueldo' ? 'translateX(0)' : 'translateX(100%)';
+    const lista = movs.filter(m => m.tipo === 'ingreso' && m.categoria === catSueldo).sort((a, b) => a.fecha - b.fecha);   // todo el historial
+    const sub = catSueldo === 'Sueldo' ? 'Sueldo Principal' : 'Sueldo 2do trabajo';
+    const cont = $('scrollSueldos');
+    if (!lista.length) {
+      cont.innerHTML = `<div class="tarjeta"><div class="sub-sueldo">${sub}</div><div class="sin-datos">Aún no hay sueldos registrados.<br>Registra un ingreso con la categoría <b>${esc(catSueldo)}</b>.</div></div>`;
+      return;
+    }
+    const max = Math.max(...lista.map(m => m.monto));
+    const total = r2(lista.reduce((a, m) => a + m.monto, 0));
+    const ult = lista[lista.length - 1], ant = lista[lista.length - 2];
+    const dia = ts => new Date(ts).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' }).replace('.', '');
+    const barras = lista.map((m, i) => `
+      <div class="bs ${i === lista.length - 1 ? 'reciente' : ''}">
+        <div class="mt">${fmt(m.monto)}</div>
+        <div class="pista-b"><div class="barra-s" data-h="${(m.monto / max) * 100}"></div></div>
+        <div class="lb">${ordinal(i + 1)} sueldo<small>(${dia(m.fecha)})</small></div>
+      </div>`).join('');
+    const hist = lista.map((m, i) => ({ m, i })).reverse().map(({ m, i }) => `
+      <div class="hist-s">
+        <div class="info"><b>${ordinal(i + 1)} sueldo</b><small>${fmtFecha(m.fecha)}${m.nombre !== m.categoria ? ' · ' + esc(m.nombre) : ''}</small></div>
+        <div class="der"><b class="pos">${fmt(m.monto)}</b>${compHtml(m.monto, i > 0 ? lista[i - 1].monto : 0)}</div>
+      </div>`).join('');
+    cont.innerHTML = `
+      <div class="tarjeta">
+        <div class="sub-sueldo">${sub}</div>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <div><small style="color:var(--muted);font-size:13px">Último sueldo</small><div style="font-size:28px;font-weight:700" class="pos">${fmt(ult.monto)}</div></div>
+          ${compHtml(ult.monto, ant ? ant.monto : 0)}
+        </div>
+        <div class="graf-wrap" id="grafWrap"><div class="graf">${barras}</div></div>
+        <div class="resumen-s">
+          <div><small>Total cobrado</small><b>${fmt(total)}</b></div>
+          <div><small>Promedio</small><b>${fmt(r2(total / lista.length))}</b></div>
+          <div><small>Más alto</small><b>${fmt(max)}</b></div>
+        </div>
+      </div>
+      <div class="tarjeta">
+        <h4>Sueldo por sueldo</h4>
+        ${hist}
+      </div>`;
+    const gw = $('grafWrap'); gw.scrollLeft = gw.scrollWidth;
+    requestAnimationFrame(() => requestAnimationFrame(() => cont.querySelectorAll('.barra-s').forEach(b => { b.style.height = b.dataset.h + '%'; })));
+  }
 
   /* =================== METAS =================== */
   /* La ganancia (ingresos − gastos) llena las metas en orden: la de arriba primero. */
