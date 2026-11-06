@@ -269,6 +269,12 @@
   .hist-s .der .comp { justify-content: flex-end; font-size: 12.5px; margin-top: 2px; }
   .hist-s .der .comp span { font-size: 12px; }
 
+  .item.deuda .persona .vence { color: var(--muted); }
+  .item.deuda .persona .vence.hoy { color: #e8b23d; }
+  .item.deuda .persona .vence.vencida { color: var(--red); }
+  .aviso-card .acc { display: flex; gap: 16px; flex-wrap: wrap; }
+  .aviso-card .acc button { margin-top: 8px; }
+
   /* ---------- Metas ---------- */
   .disp {
     background: linear-gradient(135deg, rgba(95,191,106,.18), rgba(95,191,106,.05));
@@ -927,6 +933,10 @@
       <span id="lblPersona">¿A quién le debes?</span>
       <input id="dPersona" type="text" maxlength="30" placeholder="Nombre de la persona" enterkeyhint="next">
     </label>
+    <label class="campo">
+      <span id="lblFechaPago">¿Cuándo piensas pagar?</span>
+      <input id="dFechaPago" type="date">
+    </label>
     <label class="campo monto">
       <span>Monto ($)</span>
       <input id="dMonto" type="text" inputmode="decimal" placeholder="0.00" enterkeyhint="done">
@@ -957,13 +967,27 @@
         <button type="button" class="btn rojo" id="btnContinuarGasto">Continuar</button>
       </div>
     </div>
+    <div id="detDeudaFecha" hidden>
+      <label class="campo">
+        <span id="lblNuevaFecha">Nueva fecha de pago</span>
+        <input id="dNuevaFecha" type="date">
+      </label>
+      <div class="error" id="errFecha"></div>
+      <div class="botones">
+        <button type="button" class="btn sec" id="btnCancelarFecha">Cancelar</button>
+        <button type="button" class="btn verde" id="btnGuardarFecha">Guardar fecha</button>
+      </div>
+    </div>
     <div class="acciones-deuda" id="detDeudaPaso1">
       <button type="button" class="btn full" id="btnSaldar"></button>
       <div class="fila">
         <button type="button" class="btn sec" id="btnAbono">Registrar abono</button>
-        <button type="button" class="btn sec borrar-deuda" id="btnBorrarDeuda">Eliminar</button>
+        <button type="button" class="btn sec" id="btnFechaDeuda">📅 Cambiar fecha</button>
       </div>
-      <button type="button" class="btn sec full" id="btnCerrarDeuda">Cerrar</button>
+      <div class="fila">
+        <button type="button" class="btn sec borrar-deuda" id="btnBorrarDeuda">Eliminar</button>
+        <button type="button" class="btn sec" id="btnCerrarDeuda">Cerrar</button>
+      </div>
     </div>
     <div id="detDeudaAbono" hidden>
       <label class="campo monto">
@@ -1102,6 +1126,7 @@
         <p><b>Me deben</b> (tú prestaste): al crearla se resta de tu ganancia; cuando te pagan, vuelve a sumarse.</p>
         <p><b>Debo</b> (alguien pagó algo por ti): al crearla <b>no cambia</b> tu ganancia. Al marcar <b>Ya pagué</b>, indicas cuánto de ese préstamo gastaste y solo eso se registra como gasto.</p>
         <p>Puedes registrar <b>abonos</b> (pagos parciales). Las deudas pagadas pasan a <b>Cerradas</b>.</p>
+        <p>Al crear una deuda eliges <b>la fecha de pago</b>. Ese día (y mientras siga pendiente) la app te avisa al abrirla: puedes marcar <b>Ya se pagó</b> o elegir una <b>nueva fecha</b>.</p>
       </div></details>
       <details><summary>🎯 Metas</summary><div class="cuerpo">
         <p>Tu ganancia total llena tus metas <b>de arriba hacia abajo</b>: primero la #1, luego la #2… </p>
@@ -1601,6 +1626,11 @@
       return `<div class="seccion"><span>${titulo}</span>${cab}</div>` +
         (lista.length ? lista.map(d => {
           let sub = esc(d.persona);
+          if (activas && d.fechaPago) {
+            const dd = diasHasta(d.fechaPago);
+            sub += dd < 0 ? ` <span class="vence vencida">· vencida (${diaCorto(d.fechaPago)})</span>`
+              : dd === 0 ? ` <span class="vence hoy">· vence hoy</span>` : ` <span class="vence">· vence ${diaCorto(d.fechaPago)}</span>`;
+          } else if (activas) sub += ` <span class="vence vencida">· sin fecha</span>`;
           if (activas && d.abonos && d.abonos.length) sub += ` <span class="estado">· abonado ${fmt(r2(abonadoDe(d)))} de ${fmt(d.monto)}</span>`;
           if (!activas) {
             sub += ` <span class="estado">· pagada ${fmtDia(d.fechaCierre || d.fecha)}</span>`;
@@ -1627,6 +1657,8 @@
     const debo = tipoDeuda === 'debo';
     $('tituloDeuda').textContent = debo ? 'Debo' : 'Me deben';
     $('lblPersona').textContent = debo ? '¿A quién le debes?' : '¿Quién te debe?';
+    $('lblFechaPago').textContent = debo ? '¿Cuándo piensas pagar?' : '¿Cuándo te pagarán?';
+    $('dFechaPago').value = ''; $('dFechaPago').min = isoDia(Date.now());
     $('infoDeuda').textContent = debo
       ? 'No cambia tu ganancia. Cuando pagues, indicarás cuánto de este préstamo gastaste y solo eso se registrará como gasto.'
       : 'Se registrará como gasto (Deuda) en Movimientos. Cuando te paguen, se registrará como ingreso.';
@@ -1648,8 +1680,11 @@
     if (!persona) { err(tipoDeuda === 'debo' ? 'Escribe a quién le debes.' : 'Escribe quién te debe.'); $('dPersona').focus(); return; }
     if (!(monto > 0)) { err('Escribe un monto mayor a 0.'); return; }
     if (monto > 999999999999) { err('El monto es demasiado grande.'); return; }
+    const fechaPago = $('dFechaPago').value;
+    if (!fechaPago) { err(tipoDeuda === 'debo' ? 'Elige cuándo piensas pagar.' : 'Elige cuándo te pagarán.'); return; }
+    if (fechaPago < isoDia(Date.now())) { err('La fecha de pago no puede ser pasada.'); return; }
     const m = r2(monto);
-    const d = { id: nuevoId(), tipo: tipoDeuda, estado: 'activa', nombre, persona, monto: m, fecha: Date.now() };
+    const d = { id: nuevoId(), tipo: tipoDeuda, estado: 'activa', nombre, persona, monto: m, fecha: Date.now(), fechaPago };
     if (tipoDeuda === 'medeben') {
       const mov = { id: nuevoId(), tipo: 'gasto', categoria: 'Deuda', nombre: `${nombre} · ${persona}`, monto: m, fecha: Date.now(), deudaId: d.id };
       d.movId = mov.id; movs.push(mov); guardar(movs);
@@ -1665,12 +1700,19 @@
     $('detDeudaPaso1').hidden = n !== 1;
     $('detDeudaGasto').hidden = n !== 'g';
     $('detDeudaAbono').hidden = n !== 'a';
+    $('detDeudaFecha').hidden = n !== 'f';
     $('detDeudaPaso2').hidden = n !== 2;
     $('detDeudaAviso').hidden = n !== 2;
   }
   $('listaDeudas').addEventListener('click', e => {
     const it = e.target.closest('.item.deuda'); if (!it) return;
     const d = deudas.find(x => x.id === it.dataset.id); if (!d) return;
+    abrirDeudaDetalle(d);
+  });
+  // Fechas de pago (AAAA-MM-DD)
+  function diasHasta(iso) { const [y, m, dd] = iso.split('-').map(Number); const h = new Date(); h.setHours(0, 0, 0, 0); return Math.round((new Date(y, m - 1, dd) - h) / 86400000); }
+  function diaCorto(iso) { const [y, m, dd] = iso.split('-').map(Number); return new Date(y, m - 1, dd).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' }).replace('.', ''); }
+  function abrirDeudaDetalle(d) {
     deudaSel = d; accion = null; gastado = null;
     const debo = d.tipo === 'debo', cerrada = d.estado === 'cerrada';
     $('detDeudaTitulo').textContent = d.nombre;
@@ -1679,6 +1721,13 @@
       <div class="ficha"><span>${debo ? 'Le debo a' : 'Me debe'}</span><b>${esc(d.persona)}</b></div>
       <div class="ficha"><span>Monto</span><b>${fmt(d.monto)}</b></div>
       <div class="ficha"><span>Desde</span><b>${fmtFecha(d.fecha)}</b></div>`;
+    if (!cerrada) {
+      if (d.fechaPago) {
+        const dd = diasHasta(d.fechaPago);
+        const est = dd < 0 ? `<span style="color:var(--red)"> · vencida hace ${-dd} día${dd === -1 ? '' : 's'}</span>` : dd === 0 ? '<span style="color:#e8b23d"> · hoy</span>' : ` · en ${dd} día${dd === 1 ? '' : 's'}`;
+        fichas += `<div class="ficha"><span>Fecha de pago</span><b>${diaCorto(d.fechaPago)}${est}</b></div>`;
+      } else fichas += `<div class="ficha"><span>Fecha de pago</span><b style="color:var(--red)">Sin fecha</b></div>`;
+    } else if (d.fechaPago) fichas += `<div class="ficha"><span>Fecha acordada</span><b>${diaCorto(d.fechaPago)}</b></div>`;
     const abonos = d.abonos || [];
     if (abonos.length && !cerrada) fichas += `<div class="ficha"><span>Pendiente</span><b class="${debo ? 'neg' : 'pos'}">${fmt(pendienteDe(d))}</b></div>`;
     if (cerrada) {
@@ -1692,12 +1741,13 @@
       abonos.map(x => `<div class="abono"><span>${fmtFecha(x.fecha)}</span><b>${fmt(x.monto)}</b></div>`).join('') + '</div>' : '');
     $('btnSaldar').hidden = cerrada;
     $('btnAbono').hidden = cerrada;
+    $('btnFechaDeuda').hidden = cerrada;
     $('btnSaldar').textContent = debo ? '✓ Ya pagué' : '✓ Ya me pagaron';
     $('btnSaldar').className = 'btn full ' + (debo ? 'rojo' : 'verde');
     $('btnBorrarDeuda').textContent = cerrada ? 'Quitar del historial' : 'Eliminar';
     detallePaso(1);
     abrirHoja($('hojaDeuda'));
-  });
+  }
   $('btnCerrarDeuda').onclick = cerrarHoja;
   $('btnCancelarPaso2').onclick = () => detallePaso(1);
   $('btnCancelarGasto').onclick = () => detallePaso(1);
@@ -1745,6 +1795,25 @@
     confirmarSaldo();
   };
   $('dGastado').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('btnContinuarGasto').click(); } });
+
+  // ----- Nueva fecha de pago -----
+  $('btnFechaDeuda').onclick = () => {
+    const d = deudaSel; if (!d) return;
+    $('lblNuevaFecha').textContent = d.tipo === 'debo' ? '¿Cuándo piensas pagar ahora?' : '¿Cuándo te pagarán ahora?';
+    $('dNuevaFecha').min = isoDia(Date.now());
+    $('dNuevaFecha').value = d.fechaPago && d.fechaPago >= isoDia(Date.now()) ? d.fechaPago : '';
+    $('errFecha').textContent = '';
+    detallePaso('f');
+  };
+  $('btnCancelarFecha').onclick = () => detallePaso(1);
+  $('btnGuardarFecha').onclick = () => {
+    const d = deudaSel; if (!d) return;
+    const v = $('dNuevaFecha').value;
+    if (!v) { $('errFecha').textContent = 'Elige una fecha.'; return; }
+    if (v < isoDia(Date.now())) { $('errFecha').textContent = 'La fecha no puede ser pasada.'; return; }
+    d.fechaPago = v; guardarDeudas();
+    cerrarHoja(); pintarDeudas(); toast('Nueva fecha de pago: ' + diaCorto(v));
+  };
 
   // ----- Abonos -----
   let abonoMonto = 0;
@@ -2433,6 +2502,7 @@
       if (!Array.isArray(lista)) throw 0;
       const dVal = (Array.isArray(d.deudas) ? d.deudas : []).filter(x => x && x.id && (x.tipo === 'debo' || x.tipo === 'medeben') && typeof x.nombre === 'string' && typeof x.persona === 'string' && +x.monto > 0)
         .map(x => ({ id: String(x.id), tipo: x.tipo, nombre: x.nombre.slice(0, 40), persona: x.persona.slice(0, 30), monto: Math.round(+x.monto * 100) / 100, fecha: +x.fecha || Date.now(), movId: x.movId ? String(x.movId) : undefined,
+          fechaPago: typeof x.fechaPago === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x.fechaPago) ? x.fechaPago : undefined,
           estado: x.estado === 'cerrada' ? 'cerrada' : 'activa', fechaCierre: +x.fechaCierre || undefined, gastado: x.gastado != null ? r2(+x.gastado) : undefined,
           abonos: Array.isArray(x.abonos) ? x.abonos.filter(a => a && +a.monto > 0).map(a => ({ monto: r2(+a.monto), fecha: +a.fecha || Date.now(), movId: a.movId ? String(a.movId) : undefined })) : undefined }));
       const dIds = new Set(deudas.map(x => x.id));
@@ -2558,9 +2628,9 @@
       orden.filter(m => ymDe(m.fecha) === ym && m.tipo === t).forEach(m => { const c = m.categoria || 'Sin categoría'; acc[c] = (acc[c] || 0) + m.monto; });
       Object.entries(acc).sort((a, b) => b[1] - a[1]).forEach(([c, v]) => porCat.push([mesLargo(ym), t === 'ingreso' ? 'Ingreso' : 'Gasto', c, r2(v)]));
     }));
-    const deu = [['Tipo', 'Nombre', 'Persona', 'Monto', 'Abonado', 'Pendiente', 'Estado', 'Desde', 'Cerrada', 'Gastado del préstamo']].concat(
+    const deu = [['Tipo', 'Nombre', 'Persona', 'Monto', 'Abonado', 'Pendiente', 'Estado', 'Desde', 'Fecha de pago', 'Cerrada', 'Gastado del préstamo']].concat(
       deudas.slice().sort((a, b) => a.fecha - b.fecha).map(d => [d.tipo === 'debo' ? 'Debo' : 'Me deben', d.nombre, d.persona, d.monto, r2(abonadoDe(d)),
-        d.estado === 'cerrada' ? 0 : pendienteDe(d), d.estado === 'cerrada' ? 'Cerrada' : 'Activa', isoDia(d.fecha), d.fechaCierre ? isoDia(d.fechaCierre) : '', d.gastado != null ? d.gastado : '']));
+        d.estado === 'cerrada' ? 0 : pendienteDe(d), d.estado === 'cerrada' ? 'Cerrada' : 'Activa', isoDia(d.fecha), d.fechaPago || '', d.fechaCierre ? isoDia(d.fechaCierre) : '', d.gastado != null ? d.gastado : '']));
     const rep = repartir(metas);
     const met = [['Meta', 'Monto', 'Avance', 'Estado', 'Prioridad', 'Creada', 'Lograda']].concat(
       metas.map((m, i) => [m.nombre, m.monto, rep[m.id] || 0, (rep[m.id] || 0) >= m.monto ? 'Completa' : 'En progreso', i + 1, isoDia(m.fecha), '']),
@@ -2569,7 +2639,7 @@
       { nombre: 'Resumen por mes', filas: resumen, anchos: [20, 14, 14, 14] },
       { nombre: 'Movimientos', filas: movRows, anchos: [12, 8, 10, 18, 30, 12, 12] },
       { nombre: 'Por categoría', filas: porCat, anchos: [20, 10, 20, 14] },
-      { nombre: 'Deudas', filas: deu, anchos: [10, 22, 18, 12, 12, 12, 10, 12, 12, 20] },
+      { nombre: 'Deudas', filas: deu, anchos: [10, 22, 18, 12, 12, 12, 10, 12, 14, 12, 20] },
       { nombre: 'Metas', filas: met, anchos: [22, 12, 12, 13, 10, 12, 12] }
     ];
   }
@@ -2599,16 +2669,26 @@
       avisos.push({ tipo: 'resp', ic: '💾', titulo: ultimo ? `Hace ${dias} días que no haces un respaldo` : 'Aún no has hecho ningún respaldo',
         texto: 'Guarda una copia de tus datos por si cambias de iPhone o borras la app.', accion: 'Hacer respaldo', marcar: () => escribir(KEY_AV_RESP, { ref, nivel }) });
     }
-    const vistos = leer(KEY_AV_DEU, {});
+    // Deudas: aviso el día acordado de pago (y cada día que siga pendiente). Si se cierra antes, no hay aviso.
+    const vistos = leer(KEY_AV_DEU, {}), hoyIso = isoDia(ahora);
     deudas.filter(d => d.estado !== 'cerrada').forEach(d => {
-      const sem = Math.floor((ahora - d.fecha) / (7 * 86400000));
-      if (sem >= 1 && (vistos[d.id] || 0) < sem) {
-        const debo = d.tipo === 'debo', monto = fmt(pendienteDe(d)), hace = sem === 1 ? '1 semana' : `${sem} semanas`;
-        avisos.push({ tipo: 'deuda', ic: debo ? '🔴' : '🟢',
-          titulo: debo ? `Le debes ${monto} a ${d.persona}` : `${d.persona} te debe ${monto}`,
-          texto: `«${d.nombre}» · desde hace ${hace}.`, accion: 'Ver deudas',
-          marcar: () => { const v = leer(KEY_AV_DEU, {}); v[d.id] = sem; escribir(KEY_AV_DEU, v); } });
+      const debo = d.tipo === 'debo', monto = fmt(pendienteDe(d));
+      if (!d.fechaPago) {
+        if (vistos[d.id + ':sinfecha']) return;
+        avisos.push({ tipo: 'deuda', deuda: d, ic: '📅', titulo: `«${d.nombre}» no tiene fecha de pago`,
+          texto: debo ? `Le debes ${monto} a ${d.persona}. Ponle una fecha para que te avisemos.` : `${d.persona} te debe ${monto}. Ponle una fecha para que te avisemos.`,
+          acciones: [['fecha', '📅 Poner fecha']],
+          marcar: () => { const v = leer(KEY_AV_DEU, {}); v[d.id + ':sinfecha'] = 1; escribir(KEY_AV_DEU, v); } });
+        return;
       }
+      if (hoyIso < d.fechaPago || vistos[d.id] === hoyIso) return;
+      const dd = diasHasta(d.fechaPago), cuando = dd === 0 ? 'hoy' : `el ${diaCorto(d.fechaPago)}`;
+      avisos.push({ tipo: 'deuda', deuda: d, ic: debo ? '🔴' : '🟢',
+        titulo: dd === 0 ? (debo ? `Hoy quedaste en pagarle ${monto} a ${d.persona}` : `Hoy ${d.persona} quedó en pagarte ${monto}`)
+                         : (debo ? `Debías pagarle ${monto} a ${d.persona} ${cuando}` : `${d.persona} debía pagarte ${monto} ${cuando}`),
+        texto: `«${d.nombre}»${dd < 0 ? ` · vencida hace ${-dd} día${dd === -1 ? '' : 's'}` : ''}. ¿Ya se pagó?`,
+        acciones: [['pagar', '✓ Ya se pagó'], ['fecha', '📅 Nueva fecha']],
+        marcar: () => { const v = leer(KEY_AV_DEU, {}); v[d.id] = hoyIso; escribir(KEY_AV_DEU, v); } });
     });
     return avisos;
   }
@@ -2621,7 +2701,9 @@
     $('listaAvisos').innerHTML = avisos.map((a, i) => `
       <div class="aviso-card">
         <span class="ic">${a.ic}</span>
-        <div class="tx"><b>${esc(a.titulo)}</b><small>${esc(a.texto)}</small><button data-i="${i}">${a.accion} →</button></div>
+        <div class="tx"><b>${esc(a.titulo)}</b><small>${esc(a.texto)}</small>${a.acciones
+          ? '<div class="acc">' + a.acciones.map(([k, t]) => `<button data-i="${i}" data-acc="${k}">${t}</button>`).join('') + '</div>'
+          : `<button data-i="${i}">${a.accion} →</button>`}</div>
       </div>`).join('');
     abrirHoja($('hojaAvisos'));
   }
@@ -2630,8 +2712,15 @@
     const b = e.target.closest('button[data-i]'); if (!b) return;
     const a = avisosMostrados[+b.dataset.i]; cerrarHoja();
     setTimeout(() => {
-      if (a.tipo === 'resp') { pintarUltimo(); abrirHoja($('hojaResp')); }
-      else { vistaDeudas = 'activas'; pintarDeudas(); abrirVista('deudas'); }
+      if (a.tipo === 'resp') { pintarUltimo(); abrirHoja($('hojaResp')); return; }
+      vistaDeudas = 'activas'; pintarDeudas(); abrirVista('deudas');
+      const d = a.deuda && deudas.find(x => x.id === a.deuda.id);
+      if (!d || d.estado === 'cerrada') return;
+      setTimeout(() => {
+        abrirDeudaDetalle(d);
+        if (b.dataset.acc === 'pagar') $('btnSaldar').click();       // Debo: pregunta cuánto gastaste; Me deben: confirma
+        else if (b.dataset.acc === 'fecha') $('btnFechaDeuda').click();
+      }, 380);
     }, 280);
   });
 
