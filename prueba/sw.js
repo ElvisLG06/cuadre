@@ -4,7 +4,7 @@
    - Una versión nueva solo se guarda si se descargó completa y es realmente la app.
    - Los movimientos NO están aquí: viven aparte en la memoria del iPhone.
    Cambia VERSION en cada actualización para que los iPhones la detecten. */
-const VERSION = 'cuadre-prueba-v1';
+const VERSION = 'cuadre-prueba-v2';
 const PREFIJO = VERSION.replace(/\d+$/, '');   // solo se borran copias viejas de ESTA app
 const OTRAS = [];                     // carpetas con otra app (versión de prueba): no tocarlas
 const ARCHIVOS = ['./', 'index.html', 'manifest.json', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
