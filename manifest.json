@@ -3,8 +3,8 @@
   "short_name": "Cuadre",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#1a1f2b",
-  "theme_color": "#1a1f2b",
+  "background_color": "#F2F3EF",
+  "theme_color": "#F2F3EF",
   "icons": [
     {
       "src": "icon-192.png",
