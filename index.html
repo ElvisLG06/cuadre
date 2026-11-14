@@ -2,6 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<script>/* Aplica el modo oscuro antes de pintar, para que no parpadee */
+(function () { try { var t = localStorage.getItem('cuadre_tema') || 'claro';
+  if (t === 'oscuro' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('oscuro'); } catch (e) {} })();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <title>Cuadre</title>
 <meta name="wyt-app" content="ok">
@@ -786,6 +790,55 @@
   .fila-apo .mt { font-size: 17px; font-weight: 700; color: var(--oro-txt); white-space: nowrap; font-variant-numeric: tabular-nums; }
   .fila-apo svg { color: #8A8F99; flex-shrink: 0; }
   .nota-apo { text-align: center; font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+
+  /* =================== MODO OSCURO =================== */
+  html.oscuro {
+    --bg: #14171D; --surface: #1E232C; --surface-2: #2A303B; --track: #262B34;
+    --text: #EEF0F3; --muted: #9AA1AD;
+    --green: #6BCB78; --green-soft: #1F3524; --red: #F08A80; --red-soft: #3A2120;
+    --oro: #D9AE52; --oro-soft: #2E2716; --oro-txt: #E2BC66;
+    --sombra: none;
+  }
+  html.oscuro .campo input[type="date"] { color-scheme: dark; }
+  html.oscuro .aviso { color: #F5A9A2; }
+  html.oscuro .velo { background: rgba(0,0,0,.55); }
+  html.oscuro .toast, html.oscuro .update { background: #2F3642; color: #EEF0F3; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+  html.oscuro .guia .cuerpo { color: #C4C9D4; }
+  html.oscuro .ppto-msg.warn, html.oscuro .item.deuda .persona .vence.hoy { color: #E8B23D; }
+  html.oscuro .logradas-t { color: #D9B64A; }
+  html.oscuro .opcion .ico.a { background: rgba(120,150,230,.16); color: #9DB2F0; }
+  html.oscuro .opcion .ico.x { background: rgba(91,141,239,.16); color: #8FB0F5; }
+  html.oscuro .agarre { background: #3A404B; }
+  html.oscuro .segmento .indicador { background: #343B48 !important; box-shadow: none; }
+  html.oscuro .periodo.todo .per-todo, html.oscuro .periodo:not(.todo) .per-mes { background: #343B48; box-shadow: none; }
+  html.oscuro .meta-card.dragging { background: #2A303B; }
+  html.oscuro .chip, html.oscuro .frec, html.oscuro .vacio-sec, html.oscuro .cat-agregar { border-color: #3A404B; }
+  html.oscuro .card-gan, html.oscuro #barras .barras, html.oscuro .fila-apo { background: var(--surface); }
+  html.oscuro .barra .sep { background: var(--surface); }
+  html.oscuro .ch.ing { background: #1F3524; color: #7FD38A; }
+  html.oscuro .ch.gas { background: #3A2120; color: #F08A80; }
+  html.oscuro .bc.mov { background: #1B2A2F; }
+  html.oscuro .bc-pie small { color: #8FB3BA; } html.oscuro .bc-pie b { color: #8FC3CE; }
+  html.oscuro #sparkLinea { stroke: #6FB3C2; } html.oscuro #relleno stop { stop-color: #6FB3C2; }
+  html.oscuro .bc.deu { background: #2E2120; } html.oscuro .bc-lin { color: #C9A39E; }
+  html.oscuro .bc-lin b.pos { color: #7FD38A; } html.oscuro .bc-lin b.neg { color: #F08A80; }
+  html.oscuro .bc.est { background: #23262B; } html.oscuro .bc-dona { color: #AEB3BC; }
+  html.oscuro .bc-dona svg circle:first-child { stroke: #353A44; }
+  html.oscuro .bc.met { background: #23243A; } html.oscuro .met-top small { color: #A9ABCF; } html.oscuro .met-lin b { color: #A8ABF5; }
+  html.oscuro .bc.met .mini-bar { background: #34365A; } html.oscuro .bc.met .mini-bar i { background: #8A8FF0; }
+  html.oscuro .apo-mid b small, html.oscuro .apo-mid span, html.oscuro .apo-pie, html.oscuro .apo-res small, html.oscuro .apo-res .pct { color: #C9B17A; }
+  html.oscuro .bc.apo .mini-bar, html.oscuro .apo-res .mini-bar { background: #4A3E22; }
+  html.oscuro .btn-aportar, html.oscuro .btn-negro { color: #14171D; }
+  html.oscuro .btn-icono { color: #AEB3BC; } html.oscuro .fila-apo svg { color: #6B717C; }
+  html.oscuro .seg-tema button.on { background: #3A414E; }
+
+  /* Selector de apariencia (escondido en Estadísticas → Datos) */
+  .apariencia { margin: 4px 0 10px; }
+  .ap-t { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin: 0 4px 6px; }
+  .seg-tema { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--track); border-radius: 12px; padding: 3px; }
+  .seg-tema button { border: 0; background: none; height: 38px; border-radius: 9px; font-family: inherit; font-size: 14px; font-weight: 600; color: var(--muted); }
+  .seg-tema button.on { background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .opcion .ico.x { background: #E4ECFB; color: #3F68C4; }
 </style>
 </head>
 <body>
@@ -1130,9 +1183,13 @@
       <span><b>Importar respaldo</b><small>Recupera tus movimientos, deudas y metas desde un archivo. No se duplican los que ya tienes.</small></span>
     </button>
     <button class="opcion" id="btnExcel">
-      <span class="ico v" style="background:#E4ECFB;color:#3F68C4"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/></svg></span>
+      <span class="ico x"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/></svg></span>
       <span><b>Exportar a Excel</b><small>Resumen por mes, movimientos, categorías, deudas y metas en un archivo .xlsx.</small></span>
     </button>
+    <div class="apariencia">
+      <span class="ap-t">Apariencia</span>
+      <div class="seg-tema" id="segTema"><button type="button" data-tema="claro">Claro</button><button type="button" data-tema="oscuro">Oscuro</button><button type="button" data-tema="auto">Auto</button></div>
+    </div>
     <button class="opcion" id="btnBorrarTodo">
       <span class="ico r"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></span>
       <span><b style="color:var(--red)">Borrar todos los datos</b><small>Deja la app como recién instalada. Se pide confirmar dos veces.</small></span>
@@ -3355,6 +3412,23 @@
     if (trasReceptor) { trasReceptor = false; setTimeout(() => abrirForm('aporte', null), 300); }
     else if (antes !== receptor) toast('Nombre actualizado');
   });
+
+  /* =================== MODO OSCURO =================== */
+  const KEY_TEMA = 'cuadre_tema', mqOscuro = matchMedia('(prefers-color-scheme: dark)');
+  let tema = 'claro'; try { tema = localStorage.getItem(KEY_TEMA) || 'claro'; } catch (e) {}
+  function aplicarTema() {
+    const o = tema === 'oscuro' || (tema === 'auto' && mqOscuro.matches);
+    document.documentElement.classList.toggle('oscuro', o);
+    const mt = document.querySelector('meta[name="theme-color"]'); if (mt) mt.setAttribute('content', o ? '#14171D' : '#F2F3EF');
+    $('segTema').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.tema === tema));
+  }
+  $('segTema').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    tema = b.dataset.tema; try { localStorage.setItem(KEY_TEMA, tema); } catch (er) {}
+    aplicarTema(); vibrar(8);
+  });
+  if (mqOscuro.addEventListener) mqOscuro.addEventListener('change', () => { if (tema === 'auto') aplicarTema(); });
+  aplicarTema();
 
   /* =================== GUÍA =================== */
   $('abrirGuia').onclick = () => { $('hojaGuia').querySelector('.scroll').scrollTop = 0; abrirHoja($('hojaGuia')); };
