@@ -4,7 +4,9 @@
    - Una versión nueva solo se guarda si se descargó completa y es realmente la app.
    - Los movimientos NO están aquí: viven aparte en la memoria del iPhone.
    Cambia VERSION en cada actualización para que los iPhones la detecten. */
-const VERSION = 'cuadre-v29';
+const VERSION = 'cuadre-v30';
+const PREFIJO = VERSION.replace(/\d+$/, '');   // solo se borran copias viejas de ESTA app
+const OTRAS = ['/prueba/'];                     // carpetas con otra app (versión de prueba): no tocarlas
 const ARCHIVOS = ['./', 'index.html', 'manifest.json', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 const MARCA = 'name="wyt-app"';
 
@@ -35,7 +37,7 @@ self.addEventListener('message', e => { if (e.data === 'ACTIVAR') self.skipWaiti
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
     const claves = await caches.keys();
-    await Promise.all(claves.filter(k => k !== VERSION).map(k => caches.delete(k)));
+    await Promise.all(claves.filter(k => k !== VERSION && k.startsWith(PREFIJO)).map(k => caches.delete(k)));
     await self.clients.claim();
   })());
 });
@@ -43,7 +45,9 @@ self.addEventListener('activate', e => {
 // Siempre responder desde la copia guardada; internet solo como respaldo
 self.addEventListener('fetch', e => {
   const req = e.request;
-  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+  const url = new URL(req.url);
+  if (req.method !== 'GET' || url.origin !== self.location.origin) return;
+  if (OTRAS.some(c => url.pathname.includes(c))) return;   // la versión de prueba se maneja sola
   e.respondWith((async () => {
     const cache = await caches.open(VERSION);
     if (req.mode === 'navigate') {
