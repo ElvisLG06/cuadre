@@ -690,7 +690,7 @@
   #segTipo[data-t="aporte"] .indicador { transform: translateX(300%); }
 
   /* =================== INICIO (recuadros) =================== */
-  #inicio { display: block; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: calc(var(--safe-top) + 14px) 20px 0; }
+  #inicio { display: block; overflow-y: auto; -webkit-overflow-scrolling: touch; top: var(--safe-top); padding: 14px 20px 0; }
   .ini { display: flex; flex-direction: column; gap: 11px; padding-bottom: calc(var(--safe-bottom) + 16px); }
   #inicio .acciones { margin-top: 0; }
   .card-gan, .bc { border: 0; font-family: inherit; color: var(--text); text-align: left; width: 100%; min-width: 0; transition: transform .12s; }
@@ -710,7 +710,9 @@
   .bc-t { font-size: 18px; font-weight: 700; }
   .bc-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .bc.mov { grid-row: span 2; background: #DFEBEE; padding: 18px 16px 16px; }
-  .bc-ir { width: 30px; height: 30px; border: 2px solid var(--text); border-radius: 9px; display: grid; place-items: center; flex-shrink: 0; }
+  .bc.mov .bc-t { font-size: 17px; letter-spacing: -.2px; }
+  .bc.mov .bc-top { gap: 6px; }
+  .bc-ir { width: 26px; height: 26px; border: 1.8px solid var(--text); border-radius: 8px; display: grid; place-items: center; flex-shrink: 0; }
   .bc.mov .spark { width: 100%; height: 70px; display: block; }
   .bc-pie { display: flex; flex-direction: column; gap: 4px; }
   .bc-pie small { font-size: 13px; color: #3F5A60; }
@@ -745,7 +747,7 @@
   .apo-mid span { font-size: 13px; font-weight: 600; color: #6B5A2E; text-align: right; }
   .bc.apo .mini-bar { background: #E6D7AE; } .bc.apo .mini-bar i { background: var(--oro); }
   .apo-pie { font-size: 12.5px; color: #6B5A2E; }
-  @media (max-width: 380px) { .bc-pie b { font-size: 15px; } .bc-dona { font-size: 11.5px; gap: 8px; } .bc-dona svg { width: 40px; height: 40px; } .bc-t { font-size: 17px; } }
+  @media (max-width: 380px) { .bc-pie b { font-size: 15px; } .bc-dona { font-size: 11.5px; gap: 8px; } .bc-dona svg { width: 40px; height: 40px; } .bc-t { font-size: 17px; } .bc.mov .bc-t { font-size: 16px; } .bc-ir { width: 24px; height: 24px; } }
 
   /* =================== BARRAS (al tocar la ganancia) =================== */
   #barras .periodo { margin-bottom: 4px; }
