@@ -1782,6 +1782,7 @@
     if (!hojaAbierta) return;
     document.activeElement && document.activeElement.blur();
     hojaAbierta.classList.remove('on'); $('velo').classList.remove('on'); hojaAbierta = null;
+    setTimeout(() => typeof reposar === 'function' && reposar(), 350);
   }
   $('velo').onclick = cerrarHoja;
 
@@ -3383,6 +3384,20 @@
   // Errores en formularios: 2 toques rápidos cada vez que aparece un mensaje de error
   document.querySelectorAll('.error').forEach(el => new MutationObserver(() => { if (el.textContent.trim()) vibrar(2, 70); })
     .observe(el, { childList: true, characterData: true, subtree: true }));
+
+  /* ---------- iPhone: al cerrar el teclado, la pantalla vuelve a su lugar ---------- */
+  // iOS sube toda la página para mostrar el campo con teclado y a veces no la regresa.
+  const escribiendo = () => { const a = document.activeElement; return !!a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName); };
+  function reposar() {
+    if (escribiendo()) return;
+    if (window.scrollY || window.scrollX || document.documentElement.scrollTop || document.body.scrollTop) {
+      window.scrollTo(0, 0); document.documentElement.scrollTop = 0; document.body.scrollTop = 0;
+    }
+  }
+  document.addEventListener('focusout', () => { setTimeout(reposar, 60); setTimeout(reposar, 400); });
+  window.addEventListener('scroll', () => { if (!escribiendo()) reposar(); });
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', () => setTimeout(reposar, 60));
+  $('velo').addEventListener('transitionend', reposar);
 
   /* ---------- Sin zoom (pellizco) ---------- */
   ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
