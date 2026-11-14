@@ -1872,6 +1872,14 @@
     if (dia > isoDia(Date.now())) { $('errForm').textContent = 'La fecha no puede ser futura.'; return; }
     if (!editId && manejarFrecuente({ categoria, nombre, monto: Math.round(monto * 100) / 100 })) return;
     const original = editId ? movs.find(x => x.id === editId) : null;
+    // Un aporte no puede ser mayor a la ganancia actual (al editar, se cuenta lo que ya tenía ese aporte)
+    if (tipoActual === 'aporte') {
+      const t = sumas(), disp = r2(t.ing - t.gas - t.ap + (original ? original.monto : 0));
+      if (Math.round(monto * 100) / 100 > disp) {
+        $('errForm').textContent = disp > 0 ? `Solo tienes ${fmt(disp)} de ganancia disponible.` : 'No tienes ganancia disponible para aportar.';
+        return;
+      }
+    }
     // Hoy → hora actual; otro día → mediodía de ese día; si al editar no cambió el día, se conserva la hora
     let fecha;
     if (original && isoDia(original.fecha) === dia) fecha = original.fecha;
