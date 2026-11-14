@@ -2,6 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<script>/* Aplica el modo oscuro antes de pintar, para que no parpadee */
+(function () { try { var t = localStorage.getItem('cuadre_tema') || 'claro';
+  if (t === 'oscuro' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('oscuro'); } catch (e) {} })();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <title>Cuadre</title>
 <meta name="wyt-app" content="ok">
@@ -9,8 +13,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="color-scheme" content="light">
 <meta name="apple-mobile-web-app-title" content="Cuadre">
-<meta name="theme-color" content="#1a1f2b">
+<meta name="theme-color" content="#F2F3EF">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="manifest" href="manifest.json">
 <!-- Pantalla de carga del iPhone (en vez de negro) -->
@@ -30,15 +35,22 @@
 <link rel="apple-touch-startup-image" media="(device-width: 360px) and (device-height: 780px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1080x2340.png">
 <style>
   :root {
-    --bg: #1a1f2b;          /* azul pizarra oscuro, suave a la vista */
-    --surface: #232a38;
-    --surface-2: #2c3445;
-    --text: #e6e8ee;
-    --muted: #8a93a6;
-    --green: #5fbf6a;
-    --green-soft: rgba(95,191,106,.16);
-    --red: #e0574f;
-    --red-soft: rgba(224,87,79,.16);
+    --bg: #F2F3EF;          /* claro y cálido, no encandila */
+    --surface: #FFFFFF;
+    --surface-2: #E6E7E2;
+    --track: #E4E5E0;
+    --text: #15171C;
+    --muted: #5E6472;
+    --green: #2F8A41;       /* texto verde */
+    --green-btn: #3E9E4F;   /* botones verdes */
+    --green-soft: #E3F1E5;
+    --red: #C2413A;
+    --red-btn: #D9534A;
+    --red-soft: #F9E5E3;
+    --oro: #B7862A;
+    --oro-soft: #F5ECD4;
+    --oro-txt: #7A5A12;
+    --sombra: 0 1px 2px rgba(21,23,28,.05);
     --safe-top: env(safe-area-inset-top);
     --safe-bottom: env(safe-area-inset-bottom);
   }
@@ -64,8 +76,8 @@
     display: flex; flex-direction: column;
     transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .35s;
   }
-  #movimientos, #deudas, #metas, #stats { transform: translateX(100%); }
-  #movimientos.on, #deudas.on, #metas.on, #stats.on { transform: translateX(0); }
+  #movimientos, #deudas, #metas, #stats, #barras, #aportes { transform: translateX(100%); }
+  #movimientos.on, #deudas.on, #metas.on, #stats.on, #barras.on, #aportes.on { transform: translateX(0); }
 
   /* ---------- Estadísticas ---------- */
   #stats .periodo { margin-bottom: 12px; }
@@ -127,12 +139,6 @@
   .per-next:disabled { opacity: .25; }
   .per-label { padding: 0 4px; font-size: 14.5px; font-weight: 600; min-width: 128px; }
   .periodo.todo .per-todo, .periodo:not(.todo) .per-mes { background: var(--surface-2); color: var(--text); }
-  #inicio { padding-top: calc(var(--safe-top) + 14px); padding-bottom: calc(var(--safe-bottom) * .55 + 4px); }
-  #inicio .periodo { margin-top: 12px; }
-  #inicio .balance { margin-top: 8px; }
-  #inicio .monto-wrap { height: 84px; }
-  #inicio .barras { margin-top: 16px; }
-  #inicio .links { margin-top: 10px; }
 
   /* Fila de Movimientos: periodo + buscador */
   .fila-filtros { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; min-height: 40px; }
@@ -617,8 +623,8 @@
   #splash.fuera { opacity: 0; transform: scale(1.06); pointer-events: none; }
   #splash .logo { position: relative; width: 110px; height: 114px; }
   #splash .b { position: absolute; bottom: 0; width: 46px; border-radius: 23px; transform-origin: 50% 100%; }
-  #splash .b.g { left: 0; height: 114px; background: #5fbf6a; animation: rebote-g .9s cubic-bezier(.3,.7,.3,1) .05s both; }
-  #splash .b.r { left: 64px; height: 74px; background: #e0574f; animation: rebote-r .9s cubic-bezier(.3,.7,.3,1) .15s both; }
+  #splash .b.g { left: 0; height: 114px; background: linear-gradient(135deg, #C6F36B, #3CCB6B 50%, #0F9F8C); box-shadow: 2px 6px 0 rgba(15,159,140,.18); animation: rebote-g .9s cubic-bezier(.3,.7,.3,1) .05s both; }
+  #splash .b.r { left: 64px; height: 74px; background: linear-gradient(135deg, #FFC15E, #FF6A4D 50%, #E5306A); box-shadow: 2px 6px 0 rgba(229,48,106,.18); animation: rebote-r .9s cubic-bezier(.3,.7,.3,1) .15s both; }
   #splash .nombre-app {
     position: absolute; left: 50%; top: calc(50% + 78px); transform: translate(-50%, 8px);
     font-size: 26px; font-weight: 700; letter-spacing: .5px; color: var(--text); opacity: 0;
@@ -645,12 +651,200 @@
   #girar .mini { display: flex; gap: 5px; align-items: flex-end; height: 26px; margin-bottom: 4px; }
   #girar .mini i { width: 11px; border-radius: 6px; display: block; }
   @keyframes girar-tel { 0%, 15% { transform: rotate(-90deg); } 45%, 85% { transform: rotate(0deg); } 100% { transform: rotate(-90deg); } }
+
+  /* =================== TEMA CLARO: ajustes =================== */
+  .campo input[type="date"] { color-scheme: light; }
+  .aviso { color: #A8352E; }
+  .velo { background: rgba(21,23,28,.32); }
+  .toast { background: #15171C; color: #fff; box-shadow: 0 8px 24px rgba(21,23,28,.25); }
+  .toast button { color: #8FE39A; }
+  .update { background: #15171C; color: #fff; box-shadow: 0 10px 30px rgba(21,23,28,.3); }
+  .update button, .btn.verde, .pill.ingreso, .pill.medeben, .ok-c, .meta-card.activa .rank { background: var(--green-btn); }
+  .chips.ingreso .chip.on { background: var(--green-btn); border-color: var(--green-btn); }
+  .btn.rojo, .pill.gasto, .pill.debo, .over-c, .punto { background: var(--red-btn); }
+  .chips.gasto .chip.on { background: var(--red-btn); border-color: var(--red-btn); }
+  .guia .cuerpo { color: #3D424C; }
+  .ppto-msg.warn, .item.deuda .persona .vence.hoy { color: #A8730F; }
+  .logradas-t { color: #9A7A1E; }
+  .opcion .ico.a { background: #ECE9FB; color: #5B4FC4; }
+  .agarre { background: #D5D7D0; }
+  .tarjeta, .item, .meta-card, .resumen, .btn-resp, .btn-buscar, .buscador, .meta-lograda { box-shadow: var(--sombra); }
+  .segmento { background: var(--track); }
+  .segmento .indicador { background: #fff !important; box-shadow: 0 1px 3px rgba(21,23,28,.1); }
+  .per-todo, .per-mes { background: var(--track); }
+  .periodo.todo .per-todo, .periodo:not(.todo) .per-mes { background: #fff; color: var(--text); box-shadow: 0 1px 2px rgba(21,23,28,.08); }
+  .meta-card.dragging { background: #fff; box-shadow: 0 18px 40px rgba(21,23,28,.18), 0 0 0 2px rgba(62,158,79,.5); }
+  .top h2 { font-size: 26px; font-weight: 800; letter-spacing: -.4px; }
+  .chip { border-color: #D5D7D0; }
+  .frec, .vacio-sec, .cat-agregar { border-color: #D5D7D0; }
+  .pill { height: 54px; font-weight: 700; }
+  .item:active, .opcion:active, .cat-fila:active { background: var(--surface-2); }
+
+  /* Aportes en todas las vistas */
+  .oro { color: var(--oro-txt); }
+  .tag.aporte { background: var(--oro-soft); color: var(--oro-txt); }
+  .btn.oro { background: #A87B24; color: #fff; }
+  .resumen.aporte { box-shadow: inset 4px 0 0 var(--oro); }
+  #hojaForm.aporte .frec.nuevo, #hojaForm.aporte .frec.nuevo b { color: var(--oro-txt); }
+  #hojaForm.aporte .frec.on { border-color: var(--oro); background: var(--oro-soft); }
+  .segmento button.on[data-t="aporte"] { color: var(--oro-txt); }
+  #segTipo { grid-template-columns: repeat(4, 1fr); }
+  #segTipo button { font-size: 14px; }
+  #segTipo .indicador { width: calc((100% - 8px) / 4); }
+  #segTipo[data-t="aporte"] .indicador { transform: translateX(300%); }
+
+  /* =================== INICIO (recuadros) =================== */
+  #inicio { display: block; overflow-y: auto; -webkit-overflow-scrolling: touch; top: var(--safe-top); padding: 14px 20px 0; }
+  .ini { display: flex; flex-direction: column; gap: 11px; padding-bottom: calc(var(--safe-bottom) + 16px); }
+  #inicio .acciones { margin-top: 0; }
+  .card-gan, .bc { border: 0; font-family: inherit; color: var(--text); text-align: left; width: 100%; min-width: 0; transition: transform .12s; }
+  .card-gan:active, .bc:active { transform: scale(.98); }
+  .card-gan { display: flex; flex-direction: column; gap: 6px; background: #fff; border-radius: 26px; padding: 18px 20px 16px; box-shadow: var(--sombra); }
+  .cg-top { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; color: var(--muted); }
+  .cg-top .ver { display: flex; align-items: center; gap: 2px; font-size: 13px; }
+  .card-gan .monto-wrap { height: 58px; justify-content: flex-start; margin: 0; }
+  .card-gan .monto { font-size: 50px; font-weight: 800; letter-spacing: -1.5px; }
+  .cg-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+  .ch { font-size: 12.5px; font-weight: 600; padding: 5px 8px; border-radius: 999px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .ch.ing { background: #E8F3EA; color: #2A7A3A; }
+  .ch.gas { background: #F9E7E5; color: #B23A31; }
+  .ch.apo { background: var(--oro-soft); color: var(--oro-txt); }
+  .bento { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: 112px 112px; gap: 12px; }
+  .bc { border-radius: 24px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; }
+  .bc-t { font-size: 18px; font-weight: 700; }
+  .bc-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .bc.mov { grid-row: span 2; background: #DFEBEE; padding: 18px 16px 16px; }
+  .bc.mov .bc-t { font-size: 17px; letter-spacing: -.2px; }
+  .bc.mov .bc-top { gap: 6px; }
+  .bc-ir { width: 26px; height: 26px; border: 1.8px solid var(--text); border-radius: 8px; display: grid; place-items: center; flex-shrink: 0; }
+  .bc.mov .spark { width: 100%; height: 70px; display: block; }
+  .bc-pie { display: flex; flex-direction: column; gap: 4px; }
+  .bc-pie small { font-size: 13px; color: #3F5A60; }
+  .bc-pie b { font-size: 16px; font-weight: 600; color: #2E6672; }
+  .bc.deu { background: #F7E6E1; }
+  .bc.deu .punto { margin-left: 0; min-width: 24px; height: 24px; font-size: 13px; }
+  .bc-lin { display: flex; flex-direction: column; gap: 3px; font-size: 13px; color: #6A4F49; }
+  .bc-lin b { font-variant-numeric: tabular-nums; }
+  .bc-lin b.pos { color: #2A7A3A; } .bc-lin b.neg { color: #B23A31; }
+  .bc.est { background: #E9EAE6; }
+  .bc-dona { display: flex; align-items: center; gap: 10px; font-size: 12.5px; line-height: 1.35; color: #4C515C; min-width: 0; }
+  .bc-dona svg { width: 46px; height: 46px; transform: rotate(-90deg); flex-shrink: 0; }
+  .bc-dona span { min-width: 0; overflow: hidden; }
+  .bc-dona b { color: var(--text); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bc.met { background: #E5E6F4; padding: 14px 18px; gap: 8px; justify-content: flex-start; }
+  .met-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .met-top small { font-size: 13px; color: #4C4F68; white-space: nowrap; }
+  .met-lin { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
+  .met-lin span { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .met-lin b { font-weight: 700; color: #3B3F8C; font-variant-numeric: tabular-nums; }
+  .mini-bar { height: 10px; border-radius: 999px; overflow: hidden; }
+  .mini-bar i { display: block; height: 100%; width: 0; border-radius: 999px; transition: width .6s cubic-bezier(.2,.8,.2,1); }
+  .bc.met .mini-bar { background: #CDCFE6; } .bc.met .mini-bar i { background: #5A5FC4; }
+  .bc.apo { background: var(--oro-soft); padding: 14px 16px 15px; gap: 9px; justify-content: flex-start; cursor: pointer; }
+  .apo-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .apo-top .bc-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .btn-aportar { height: 32px; padding: 0 13px; border: 0; border-radius: 999px; background: var(--text); color: #fff; font-size: 13.5px; font-weight: 600; flex-shrink: 0; font-family: inherit; }
+  .btn-aportar:active { transform: scale(.95); }
+  .apo-mid { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .apo-mid b { font-size: 26px; font-weight: 800; letter-spacing: -.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .apo-mid b small { font-size: 13px; font-weight: 500; color: #6B5A2E; letter-spacing: 0; }
+  .apo-mid span { font-size: 13px; font-weight: 600; color: #6B5A2E; text-align: right; }
+  .bc.apo .mini-bar { background: #E6D7AE; } .bc.apo .mini-bar i { background: var(--oro); }
+  .apo-pie { font-size: 12.5px; color: #6B5A2E; }
+  @media (max-width: 380px) { .bc-pie b { font-size: 15px; } .bc-dona { font-size: 11.5px; gap: 8px; } .bc-dona svg { width: 40px; height: 40px; } .bc-t { font-size: 17px; } .bc.mov .bc-t { font-size: 16px; } .bc-ir { width: 24px; height: 24px; } }
+
+  /* =================== BARRAS (al tocar la ganancia) =================== */
+  #barras .periodo { margin-bottom: 4px; }
+  .bz-gan { text-align: center; margin: 8px 0 14px; }
+  .bz-gan small { font-size: 14px; font-weight: 600; color: var(--muted); }
+  .bz-gan .monto-wrap { height: 62px; }
+  .bz-gan .monto { font-size: 52px; font-weight: 800; letter-spacing: -1.5px; }
+  #barras .barras { margin: 0; background: #fff; border-radius: 26px; padding: 22px 18px 18px; box-shadow: var(--sombra); }
+  #barras .barra { width: min(92px, 70%); }
+  #barras .col.ingreso .barra { background: var(--green-btn); }
+  #barras .col.gasto .barra { background: var(--red-btn); display: flex; flex-direction: column; overflow: hidden; }
+  .barra .seg-ap { background: #C9962F; }
+  .barra .sep { height: 3px; background: #fff; flex-shrink: 0; }
+  .barra .seg-gas { background: var(--red-btn); }
+  #barras .total { font-weight: 700; }
+  .sub-ap { font-size: 13px; font-weight: 600; color: var(--oro-txt); margin-top: 3px; text-align: center; }
+  .nota-barras { text-align: center; font-size: 13px; color: var(--muted); margin-top: 12px; line-height: 1.4; }
+
+  /* =================== APORTES =================== */
+  .btn-icono { margin-left: auto; width: 44px; height: 44px; border: 0; background: none; display: grid; place-items: center; color: #4C515C; border-radius: 12px; }
+  .btn-icono:active { background: var(--surface-2); }
+  .apo-res { background: var(--oro-soft); border-radius: 24px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+  .apo-res small { font-size: 14px; font-weight: 600; color: #6B5A2E; }
+  .apo-res .cifra { font-size: 40px; font-weight: 800; letter-spacing: -1px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .apo-res .mini-bar { height: 12px; background: #E6D7AE; } .apo-res .mini-bar i { background: var(--oro); }
+  .apo-res .pct { font-size: 13px; font-weight: 600; color: #6B5A2E; }
+  .btn-negro { height: 48px; border: 0; border-radius: 14px; background: var(--text); color: #fff; font-size: 16px; font-weight: 700; margin-top: 4px; font-family: inherit; }
+  .btn-negro:active { filter: brightness(1.3); }
+  .hist-t { font-size: 13px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); margin: 18px 4px 10px; }
+  .lista-apo { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; margin: 0 -22px; padding: 0 22px 20px; }
+  .fila-apo { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 16px; padding: 14px 16px; margin-bottom: 8px; box-shadow: var(--sombra); }
+  .fila-apo:active { background: var(--surface-2); }
+  .fila-apo .info { flex: 1; min-width: 0; }
+  .fila-apo .info b { display: block; font-size: 16px; font-weight: 600; }
+  .fila-apo .info small { display: block; font-size: 12.5px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fila-apo .mt { font-size: 17px; font-weight: 700; color: var(--oro-txt); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .fila-apo svg { color: #8A8F99; flex-shrink: 0; }
+  .nota-apo { text-align: center; font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+
+  /* =================== MODO OSCURO =================== */
+  html.oscuro {
+    --bg: #14171D; --surface: #1E232C; --surface-2: #2A303B; --track: #262B34;
+    --text: #EEF0F3; --muted: #9AA1AD;
+    --green: #6BCB78; --green-soft: #1F3524; --red: #F08A80; --red-soft: #3A2120;
+    --oro: #D9AE52; --oro-soft: #2E2716; --oro-txt: #E2BC66;
+    --sombra: none;
+  }
+  html.oscuro .campo input[type="date"] { color-scheme: dark; }
+  html.oscuro .aviso { color: #F5A9A2; }
+  html.oscuro .velo { background: rgba(0,0,0,.55); }
+  html.oscuro .toast, html.oscuro .update { background: #2F3642; color: #EEF0F3; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+  html.oscuro .guia .cuerpo { color: #C4C9D4; }
+  html.oscuro .ppto-msg.warn, html.oscuro .item.deuda .persona .vence.hoy { color: #E8B23D; }
+  html.oscuro .logradas-t { color: #D9B64A; }
+  html.oscuro .opcion .ico.a { background: rgba(120,150,230,.16); color: #9DB2F0; }
+  html.oscuro .opcion .ico.x { background: rgba(91,141,239,.16); color: #8FB0F5; }
+  html.oscuro .agarre { background: #3A404B; }
+  html.oscuro .segmento .indicador { background: #343B48 !important; box-shadow: none; }
+  html.oscuro .periodo.todo .per-todo, html.oscuro .periodo:not(.todo) .per-mes { background: #343B48; box-shadow: none; }
+  html.oscuro .meta-card.dragging { background: #2A303B; }
+  html.oscuro .chip, html.oscuro .frec, html.oscuro .vacio-sec, html.oscuro .cat-agregar { border-color: #3A404B; }
+  html.oscuro .card-gan, html.oscuro #barras .barras, html.oscuro .fila-apo { background: var(--surface); }
+  html.oscuro .barra .sep { background: var(--surface); }
+  html.oscuro .ch.ing { background: #1F3524; color: #7FD38A; }
+  html.oscuro .ch.gas { background: #3A2120; color: #F08A80; }
+  html.oscuro .bc.mov { background: #1B2A2F; }
+  html.oscuro .bc-pie small { color: #8FB3BA; } html.oscuro .bc-pie b { color: #8FC3CE; }
+  html.oscuro #sparkLinea { stroke: #6FB3C2; } html.oscuro #relleno stop { stop-color: #6FB3C2; }
+  html.oscuro .bc.deu { background: #2E2120; } html.oscuro .bc-lin { color: #C9A39E; }
+  html.oscuro .bc-lin b.pos { color: #7FD38A; } html.oscuro .bc-lin b.neg { color: #F08A80; }
+  html.oscuro .bc.est { background: #23262B; } html.oscuro .bc-dona { color: #AEB3BC; }
+  html.oscuro .bc-dona svg circle:first-child { stroke: #353A44; }
+  html.oscuro .bc.met { background: #23243A; } html.oscuro .met-top small { color: #A9ABCF; } html.oscuro .met-lin b { color: #A8ABF5; }
+  html.oscuro .bc.met .mini-bar { background: #34365A; } html.oscuro .bc.met .mini-bar i { background: #8A8FF0; }
+  html.oscuro .apo-mid b small, html.oscuro .apo-mid span, html.oscuro .apo-pie, html.oscuro .apo-res small, html.oscuro .apo-res .pct { color: #C9B17A; }
+  html.oscuro .bc.apo .mini-bar, html.oscuro .apo-res .mini-bar { background: #4A3E22; }
+  html.oscuro .btn-aportar, html.oscuro .btn-negro { color: #14171D; }
+  html.oscuro .btn-icono { color: #AEB3BC; } html.oscuro .fila-apo svg { color: #6B717C; }
+  html.oscuro .seg-tema button.on { background: #3A414E; }
+
+  /* Selector de apariencia (escondido en Estadísticas → Datos) */
+  .apariencia { margin: 4px 0 10px; }
+  .ap-t { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin: 0 4px 6px; }
+  .seg-tema { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--track); border-radius: 12px; padding: 3px; }
+  .seg-tema button { border: 0; background: none; height: 38px; border-radius: 9px; font-family: inherit; font-size: 14px; font-weight: 600; color: var(--muted); }
+  .seg-tema button.on { background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .opcion .ico.x { background: #E4ECFB; color: #3F68C4; }
 </style>
 </head>
 <body>
   <!-- Se muestra solo si el iPhone está en horizontal -->
   <div id="girar" aria-live="polite">
-    <div class="mini"><i style="height:26px;background:#5fbf6a"></i><i style="height:17px;background:#e0574f"></i></div>
+    <div class="mini"><i style="height:26px;background:linear-gradient(135deg,#C6F36B,#3CCB6B 50%,#0F9F8C)"></i><i style="height:17px;background:linear-gradient(135deg,#FFC15E,#FF6A4D 50%,#E5306A)"></i></div>
     <div class="tel"></div>
     <b>Gira tu iPhone a vertical</b>
     <small>Cuadre está diseñada para usarse en vertical.</small>
@@ -664,49 +858,107 @@
 
   <!-- ========== INICIO ========== -->
   <section class="view" id="inicio">
-    <div class="acciones">
-      <button class="pill ingreso" data-tipo="ingreso">Ingreso</button>
-      <button class="pill gasto" data-tipo="gasto">Gasto</button>
-    </div>
+    <div class="ini">
+      <div class="acciones">
+        <button class="pill ingreso" data-tipo="ingreso">Ingreso</button>
+        <button class="pill gasto" data-tipo="gasto">Gasto</button>
+      </div>
 
+      <button class="card-gan" id="abrirBarras">
+        <div class="cg-top"><span id="lblBalance">Ganancia total</span>
+          <span class="ver">Ver barras <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        <div class="monto-wrap"><div class="monto pos" id="montoBalance">$0</div></div>
+        <div class="cg-chips"><span class="ch ing" id="chIng"></span><span class="ch gas" id="chGas"></span><span class="ch apo" id="chApo" hidden></span></div>
+      </button>
+
+      <div class="bento">
+        <button class="bc mov" id="abrirMov">
+          <div class="bc-top"><span class="bc-t">Movimientos</span>
+            <span class="bc-ir"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
+          <svg class="spark" viewBox="0 0 150 70" preserveAspectRatio="none" aria-hidden="true">
+            <defs><linearGradient id="relleno" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#5B9AA8" stop-opacity=".28"/><stop offset="1" stop-color="#5B9AA8" stop-opacity="0"/></linearGradient></defs>
+            <path id="sparkArea" fill="url(#relleno)"/><path id="sparkLinea" fill="none" stroke="#3F7F8C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+          </svg>
+          <div class="bc-pie"><small id="movHoy"></small><b>Ver movimientos</b></div>
+        </button>
+        <button class="bc deu" id="abrirDeudas">
+          <div class="bc-top"><span class="bc-t">Deudas</span><span class="punto" id="puntoDeudas" hidden></span></div>
+          <div class="bc-lin" id="deuRes"></div>
+        </button>
+        <button class="bc est" id="abrirStats">
+          <span class="bc-t">Estadísticas</span>
+          <div class="bc-dona" id="estRes"></div>
+        </button>
+      </div>
+
+      <button class="bc met" id="abrirMetas">
+        <div class="met-top"><span class="bc-t">Metas</span><small id="metResumen"></small></div>
+        <div class="met-lin"><span id="metNombre"></span><b id="metPct"></b></div>
+        <div class="mini-bar"><i id="metBar"></i></div>
+      </button>
+
+      <div class="bc apo" id="abrirAportes" role="button" tabindex="0">
+        <div class="apo-top"><span class="bc-t" id="apoTitulo">Aportes</span><button class="btn-aportar" id="btnAportar">+ Aportar</button></div>
+        <div class="apo-mid"><b id="apoCardTotal">$0</b><span id="apoCardPct"></span></div>
+        <div class="mini-bar"><i id="apoCardBar"></i></div>
+        <span class="apo-pie" id="apoCardPie"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== BARRAS (al tocar la ganancia) ========== -->
+  <section class="view" id="barras" aria-hidden="true">
+    <div class="top">
+      <button class="back" id="cerrarBarras" aria-label="Volver">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <h2>Ingresos y gastos</h2>
+    </div>
     <div class="periodo" data-per>
       <button class="per-todo">Todo</button>
       <div class="per-mes"><button class="per-prev" aria-label="Mes anterior">‹</button><button class="per-label"></button><button class="per-next" aria-label="Mes siguiente">›</button></div>
     </div>
-
-    <div class="balance">
-      <div class="label" id="lblBalance">Ganancia</div>
-      <div class="monto-wrap"><div class="monto pos" id="montoBalance">$0</div></div>
-      <button class="res-deudas" id="resDeudas" hidden></button>
+    <div class="bz-gan">
+      <small id="lblBarras">Ganancia total</small>
+      <div class="monto-wrap"><div class="monto pos" id="montoBarras">$0</div></div>
     </div>
-
     <div class="barras">
       <div class="col ingreso">
         <div class="pista"><div class="barra" id="barraIng"></div></div>
         <div class="total-wrap"><div class="total" id="totIng">$0</div></div>
         <div class="sub">Ingresos</div>
+        <div class="sub-ap" aria-hidden="true" style="visibility:hidden">·</div>
       </div>
       <div class="col gasto">
-        <div class="pista"><div class="barra" id="barraGas"></div></div>
+        <div class="pista"><div class="barra" id="barraGas"><i class="seg-ap" id="segAp"></i><i class="sep" id="segSep"></i><i class="seg-gas" id="segGas"></i></div></div>
         <div class="total-wrap"><div class="total" id="totGas">$0</div></div>
         <div class="sub">Gastos</div>
+        <div class="sub-ap" id="subAp"></div>
       </div>
     </div>
+    <p class="nota-barras">Cambia de mes con las flechas. En el inicio siempre ves el total.</p>
+  </section>
 
-    <div class="links">
-      <button class="link-mov" id="abrirMov">Movimientos
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+  <!-- ========== APORTES ========== -->
+  <section class="view" id="aportes" aria-hidden="true">
+    <div class="top">
+      <button class="back" id="cerrarAportes" aria-label="Volver">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
-      <button class="link-mov" id="abrirDeudas">Deudas<span class="punto" id="puntoDeudas" hidden></span>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-      </button>
-      <button class="link-mov" id="abrirMetas">Metas
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-      </button>
-      <button class="link-mov" id="abrirStats">Estadísticas
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      <h2 id="tituloAportes">Aportes</h2>
+      <button class="btn-icono" id="editarReceptor" aria-label="Cambiar el nombre de quien recibe">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
       </button>
     </div>
+    <div class="apo-res">
+      <small>Total aportado</small>
+      <span class="cifra" id="apoTotal">$0</span>
+      <div class="mini-bar"><i id="apoBar"></i></div>
+      <span class="pct" id="apoPct"></span>
+      <button class="btn-negro" id="nuevoAporte">+ Nuevo aporte</button>
+    </div>
+    <div class="hist-t">Historial</div>
+    <div class="lista-apo" id="listaAportes"></div>
   </section>
 
   <!-- ========== ESTADÍSTICAS ========== -->
@@ -834,6 +1086,7 @@
       <button data-t="todos" class="on">Todos</button>
       <button data-t="ingreso">Ingresos</button>
       <button data-t="gasto">Gastos</button>
+      <button data-t="aporte">Aportes</button>
     </div>
     <div class="chips-wrap" id="chipsWrap"><div><div class="chips" id="chips"></div></div></div>
     <div class="lista-wrap">
@@ -855,7 +1108,7 @@
       <div class="frec-fila" id="frecFila"></div>
       <div class="frec-acc" id="frecAcc" hidden></div>
     </div>
-    <label class="campo">
+    <label class="campo" id="campoCat">
       <span>Categoría</span>
       <div class="select-wrap">
         <select id="inCategoria"></select>
@@ -863,7 +1116,7 @@
       </div>
     </label>
     <label class="campo">
-      <span>Nombre <em class="opc" id="opcNombre">(opcional)</em></span>
+      <span><span id="lblNombre" style="display:inline;margin:0">Nombre</span> <em class="opc" id="opcNombre">(opcional)</em></span>
       <input id="inNombre" type="text" maxlength="40" placeholder="Ej. Pago de noviembre" enterkeyhint="next">
       <small class="pista-nombre" id="pistaNombre"></small>
     </label>
@@ -930,9 +1183,13 @@
       <span><b>Importar respaldo</b><small>Recupera tus movimientos, deudas y metas desde un archivo. No se duplican los que ya tienes.</small></span>
     </button>
     <button class="opcion" id="btnExcel">
-      <span class="ico v" style="background:rgba(91,141,239,.16);color:#8fb0f5"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/></svg></span>
+      <span class="ico x"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/></svg></span>
       <span><b>Exportar a Excel</b><small>Resumen por mes, movimientos, categorías, deudas y metas en un archivo .xlsx.</small></span>
     </button>
+    <div class="apariencia">
+      <span class="ap-t">Apariencia</span>
+      <div class="seg-tema" id="segTema"><button type="button" data-tema="claro">Claro</button><button type="button" data-tema="oscuro">Oscuro</button><button type="button" data-tema="auto">Auto</button></div>
+    </div>
     <button class="opcion" id="btnBorrarTodo">
       <span class="ico r"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></span>
       <span><b style="color:var(--red)">Borrar todos los datos</b><small>Deja la app como recién instalada. Se pide confirmar dos veces.</small></span>
@@ -1142,9 +1399,9 @@
     <div class="scroll">
       <p class="intro">Todo lo que registras se guarda solo en este iPhone. Nadie más lo ve y no necesita internet.</p>
       <details open><summary>🏠 Inicio</summary><div class="cuerpo">
-        <p>El número grande es tu <b>Ganancia</b> (ingresos − gastos). Si gastas más de lo que ingresa, cambia a <b>Pérdida</b> en rojo.</p>
-        <p>La barra <b>verde</b> son tus ingresos y la <b>roja</b> tus gastos. Con <b>Todo / ‹ Mes ›</b> eliges si ves todo o solo un mes.</p>
-        <p>Debajo de la ganancia verás cuánto <b>te deben</b> y cuánto <b>debes</b>; tócalo para ir a Deudas.</p>
+        <p>Arriba registras un <b>Ingreso</b> o un <b>Gasto</b>. El número grande es tu <b>Ganancia total</b> (ingresos − gastos − aportes). Si es negativa, cambia a <b>Pérdida</b> en rojo.</p>
+        <p>Toca la ganancia para ver las <b>barras</b>: la <b>verde</b> son tus ingresos y la <b>roja</b> tus gastos, con tus aportes encima en <b>dorado</b>. Con <b>Todo / ‹ Mes ›</b> eliges si ves todo o solo un mes.</p>
+        <p>Cada recuadro te lleva a Movimientos, Deudas, Estadísticas, Metas y Aportes, con un resumen de cada uno.</p>
       </div></details>
       <details><summary>➕ Ingresos y gastos</summary><div class="cuerpo">
         <p>Toca <b>Ingreso</b> o <b>Gasto</b>, elige la <b>categoría</b>, el monto y la fecha. El nombre es opcional: si lo dejas vacío se guarda con el nombre de la categoría. En <b>Otros</b> el nombre es obligatorio.</p>
@@ -1160,8 +1417,13 @@
         <p>Puedes registrar <b>abonos</b> (pagos parciales). Las deudas pagadas pasan a <b>Cerradas</b>.</p>
         <p>Al crear una deuda eliges <b>la fecha de pago</b>. Ese día (y mientras siga pendiente) la app te avisa al abrirla: puedes marcar <b>Ya se pagó</b> o elegir una <b>nueva fecha</b>.</p>
       </div></details>
+      <details><summary>💛 Aportes</summary><div class="cuerpo">
+        <p>Registra el dinero que le das a alguien. Toca <b>+ Aportar</b>; la primera vez eliges a quién. Puedes cambiar el nombre con el ✏️ dentro de Aportes.</p>
+        <p>Un aporte <b>se resta de tu ganancia</b>, pero <b>no es un gasto</b>: no aparece en Estadísticas ni en Presupuestos. En Movimientos tiene su propia pestaña.</p>
+        <p>El <b>%</b> compara lo que aportaste con lo que ganaste sin contar los aportes. Toca un aporte para editarlo o eliminarlo.</p>
+      </div></details>
       <details><summary>🎯 Metas</summary><div class="cuerpo">
-        <p>Tu ganancia total llena tus metas <b>de arriba hacia abajo</b>: primero la #1, luego la #2… </p>
+        <p>Tu ganancia (sin restar los aportes) llena tus metas <b>de arriba hacia abajo</b>: primero la #1, luego la #2… </p>
         <p><b>Mantén presionada</b> una meta y arrástrala para cambiar su prioridad. Cuando una se complete, toca <b>Ya lo compré</b>: se registra el gasto y pasa a <b>Logradas</b> 🏆.</p>
       </div></details>
       <details><summary>📊 Estadísticas y presupuestos</summary><div class="cuerpo">
@@ -1176,6 +1438,22 @@
     </div>
     <button type="button" class="btn sec full" id="cerrarGuia" style="margin-top:8px">Entendido</button>
   </div>
+
+  <!-- ========== HOJA: A QUIÉN APORTAS ========== -->
+  <form class="hoja" id="hojaReceptor" autocomplete="off">
+    <div class="agarre"></div>
+    <h3>¿A quién le aportas?</h3>
+    <p class="det">Es el nombre que verás en «Aportes a …». Puedes cambiarlo cuando quieras.</p>
+    <label class="campo">
+      <span>Nombre</span>
+      <input id="rNombre" type="text" maxlength="20" placeholder="Ej. Mary, Mamá, Ahorro casa…" enterkeyhint="done">
+    </label>
+    <div class="error" id="errReceptor"></div>
+    <div class="botones">
+      <button type="button" class="btn sec" id="cancelarReceptor">Cancelar</button>
+      <button type="submit" class="btn oro" id="guardarReceptor">Guardar</button>
+    </div>
+  </form>
 
   <div class="toast" id="toast">Movimiento eliminado</div>
 
@@ -1273,41 +1551,139 @@
     else if (e.target.closest('.per-label')) setPeriodo(mesVisto);
   });
 
+  /* ---------- Aportes: a quién (cada usuario pone el suyo) ---------- */
+  const KEY_APO = 'cuadre_aporte_nombre';
+  let receptor = ''; try { receptor = (localStorage.getItem(KEY_APO) || '').trim(); } catch (e) {}
+  const aQuien = () => receptor || '…';
+  const tituloMov = m => m.tipo === 'aporte' ? `Aporte a ${aQuien()}` : m.nombre;
+  const notaApo = m => m.tipo === 'aporte' && m.nombre && m.nombre !== 'Aporte' ? m.nombre : '';
+  const etiquetaTipo = t => t === 'ingreso' ? 'Ingreso' : t === 'aporte' ? 'Aporte' : 'Gasto';
+  const claseValor = t => t === 'ingreso' ? 'pos' : t === 'aporte' ? 'oro' : 'neg';
+  const red2 = n => Math.round(n * 100) / 100;
+  function sumas(filtro) {
+    let ing = 0, gas = 0, ap = 0;
+    movs.forEach(m => {
+      if (filtro && !filtro(m)) return;
+      if (m.tipo === 'ingreso') ing += m.monto; else if (m.tipo === 'gasto') gas += m.monto; else if (m.tipo === 'aporte') ap += m.monto;
+    });
+    return { ing: red2(ing), gas: red2(gas), ap: red2(ap) };
+  }
+
+  /* ---------- Inicio: siempre muestra TODO ---------- */
   function pintarInicio() {
     pintarPeriodo();
-    const base = movs.filter(enPeriodo);
-    const ing = base.filter(m => m.tipo === 'ingreso').reduce((a, m) => a + m.monto, 0);
-    const gas = base.filter(m => m.tipo === 'gasto').reduce((a, m) => a + m.monto, 0);
-    const dif = Math.round((ing - gas) * 100) / 100;
-
-    $('lblBalance').textContent = (dif < 0 ? 'Pérdida' : 'Ganancia') + (periodo === 'todo' ? '' : ' de ' + nombreMes(periodo));
+    const { ing, gas, ap } = sumas();
+    const dif = red2(ing - gas - ap);
+    $('lblBalance').textContent = (dif < 0 ? 'Pérdida' : 'Ganancia') + ' total';
     const mb = $('montoBalance');
     mb.textContent = fmt(dif);
     mb.className = 'monto ' + (dif < 0 ? 'neg' : 'pos');
-
-    // Resumen de deudas activas
-    const act = deudas.filter(d => d.estado !== 'cerrada');
-    const debo = r2(act.filter(d => d.tipo === 'debo').reduce((a, d) => a + pendienteDe(d), 0));
-    const meDeben = r2(act.filter(d => d.tipo === 'medeben').reduce((a, d) => a + pendienteDe(d), 0));
-    const partes = [];
-    if (meDeben > 0) partes.push(`Te deben <b class="pos">${fmt(meDeben)}</b>`);
-    if (debo > 0) partes.push(`Debes <b class="neg">${fmt(debo)}</b>`);
-    $('resDeudas').hidden = !partes.length;
-    actualizarPunto();
-    $('resDeudas').innerHTML = partes.join(' · ');
-
-    $('totIng').textContent = fmt(ing);
-    $('totGas').textContent = fmt(gas);
-
-    // La barra mayor ocupa el 100% de su espacio; la otra es proporcional (nunca se sale)
-    const max = Math.max(ing, gas);
-    const pct = v => max > 0 ? (v / max) * 100 : 0;
-    $('barraIng').style.height = pct(ing) + '%';
-    $('barraGas').style.height = pct(gas) + '%';
-
+    $('chIng').textContent = '↑ Ingresos ' + fmt(ing);
+    $('chGas').textContent = '↓ Gastos ' + fmt(gas);
+    $('chApo').hidden = !(ap > 0);
+    $('chApo').textContent = `→ ${receptor || 'Aportes'} ${fmt(ap)}`;
+    pintarCardMov(); pintarCardDeudas(); pintarCardStats(); pintarCardMetas(); pintarCardAportes();
+    if ($('barras').classList.contains('on')) pintarBarras();
     ajustarTextos();
   }
 
+  function pintarCardMov() {
+    const hoy = isoDia(Date.now());
+    const n = movs.filter(m => isoDia(m.fecha) === hoy).length;
+    $('movHoy').textContent = n ? `Hoy · ${n} movimiento${n === 1 ? '' : 's'}` : 'Hoy · sin movimientos';
+    // Línea: cómo fue cambiando tu ganancia en los últimos 30 días
+    const DIAS = 30, ini = new Date(); ini.setHours(0, 0, 0, 0); ini.setDate(ini.getDate() - (DIAS - 1));
+    const t0 = ini.getTime(), neto = m => m.tipo === 'ingreso' ? m.monto : -m.monto;
+    let acc = movs.filter(m => m.fecha < t0).reduce((a, m) => a + neto(m), 0);
+    const porDia = new Array(DIAS).fill(0);
+    movs.forEach(m => { if (m.fecha >= t0) porDia[Math.min(DIAS - 1, Math.floor((m.fecha - t0) / 86400000))] += neto(m); });
+    const pts = porDia.map(v => (acc += v));
+    const min = Math.min(...pts), max = Math.max(...pts), rango = max - min;
+    const d = pts.map((v, i) => (i ? 'L' : 'M') + (2 + i * 146 / (DIAS - 1)).toFixed(1) + ' ' + (rango ? 62 - ((v - min) / rango) * 52 : 40).toFixed(1)).join(' ');
+    $('sparkLinea').setAttribute('d', d);
+    $('sparkArea').setAttribute('d', d + ' L148 70 L2 70 Z');
+  }
+
+  function pintarCardDeudas() {
+    const act = deudas.filter(d => d.estado !== 'cerrada');
+    const debo = red2(act.filter(d => d.tipo === 'debo').reduce((a, d) => a + pendienteDe(d), 0));
+    const meDeben = red2(act.filter(d => d.tipo === 'medeben').reduce((a, d) => a + pendienteDe(d), 0));
+    const l = [];
+    if (meDeben > 0) l.push(`<span>Te deben <b class="pos">${fmt(meDeben)}</b></span>`);
+    if (debo > 0) l.push(`<span>Debes <b class="neg">${fmt(debo)}</b></span>`);
+    $('deuRes').innerHTML = l.length ? l.join('') : '<span>Sin deudas activas</span>';
+    actualizarPunto();
+  }
+
+  function pintarCardStats() {
+    const porCat = {}; let total = 0;
+    movs.forEach(m => { if (m.tipo !== 'gasto') return; const c = m.categoria || 'Sin categoría'; porCat[c] = (porCat[c] || 0) + m.monto; total += m.monto; });
+    const filas = Object.entries(porCat).sort((a, b) => b[1] - a[1]);
+    const R = 17, C = 2 * Math.PI * R;
+    let arcos = '', acc = 0;
+    filas.slice(0, 4).forEach(([c, v]) => {
+      const len = Math.max(0, (v / total) * C - (filas.length > 1 ? 1.5 : 0));
+      arcos += `<circle cx="23" cy="23" r="${R}" fill="none" stroke="${colorCat('gasto', c)}" stroke-width="8" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-acc}"/>`;
+      acc += (v / total) * C;
+    });
+    $('estRes').innerHTML = `<svg viewBox="0 0 46 46" aria-hidden="true"><circle cx="23" cy="23" r="${R}" fill="none" stroke="#D6D8D2" stroke-width="8"/>${arcos}</svg>` +
+      (filas.length ? `<span>Más gasto:<b>${esc(filas[0][0])}</b>${Math.round(filas[0][1] / total * 100)}% del total</span>` : '<span>Aún no hay gastos</span>');
+  }
+
+  function pintarCardMetas() {
+    if (!metas.length) {
+      $('metResumen').textContent = logradas.length ? `${logradas.length} lograda${logradas.length === 1 ? '' : 's'} 🏆` : '';
+      $('metNombre').textContent = 'Crea tu primera meta'; $('metPct').textContent = ''; $('metBar').style.width = '0%';
+      return;
+    }
+    const rep = repartir(metas), hechas = metas.filter(m => rep[m.id] >= m.monto).length;
+    $('metResumen').textContent = `${hechas} de ${metas.length} completada${metas.length === 1 ? '' : 's'}`;
+    const act = metas.find(m => rep[m.id] < m.monto);
+    if (!act) { $('metNombre').textContent = '¡Todas completas! 🎉'; $('metPct').textContent = '100%'; $('metBar').style.width = '100%'; return; }
+    const pct = Math.floor(rep[act.id] / act.monto * 100);
+    $('metNombre').textContent = act.nombre; $('metPct').textContent = pct + '%'; $('metBar').style.width = pct + '%';
+  }
+
+  // El % compara lo aportado con la ganancia SIN restar aportes (esa cifra no se muestra)
+  function datosAportes() {
+    const lista = movs.filter(m => m.tipo === 'aporte').sort((a, b) => b.fecha - a.fecha);
+    const { ing, gas, ap } = sumas();
+    const bruta = red2(ing - gas);
+    return { lista, total: ap, pct: bruta > 0 ? ap / bruta * 100 : null };
+  }
+  const textoPct = p => `${p > 0 && p < 1 ? '<1' : Math.round(p)}% de lo que ganaste`;
+  function pintarCardAportes() {
+    const { lista, total, pct } = datosAportes();
+    $('apoTitulo').textContent = receptor ? `Aportes a ${receptor}` : 'Aportes';
+    $('apoCardTotal').innerHTML = `${fmt(total)} <small>aportado</small>`;
+    $('apoCardPct').textContent = lista.length && pct != null ? textoPct(pct) : '';
+    $('apoCardBar').style.width = Math.min(100, pct || 0) + '%';
+    $('apoCardPie').textContent = !receptor ? 'Toca «+ Aportar» y elige a quién le aportas.'
+      : lista.length ? `${lista.length} aporte${lista.length === 1 ? '' : 's'} · Último: ${fmtDia(lista[0].fecha)}, ${fmt(lista[0].monto)}` : 'Aún no hay aportes.';
+  }
+
+  /* ---------- Barras (al tocar la ganancia): aquí sí se elige el mes ---------- */
+  function pintarBarras() {
+    pintarPeriodo();
+    const { ing, gas, ap } = sumas(enPeriodo);
+    const dif = red2(ing - gas - ap);
+    $('lblBarras').textContent = (dif < 0 ? 'Pérdida' : 'Ganancia') + (periodo === 'todo' ? ' total' : ' de ' + nombreMes(periodo));
+    const mb = $('montoBarras');
+    mb.textContent = fmt(dif);
+    mb.className = 'monto ' + (dif < 0 ? 'neg' : 'pos');
+    $('totIng').textContent = fmt(ing);
+    $('totGas').textContent = fmt(gas);
+    $('subAp').style.visibility = ap > 0 ? 'visible' : 'hidden';
+    $('subAp').textContent = `+ ${fmt(ap)} a ${aQuien()}`;
+    // La barra mayor ocupa todo el alto; el aporte va encima del gasto, en dorado
+    const salida = gas + ap, max = Math.max(ing, salida), pct = v => max > 0 ? (v / max) * 100 : 0;
+    $('barraIng').style.height = pct(ing) + '%';
+    $('barraGas').style.height = pct(salida) + '%';
+    $('segAp').style.flex = ap > 0 ? `${ap} 1 0` : '0 0 0';
+    $('segSep').hidden = !(ap > 0 && gas > 0);
+    $('segGas').style.flex = gas > 0 || !(ap > 0) ? `${gas || 1} 1 0` : '0 0 0';
+    ajustarTextos();
+  }
   /* ---------- Achicar montos grandes para que entren en el ancho ---------- */
   function ajustar(el, maxPx) {
     el.style.fontSize = maxPx + 'px';
@@ -1316,7 +1692,8 @@
     if (real > disponible && disponible > 0) el.style.fontSize = Math.floor(maxPx * disponible / real) + 'px';
   }
   function ajustarTextos() {
-    ajustar($('montoBalance'), Math.min(84, Math.round(window.innerWidth * 0.2)));
+    ajustar($('montoBalance'), 50);
+    ajustar($('montoBarras'), 52);
     ajustar($('totIng'), 22);
     ajustar($('totGas'), 22);
   }
@@ -1330,7 +1707,7 @@
     seg.dataset.t = fTipo;
     seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === fTipo));
     const wrap = $('chipsWrap'), chips = $('chips');
-    if (fTipo === 'todos') { wrap.classList.remove('on'); return; }
+    if (fTipo === 'todos' || fTipo === 'aporte') { wrap.classList.remove('on'); return; }
     const delTipo = movs.filter(m => m.tipo === fTipo && enPeriodo(m) && coincide(m));
     const base = CATEGORIAS[fTipo];
     const extra = [...new Set(movs.filter(m => m.tipo === fTipo && m.categoria && enPeriodo(m)).map(m => m.categoria))].filter(c => !base.includes(c));
@@ -1358,6 +1735,13 @@
       r.className = 'resumen on ' + (neto < 0 ? 'gasto' : 'ingreso');
       return;
     }
+    if (fTipo === 'aporte') {
+      const t = r2(lista.reduce((a, m) => a + m.monto, 0));
+      $('resTitulo').textContent = `Total aportes a ${aQuien()}`;
+      $('resCuenta').textContent = `${lista.length} aporte${lista.length === 1 ? '' : 's'}`;
+      $('resMonto').textContent = fmt(t); $('resMonto').className = 'monto-res oro';
+      r.className = 'resumen on aporte'; return;
+    }
     const total = lista.reduce((a, m) => a + m.monto, 0);
     const ing = fTipo === 'ingreso';
     $('resTitulo').textContent = fCat ? `Total ${fCat}` : (ing ? 'Total ingresos' : 'Total gastos');
@@ -1380,7 +1764,7 @@
     }
     if (!lista.length) {
       const que = busqueda ? `que coincidan con «${esc($('inBuscar').value.trim())}»`
-        : fCat ? `en «${esc(fCat)}»` : fTipo === 'ingreso' ? 'de ingresos' : fTipo === 'gasto' ? 'de gastos' : '';
+        : fCat ? `en «${esc(fCat)}»` : fTipo === 'ingreso' ? 'de ingresos' : fTipo === 'gasto' ? 'de gastos' : fTipo === 'aporte' ? 'de aportes' : '';
       const cuando = periodo === 'todo' ? '' : ` en ${nombreMes(periodo)}`;
       cont.innerHTML = `<div class="vacio">No hay movimientos ${que}${cuando}.</div>`;
       return;
@@ -1399,10 +1783,10 @@
       return cab + `
       <div class="item" data-id="${m.id}">
         <div class="info">
-          <div class="nombre">${esc(m.nombre)}</div>
-          <div class="meta"><span class="tag ${m.tipo}">${m.tipo === 'ingreso' ? 'Ingreso' : 'Gasto'}</span><span class="fecha">${m.categoria && m.categoria !== m.nombre ? esc(m.categoria) + ' · ' : ''}${horaDe(m.fecha)}</span></div>
+          <div class="nombre">${esc(tituloMov(m))}</div>
+          <div class="meta"><span class="tag ${m.tipo}">${etiquetaTipo(m.tipo)}</span><span class="fecha">${m.tipo === 'aporte' ? (notaApo(m) ? esc(notaApo(m)) + ' · ' : '') : m.categoria && m.categoria !== m.nombre ? esc(m.categoria) + ' · ' : ''}${horaDe(m.fecha)}</span></div>
         </div>
-        <div class="valor ${m.tipo === 'ingreso' ? 'pos' : 'neg'}">${m.tipo === 'ingreso' ? '+' : '-'}${fmt(m.monto)}</div>
+        <div class="valor ${claseValor(m.tipo)}">${m.tipo === 'ingreso' ? '+' : '-'}${fmt(m.monto)}</div>
         <button class="borrar" aria-label="Eliminar">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
         </button>
@@ -1426,7 +1810,7 @@
   const horaDe = ts => new Date(ts).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false });
   const norm = t => (t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   let busqueda = '';
-  const coincide = m => !busqueda || norm(m.nombre).includes(busqueda) || norm(m.categoria).includes(busqueda);
+  const coincide = m => !busqueda || norm(m.nombre).includes(busqueda) || norm(m.categoria).includes(busqueda) || norm(tituloMov(m)).includes(busqueda);
   $('btnBuscar').onclick = () => { $('filaFiltros').classList.add('buscando'); setTimeout(() => $('inBuscar').focus(), 50); };
   $('cerrarBuscar').onclick = () => { $('inBuscar').value = ''; busqueda = ''; $('filaFiltros').classList.remove('buscando'); pintarLista(); };
   $('inBuscar').addEventListener('input', () => { busqueda = norm($('inBuscar').value.trim()); pintarLista(); });
@@ -1445,7 +1829,7 @@
 
   /* ---------- Navegación ---------- */
   function abrirVista(id) { $('inicio').classList.add('off'); $(id).classList.add('on'); }
-  function cerrarVista(id) { $('inicio').classList.remove('off'); $(id).classList.remove('on'); }
+  function cerrarVista(id) { pintarInicio(); $('inicio').classList.remove('off'); $(id).classList.remove('on'); }   // al volver, el inicio siempre está al día
   $('abrirMov').onclick = () => { pintarLista(); abrirVista('movimientos'); };
   $('cerrarMov').onclick = () => cerrarVista('movimientos');
   $('abrirDeudas').onclick = () => { pintarDeudas(); abrirVista('deudas'); };
@@ -1458,6 +1842,7 @@
     if (!hojaAbierta) return;
     document.activeElement && document.activeElement.blur();
     hojaAbierta.classList.remove('on'); $('velo').classList.remove('on'); hojaAbierta = null;
+    setTimeout(() => typeof reposar === 'function' && reposar(), 350);
   }
   $('velo').onclick = cerrarHoja;
 
@@ -1473,6 +1858,13 @@
   // Mensaje bajo el nombre según la categoría elegida
   function pintarPista() {
     const cat = $('inCategoria').value;
+    if (tipoActual === 'aporte') {
+      $('inCategoria').classList.remove('sin-valor');
+      $('opcNombre').textContent = '(opcional)'; $('opcNombre').classList.remove('req');
+      $('pistaNombre').textContent = `Se verá como «Aporte a ${aQuien()}».`;
+      if ($('errForm').textContent) $('errForm').textContent = '';
+      return;
+    }
     $('inCategoria').classList.toggle('sin-valor', !cat);
     const otros = cat === 'Otros';
     $('opcNombre').textContent = otros ? '(obligatorio)' : '(opcional)';
@@ -1490,14 +1882,20 @@
   let editId = null;
   function abrirForm(tipo, m) {
     tipoActual = tipo; editId = m ? m.id : null;
-    const ing = tipo === 'ingreso';
-    $('tituloForm').textContent = (m ? 'Editar ' : 'Nuevo ') + (ing ? 'ingreso' : 'gasto');
-    const cats = CATEGORIAS[tipo].slice();
-    if (m && m.categoria && !cats.includes(m.categoria)) cats.push(m.categoria);
-    $('inCategoria').innerHTML = '<option value="" disabled selected>Elige una categoría</option>' +
-      cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
-    $('inCategoria').value = m && m.categoria ? m.categoria : '';
-    $('guardarForm').className = 'btn ' + (ing ? 'verde' : 'rojo');
+    const ing = tipo === 'ingreso', apo = tipo === 'aporte';
+    $('tituloForm').textContent = apo ? (m ? 'Editar aporte' : `Nuevo aporte a ${aQuien()}`) : (m ? 'Editar ' : 'Nuevo ') + (ing ? 'ingreso' : 'gasto');
+    $('campoCat').hidden = apo;
+    $('lblNombre').textContent = apo ? 'Nota' : 'Nombre';
+    $('inNombre').placeholder = apo ? 'Ej. Quincena de noviembre' : 'Ej. Pago de noviembre';
+    if (apo) { $('inCategoria').innerHTML = '<option value="Aporte">Aporte</option>'; $('inCategoria').value = 'Aporte'; }
+    else {
+      const cats = CATEGORIAS[tipo].slice();
+      if (m && m.categoria && !cats.includes(m.categoria)) cats.push(m.categoria);
+      $('inCategoria').innerHTML = '<option value="" disabled selected>Elige una categoría</option>' +
+        cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+      $('inCategoria').value = m && m.categoria ? m.categoria : '';
+    }
+    $('guardarForm').className = 'btn ' + (apo ? 'oro' : ing ? 'verde' : 'rojo');
     $('guardarForm').textContent = m ? 'Guardar cambios' : 'Guardar';
     $('inNombre').value = m ? (m.nombre === m.categoria ? '' : m.nombre) : '';
     $('inMonto').value = m ? String(m.monto) : '';
@@ -1509,6 +1907,7 @@
     $('errForm').textContent = '';
     pintarPista();
     $('hojaForm').classList.toggle('gasto', tipo === 'gasto');
+    $('hojaForm').classList.toggle('aporte', apo);
     pintarFrecuentes(m ? null : tipo);
     abrirHoja($('hojaForm'));
   }
@@ -1532,6 +1931,14 @@
     if (dia > isoDia(Date.now())) { $('errForm').textContent = 'La fecha no puede ser futura.'; return; }
     if (!editId && manejarFrecuente({ categoria, nombre, monto: Math.round(monto * 100) / 100 })) return;
     const original = editId ? movs.find(x => x.id === editId) : null;
+    // Un aporte no puede ser mayor a la ganancia actual (al editar, se cuenta lo que ya tenía ese aporte)
+    if (tipoActual === 'aporte') {
+      const t = sumas(), disp = r2(t.ing - t.gas - t.ap + (original ? original.monto : 0));
+      if (Math.round(monto * 100) / 100 > disp) {
+        $('errForm').textContent = disp > 0 ? `Solo tienes ${fmt(disp)} de ganancia disponible.` : 'No tienes ganancia disponible para aportar.';
+        return;
+      }
+    }
     // Hoy → hora actual; otro día → mediodía de ese día; si al editar no cambió el día, se conserva la hora
     let fecha;
     if (original && isoDia(original.fecha) === dia) fecha = original.fecha;
@@ -1540,9 +1947,10 @@
     if (original) {
       original.categoria = categoria; original.nombre = nombre; original.fecha = fecha;
       if (!original.deudaId && !original.metaId) original.monto = Math.round(monto * 100) / 100;
-      toast('Movimiento actualizado');
+      toast(original.tipo === 'aporte' ? 'Aporte actualizado' : 'Movimiento actualizado');
     } else {
       movs.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tipo: tipoActual, categoria, nombre, monto: Math.round(monto * 100) / 100, fecha });
+      if (tipoActual === 'aporte' && dia === isoDia(Date.now())) toast(`Aporte a ${aQuien()} registrado`);
       if (dia !== isoDia(Date.now())) toast('Guardado el ' + new Date(fecha).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' }).replace('.', ''));
     }
     guardar(movs); editId = null;
@@ -1550,6 +1958,7 @@
     cerrarHoja();
     pintarInicio();
     if ($('movimientos').classList.contains('on')) pintarLista();
+    if ($('aportes').classList.contains('on')) pintarAportes();
   });
 
   /* ---------- Eliminar con doble verificación ---------- */
@@ -1565,22 +1974,26 @@
     const it = e.target.closest('.item'); if (!it) return;
     const m = movs.find(x => x.id === it.dataset.id); if (!m) return;
     if (e.target.closest('.borrar')) { abrirBorrar(m); return; }
-    movSel = m;
-    const ing = m.tipo === 'ingreso';
-    $('detMovTitulo').textContent = m.nombre;
-    $('detMovFichas').innerHTML = `
-      <div class="ficha"><span>Tipo</span><b class="${ing ? 'pos' : 'neg'}">${ing ? 'Ingreso' : 'Gasto'}</b></div>
-      <div class="ficha"><span>Categoría</span><b>${m.categoria ? esc(m.categoria) : '—'}</b></div>
-      <div class="ficha"><span>Monto</span><b class="${ing ? 'pos' : 'neg'}">${ing ? '+' : '-'}${fmt(m.monto)}</b></div>
-      <div class="ficha"><span>Fecha</span><b>${etiquetaDia(m.fecha)} · ${new Date(m.fecha).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false })}</b></div>`;
-    abrirHoja($('hojaMov'));
+    abrirDetalleMov(m);
   });
+  function abrirDetalleMov(m) {
+    movSel = m;
+    const cls = claseValor(m.tipo), apo = m.tipo === 'aporte';
+    $('detMovTitulo').textContent = tituloMov(m);
+    $('detMovFichas').innerHTML = `
+      <div class="ficha"><span>Tipo</span><b class="${cls}">${etiquetaTipo(m.tipo)}</b></div>
+      ${apo ? `<div class="ficha"><span>Para</span><b>${esc(aQuien())}</b></div>` + (notaApo(m) ? `<div class="ficha"><span>Nota</span><b>${esc(notaApo(m))}</b></div>` : '')
+            : `<div class="ficha"><span>Categoría</span><b>${m.categoria ? esc(m.categoria) : '—'}</b></div>`}
+      <div class="ficha"><span>Monto</span><b class="${cls}">${m.tipo === 'ingreso' ? '+' : '-'}${fmt(m.monto)}</b></div>
+      <div class="ficha"><span>Fecha</span><b>${etiquetaDia(m.fecha)} · ${horaDe(m.fecha)}</b></div>`;
+    abrirHoja($('hojaMov'));
+  }
   $('btnMovCerrar').onclick = cerrarHoja;
   $('btnMovEditar').onclick = () => { const m = movSel; cerrarHoja(); setTimeout(() => abrirForm(m.tipo, m), 280); };
   $('btnMovBorrar').onclick = () => { const m = movSel; cerrarHoja(); setTimeout(() => abrirBorrar(m), 280); };
   function abrirBorrar(m) {
     idBorrar = m.id;
-    $('detBorrar').textContent = `${m.tipo === 'ingreso' ? 'Ingreso' : 'Gasto'} · ${m.nombre} · ${fmt(m.monto)}`;
+    $('detBorrar').textContent = `${etiquetaTipo(m.tipo)} · ${tituloMov(m)}${notaApo(m) ? ' (' + notaApo(m) + ')' : ''} · ${fmt(m.monto)}`;
     pasoBorrar(1);
     const ligada = m.deudaId && deudas.some(d => d.id === m.deudaId && d.estado !== 'cerrada');
     $('avisoBorrar').textContent = ligada
@@ -1592,9 +2005,11 @@
   $('confirmarBorrar').onclick = () => {
     if (paso === 1) { pasoBorrar(2); return; }        // 1ª confirmación → pide la 2ª
     const snap = foto();
+    const borrado = movs.find(m => m.id === idBorrar);
     movs = movs.filter(m => m.id !== idBorrar); guardar(movs);  // 2ª confirmación → borra
     cerrarHoja(); pintarLista(); pintarInicio();
-    toastDeshacer('Movimiento eliminado', snap);
+    if ($('aportes').classList.contains('on')) pintarAportes();
+    toastDeshacer(borrado && borrado.tipo === 'aporte' ? 'Aporte eliminado' : 'Movimiento eliminado', snap);
   };
 
   /* =================== DEUDAS =================== */
@@ -1625,7 +2040,6 @@
   const nuevoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const abonadoDe = d => (d.abonos || []).reduce((a, x) => a + x.monto, 0);
   function pendienteDe(d) { return Math.round((d.monto - abonadoDe(d)) * 100) / 100; }
-  $('resDeudas').onclick = () => { vistaDeudas = 'activas'; pintarDeudas(); abrirVista('deudas'); };
   const icoPersona = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>';
   const icoChev = '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
   const fmtDia = ts => new Date(ts).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' }).replace('.', '');
@@ -2202,7 +2616,8 @@
   let logradas = []; try { logradas = JSON.parse(localStorage.getItem(KEY_LOGRADAS) || '[]'); if (!Array.isArray(logradas)) logradas = []; } catch (e) {}
   function guardarLogradas() { try { localStorage.setItem(KEY_LOGRADAS, JSON.stringify(logradas)); } catch (e) {} }
 
-  const ganancia = () => movs.reduce((a, m) => a + (m.tipo === 'ingreso' ? m.monto : -m.monto), 0);
+  // Ganancia SIN restar los aportes: es la que llena las metas (único lugar donde se ve esa cifra)
+  const ganancia = () => movs.reduce((a, m) => a + (m.tipo === 'ingreso' ? m.monto : m.tipo === 'gasto' ? -m.monto : 0), 0);
   // Reparte la ganancia disponible entre las metas según el orden dado
   function repartir(orden) {
     let resto = Math.max(0, r2(ganancia()));
@@ -2516,7 +2931,7 @@
     const hoy = new Date();
     const f = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
     const nombre = `Cuadre-respaldo-${f}.json`;
-    const datos = JSON.stringify({ app: 'Cuadre', version: 2, exportado: Date.now(), movimientos: movs, deudas, metas, logradas, categorias: catsData, frecuentes }, null, 1);
+    const datos = JSON.stringify({ app: 'Cuadre', version: 2, exportado: Date.now(), movimientos: movs, deudas, metas, logradas, categorias: catsData, frecuentes, aporteNombre: receptor }, null, 1);
     const marcar = () => { try { localStorage.setItem(KEY_RESP, String(Date.now())); } catch (e) {} pintarUltimo(); };
     try {
       const file = new File([datos], nombre, { type: 'application/json' });
@@ -2536,7 +2951,7 @@
     } catch (e) { toast('No se pudo exportar'); }
   };
 
-  let pendientes = null, deudasPend = [], metasPend = [], catsPend = null, logradasPend = [], frecPend = [];
+  let apoNombrePend = '', pendientes = null, deudasPend = [], metasPend = [], catsPend = null, logradasPend = [], frecPend = [];
   $('btnImportar').onclick = () => { $('inArchivo').value = ''; $('inArchivo').click(); };
   $('inArchivo').addEventListener('change', async () => {
     const file = $('inArchivo').files[0]; if (!file) return;
@@ -2552,8 +2967,9 @@
       const dIds = new Set(deudas.map(x => x.id));
       deudasPend = dVal.filter(x => !dIds.has(x.id));
       catsPend = d.categorias && typeof d.categorias === 'object' ? d.categorias : null;
+      apoNombrePend = typeof d.aporteNombre === 'string' ? d.aporteNombre.trim().slice(0, 20) : '';
       const fIds = new Set(frecuentes.map(x => x.id));
-      frecPend = (Array.isArray(d.frecuentes) ? d.frecuentes : []).filter(x => x && x.id && !fIds.has(String(x.id)) && (x.tipo === 'ingreso' || x.tipo === 'gasto') && typeof x.nombre === 'string' && typeof x.categoria === 'string' && +x.monto > 0)
+      frecPend = (Array.isArray(d.frecuentes) ? d.frecuentes : []).filter(x => x && x.id && !fIds.has(String(x.id)) && (x.tipo === 'ingreso' || x.tipo === 'gasto' || x.tipo === 'aporte') && typeof x.nombre === 'string' && typeof x.categoria === 'string' && +x.monto > 0)
         .map(x => ({ id: String(x.id), tipo: x.tipo, categoria: x.categoria.slice(0, 24), nombre: x.nombre.slice(0, 40), monto: r2(+x.monto) }));
       const mIds = new Set(metas.map(x => x.id));
       metasPend = (Array.isArray(d.metas) ? d.metas : []).filter(x => x && x.id && typeof x.nombre === 'string' && +x.monto > 0 && !mIds.has(String(x.id)))
@@ -2561,7 +2977,7 @@
       const lIds = new Set(logradas.map(x => x.id));
       logradasPend = (Array.isArray(d.logradas) ? d.logradas : []).filter(x => x && x.id && typeof x.nombre === 'string' && +x.monto > 0 && !lIds.has(String(x.id)))
         .map(x => ({ id: String(x.id), nombre: x.nombre.slice(0, 30), monto: r2(+x.monto), fecha: +x.fecha || Date.now(), fechaLograda: +x.fechaLograda || Date.now(), movId: x.movId ? String(x.movId) : undefined }));
-      const validos = lista.filter(m => m && (m.tipo === 'ingreso' || m.tipo === 'gasto') && typeof m.nombre === 'string' && +m.monto > 0 && m.id)
+      const validos = lista.filter(m => m && (m.tipo === 'ingreso' || m.tipo === 'gasto' || m.tipo === 'aporte') && typeof m.nombre === 'string' && +m.monto > 0 && m.id)
         .map(m => ({ id: String(m.id), tipo: m.tipo, categoria: typeof m.categoria === 'string' ? m.categoria.slice(0, 30) : undefined, nombre: m.nombre.slice(0, 40), monto: Math.round(+m.monto * 100) / 100, fecha: +m.fecha || Date.now(), deudaId: m.deudaId ? String(m.deudaId) : undefined, metaId: m.metaId ? String(m.metaId) : undefined }));
       if (!validos.length && !dVal.length && !metasPend.length && !(Array.isArray(d.metas) && d.metas.length)) throw 0;
       const ids = new Set(movs.map(m => m.id));
@@ -2598,6 +3014,7 @@
       }));
       guardarCats(); catsPend = null;
     }
+    if (!receptor && apoNombrePend) { receptor = apoNombrePend; try { localStorage.setItem(KEY_APO, receptor); } catch (e) {} }
     pendientes = null; deudasPend = [];
     cerrarHoja(); pintarLista(); pintarDeudas(); pintarInicio();
     toast('Respaldo importado');
@@ -2655,17 +3072,18 @@
   function datosExcel() {
     const orden = movs.slice().sort((a, b) => a.fecha - b.fecha);
     const meses = [...new Set(orden.map(m => ymDe(m.fecha)))].sort();
-    const resumen = [['Mes', 'Ingresos', 'Gastos', 'Ganancia']];
-    let ti = 0, tg = 0;
+    const resumen = [['Mes', 'Ingresos', 'Gastos', 'Aportes', 'Ganancia']];
+    let ti = 0, tg = 0, ta = 0;
     meses.forEach(ym => {
       const del = orden.filter(m => ymDe(m.fecha) === ym);
       const i = r2(del.filter(m => m.tipo === 'ingreso').reduce((a, m) => a + m.monto, 0));
       const g = r2(del.filter(m => m.tipo === 'gasto').reduce((a, m) => a + m.monto, 0));
-      ti += i; tg += g; resumen.push([mesLargo(ym), i, g, r2(i - g)]);
+      const a = r2(del.filter(m => m.tipo === 'aporte').reduce((x, m) => x + m.monto, 0));
+      ti += i; tg += g; ta += a; resumen.push([mesLargo(ym), i, g, a, r2(i - g - a)]);
     });
-    resumen.push(['TOTAL', r2(ti), r2(tg), r2(ti - tg)]);
+    resumen.push(['TOTAL', r2(ti), r2(tg), r2(ta), r2(ti - tg - ta)]);
     const movRows = [['Fecha', 'Hora', 'Tipo', 'Categoría', 'Nombre', 'Monto', 'Neto']].concat(orden.map(m => [
-      isoDia(m.fecha), horaDe(m.fecha), m.tipo === 'ingreso' ? 'Ingreso' : 'Gasto', m.categoria || '', m.nombre, m.monto, m.tipo === 'ingreso' ? m.monto : -m.monto]));
+      isoDia(m.fecha), horaDe(m.fecha), etiquetaTipo(m.tipo), m.tipo === 'aporte' ? '' : m.categoria || '', m.tipo === 'aporte' ? tituloMov(m) + (notaApo(m) ? ' · ' + notaApo(m) : '') : m.nombre, m.monto, m.tipo === 'ingreso' ? m.monto : -m.monto]));
     const porCat = [['Mes', 'Tipo', 'Categoría', 'Total']];
     meses.forEach(ym => ['ingreso', 'gasto'].forEach(t => {
       const acc = {};
@@ -2680,7 +3098,7 @@
       metas.map((m, i) => [m.nombre, m.monto, rep[m.id] || 0, (rep[m.id] || 0) >= m.monto ? 'Completa' : 'En progreso', i + 1, isoDia(m.fecha), '']),
       logradas.map(m => [m.nombre, m.monto, m.monto, 'Lograda', '', isoDia(m.fecha), isoDia(m.fechaLograda)]));
     return [
-      { nombre: 'Resumen por mes', filas: resumen, anchos: [20, 14, 14, 14] },
+      { nombre: 'Resumen por mes', filas: resumen, anchos: [20, 14, 14, 14, 14] },
       { nombre: 'Movimientos', filas: movRows, anchos: [12, 8, 10, 18, 30, 12, 12] },
       { nombre: 'Por categoría', filas: porCat, anchos: [20, 10, 20, 14] },
       { nombre: 'Deudas', filas: deu, anchos: [10, 22, 18, 12, 12, 12, 10, 12, 14, 12, 20] },
@@ -2781,6 +3199,7 @@
     if ($('deudas').classList.contains('on')) pintarDeudas();
     if ($('metas').classList.contains('on')) pintarMetas(false);
     if ($('stats').classList.contains('on')) pintarStats();
+    if ($('aportes').classList.contains('on')) pintarAportes();
   }
   function toastDeshacer(msg, snap) {
     const t = $('toast');
@@ -2800,13 +3219,13 @@
   let frecTipo = null, frecSel = null, modoFrec = null, borrandoFrec = false;   // modoFrec: null | 'nuevo' | 'editar'
 
   function limpiarCampos() {
-    $('inCategoria').value = ''; $('inNombre').value = ''; $('inMonto').value = '';
+    $('inCategoria').value = tipoActual === 'aporte' ? 'Aporte' : ''; $('inNombre').value = ''; $('inMonto').value = '';
     $('inFecha').value = isoDia(Date.now()); $('errForm').textContent = ''; pintarPista();
   }
   function textosForm() {
-    const ing = frecTipo === 'ingreso';
-    $('tituloForm').textContent = modoFrec === 'nuevo' ? `Nuevo frecuente · ${ing ? 'ingreso' : 'gasto'}`
-      : modoFrec === 'editar' ? 'Editar frecuente' : (ing ? 'Nuevo ingreso' : 'Nuevo gasto');
+    const nom = frecTipo === 'ingreso' ? 'ingreso' : frecTipo === 'aporte' ? 'aporte' : 'gasto';
+    $('tituloForm').textContent = modoFrec === 'nuevo' ? `Nuevo frecuente · ${nom}`
+      : modoFrec === 'editar' ? 'Editar frecuente' : frecTipo === 'aporte' ? `Nuevo aporte a ${aQuien()}` : `Nuevo ${nom}`;
     $('guardarForm').textContent = modoFrec === 'editar' ? 'Guardar frecuente' : 'Guardar';
   }
   function mostrarEleccion(si) { $('frecEleccion').hidden = !si; $('botonesForm').hidden = si; }
@@ -2888,7 +3307,7 @@
     if (modoFrec === 'nuevo') {
       frecPendiente = { id: 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), tipo: frecTipo, categoria: datos.categoria, nombre: datos.nombre, monto: datos.monto };
       $('frecEleccionTxt').textContent = `«${datos.nombre}» · ${fmt(datos.monto)} es un frecuente nuevo. ¿Qué quieres hacer?`;
-      $('frecRegistrar').className = 'btn full ' + (frecTipo === 'ingreso' ? 'verde' : 'rojo');
+      $('frecRegistrar').className = 'btn full ' + (frecTipo === 'ingreso' ? 'verde' : frecTipo === 'aporte' ? 'oro' : 'rojo');
       document.activeElement && document.activeElement.blur();
       mostrarEleccion(true);
       return true;
@@ -2931,6 +3350,7 @@
     const snap = foto();
     movs = []; guardar(movs); deudas = []; guardarDeudas(); metas = []; guardarMetas(); logradas = []; guardarLogradas();
     frecuentes = []; guardarFrec();
+    receptor = ''; try { localStorage.removeItem(KEY_APO); } catch (e) {}
     catsData = {
       ingreso: CATS_DEF.ingreso.map(n => ({ id: idCat(), nombre: n })),
       gasto: CATS_DEF.gasto.map(n => ({ id: idCat(), nombre: n, presupuesto: 0 }))
@@ -2938,11 +3358,77 @@
     try { [KEY_RESP, KEY_AV_RESP, KEY_AV_DEU].forEach(k => localStorage.removeItem(k)); } catch (e) {}
     escribir(KEY_PRIMER, Date.now());
     cerrarHoja();
-    ['movimientos', 'deudas', 'metas', 'stats'].forEach(v => $(v).classList.remove('on'));
+    ['movimientos', 'deudas', 'metas', 'stats', 'barras', 'aportes'].forEach(v => $(v).classList.remove('on'));
     $('inicio').classList.remove('off');
     pintarInicio();
     setTimeout(() => toastDeshacer('Se borraron todos los datos', snap), 300);
   };
+
+  /* =================== APORTES =================== */
+  const fechaLarga = ts => { const d = new Date(ts); return `${d.getDate()} ${MESES[d.getMonth()].slice(0, 3)} ${d.getFullYear()}`; };
+  function pintarAportes() {
+    const { lista, total, pct } = datosAportes();
+    $('tituloAportes').textContent = receptor ? `Aportes a ${receptor}` : 'Aportes';
+    $('apoTotal').textContent = fmt(total);
+    $('apoBar').style.width = Math.min(100, pct || 0) + '%';
+    $('apoPct').textContent = !lista.length ? 'Aún no hay aportes.'
+      : pct != null ? textoPct(pct) + ' desde que empezaste' : 'Tu ganancia aún no es positiva.';
+    $('listaAportes').innerHTML = lista.length ? lista.map(m => `
+      <div class="fila-apo" data-id="${m.id}">
+        <div class="info"><b>${fechaLarga(m.fecha)}</b><small>${esc(notaApo(m) || 'Aporte')}</small></div>
+        <span class="mt">${fmt(m.monto)}</span>${icoChev}
+      </div>`).join('') + '<p class="nota-apo">Toca un aporte para editarlo o eliminarlo.</p>'
+      : '<div class="vacio" style="margin-top:12%">Aún no hay aportes.<br>Toca <b>+ Nuevo aporte</b> para registrar el primero.</div>';
+  }
+  $('abrirBarras').onclick = () => { pintarBarras(); abrirVista('barras'); };
+  $('cerrarBarras').onclick = () => cerrarVista('barras');
+  $('abrirAportes').addEventListener('click', e => { if (e.target.closest('#btnAportar')) return; pintarAportes(); abrirVista('aportes'); });
+  $('btnAportar').onclick = () => nuevoAporte();
+  $('cerrarAportes').onclick = () => cerrarVista('aportes');
+  $('nuevoAporte').onclick = () => nuevoAporte();
+  $('listaAportes').addEventListener('click', e => {
+    const f = e.target.closest('.fila-apo'); if (!f) return;
+    const m = movs.find(x => x.id === f.dataset.id); if (m) abrirDetalleMov(m);
+  });
+  let trasReceptor = false;
+  function nuevoAporte() { if (!receptor) { abrirReceptor(true); return; } abrirForm('aporte', null); }
+  function abrirReceptor(luegoAportar) {
+    trasReceptor = !!luegoAportar;
+    $('rNombre').value = receptor; $('errReceptor').textContent = '';
+    abrirHoja($('hojaReceptor'));
+  }
+  $('editarReceptor').onclick = () => abrirReceptor(false);
+  $('cancelarReceptor').onclick = () => { trasReceptor = false; cerrarHoja(); };
+  $('hojaReceptor').addEventListener('submit', e => {
+    e.preventDefault();
+    const n = $('rNombre').value.trim().replace(/\s+/g, ' ');
+    if (!n) { $('errReceptor').textContent = 'Escribe un nombre.'; return; }
+    const antes = receptor;
+    receptor = n.slice(0, 20);
+    try { localStorage.setItem(KEY_APO, receptor); } catch (e) {}
+    cerrarHoja(); pintarInicio();
+    if ($('aportes').classList.contains('on')) pintarAportes();
+    if ($('movimientos').classList.contains('on')) pintarLista();
+    if (trasReceptor) { trasReceptor = false; setTimeout(() => abrirForm('aporte', null), 300); }
+    else if (antes !== receptor) toast('Nombre actualizado');
+  });
+
+  /* =================== MODO OSCURO =================== */
+  const KEY_TEMA = 'cuadre_tema', mqOscuro = matchMedia('(prefers-color-scheme: dark)');
+  let tema = 'claro'; try { tema = localStorage.getItem(KEY_TEMA) || 'claro'; } catch (e) {}
+  function aplicarTema() {
+    const o = tema === 'oscuro' || (tema === 'auto' && mqOscuro.matches);
+    document.documentElement.classList.toggle('oscuro', o);
+    const mt = document.querySelector('meta[name="theme-color"]'); if (mt) mt.setAttribute('content', o ? '#14171D' : '#F2F3EF');
+    $('segTema').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.tema === tema));
+  }
+  $('segTema').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    tema = b.dataset.tema; try { localStorage.setItem(KEY_TEMA, tema); } catch (er) {}
+    aplicarTema(); vibrar(8);
+  });
+  if (mqOscuro.addEventListener) mqOscuro.addEventListener('change', () => { if (tema === 'auto') aplicarTema(); });
+  aplicarTema();
 
   /* =================== GUÍA =================== */
   $('abrirGuia').onclick = () => { $('hojaGuia').querySelector('.scroll').scrollTop = 0; abrirHoja($('hojaGuia')); };
@@ -2983,6 +3469,20 @@
   // Errores en formularios: 2 toques rápidos cada vez que aparece un mensaje de error
   document.querySelectorAll('.error').forEach(el => new MutationObserver(() => { if (el.textContent.trim()) vibrar(2, 70); })
     .observe(el, { childList: true, characterData: true, subtree: true }));
+
+  /* ---------- iPhone: al cerrar el teclado, la pantalla vuelve a su lugar ---------- */
+  // iOS sube toda la página para mostrar el campo con teclado y a veces no la regresa.
+  const escribiendo = () => { const a = document.activeElement; return !!a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName); };
+  function reposar() {
+    if (escribiendo()) return;
+    if (window.scrollY || window.scrollX || document.documentElement.scrollTop || document.body.scrollTop) {
+      window.scrollTo(0, 0); document.documentElement.scrollTop = 0; document.body.scrollTop = 0;
+    }
+  }
+  document.addEventListener('focusout', () => { setTimeout(reposar, 60); setTimeout(reposar, 400); });
+  window.addEventListener('scroll', () => { if (!escribiendo()) reposar(); });
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', () => setTimeout(reposar, 60));
+  $('velo').addEventListener('transitionend', reposar);
 
   /* ---------- Sin zoom (pellizco) ---------- */
   ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
