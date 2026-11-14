@@ -1770,7 +1770,7 @@
 
   /* ---------- Navegación ---------- */
   function abrirVista(id) { $('inicio').classList.add('off'); $(id).classList.add('on'); }
-  function cerrarVista(id) { $('inicio').classList.remove('off'); $(id).classList.remove('on'); }
+  function cerrarVista(id) { pintarInicio(); $('inicio').classList.remove('off'); $(id).classList.remove('on'); }   // al volver, el inicio siempre está al día
   $('abrirMov').onclick = () => { pintarLista(); abrirVista('movimientos'); };
   $('cerrarMov').onclick = () => cerrarVista('movimientos');
   $('abrirDeudas').onclick = () => { pintarDeudas(); abrirVista('deudas'); };
