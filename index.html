@@ -913,7 +913,6 @@
       <div class="bc apo" id="abrirAportes" role="button" tabindex="0">
         <div class="apo-top"><span class="bc-t" id="apoTitulo">Transferencias</span><button class="btn-aportar" id="btnAportar">+ Transferir</button></div>
         <div class="apo-mid"><b id="apoCardTotal">$0</b><span id="apoCardPct"></span></div>
-        <div class="apo-pills" id="apoCardPills"></div>
         <div class="barra3" id="apoCardBar"></div>
         <span class="apo-pie" id="apoCardPie"></span>
       </div>
@@ -1140,7 +1139,7 @@
       <input id="inMonto" type="text" inputmode="decimal" placeholder="0.00" enterkeyhint="done">
     </label>
     <label class="campo monto" id="campoCom" hidden>
-      <span>Comisión ($) <em class="opc">(opcional)</em></span>
+      <span>Comisión ($) <em class="opc req">(obligatorio, pon 0 si no te cobraron)</em></span>
       <input id="inCom" type="text" inputmode="decimal" placeholder="0.00" enterkeyhint="done">
       <small class="pista-nombre" id="pistaCom"></small>
     </label>
@@ -1478,7 +1477,7 @@
     <p class="det">Es el nombre que verás en «Transferencias a …» y en el tipo de pago «Crédito de …». Puedes cambiarlo cuando quieras.</p>
     <label class="campo">
       <span>Nombre</span>
-      <input id="rNombre" type="text" maxlength="20" placeholder="Ej. Mary, Mamá, Ahorro casa…" enterkeyhint="done">
+      <input id="rNombre" type="text" maxlength="20" placeholder="Ej. Mamá, Hermana, Ahorros…" enterkeyhint="done">
     </label>
     <div class="error" id="errReceptor"></div>
     <div class="botones">
@@ -1712,7 +1711,6 @@
     $('apoTitulo').textContent = receptor ? `Transferencias a ${receptor}` : 'Transferencias';
     $('apoCardTotal').innerHTML = `${fmt(d.liquido)} <small>neto</small>`;
     $('apoCardPct').textContent = d.trans.length && d.pct != null ? textoPct(d.pct) : '';
-    $('apoCardPills').innerHTML = d.lista.length ? pastillas(d) : '';
     $('apoCardBar').innerHTML = barra3(d);
     $('apoCardPie').textContent = !receptor ? 'Toca «+ Transferir» y elige a quién le transfieres.'
       : d.trans.length ? `${d.trans.length} transferencia${d.trans.length === 1 ? '' : 's'} · Última: ${fmtDia(d.trans[0].fecha)}, ${fmt(d.trans[0].monto)}` : 'Aún no hay transferencias.';
@@ -1970,7 +1968,7 @@
     $('inFecha').value = isoDia(m ? m.fecha : Date.now());
     $('inFecha').max = isoDia(Date.now());
     $('lblMonto').textContent = apo ? 'Monto que le llega ($)' : 'Monto ($)';
-    $('campoCom').hidden = !apo; $('inCom').value = m && comDe(m) ? String(m.comision) : '';
+    $('campoCom').hidden = !apo; $('inCom').value = m && apo ? String(comDe(m)) : '';
     $('campoPago').hidden = tipo !== 'gasto';
     if (tipo === 'gasto') llenarPagos(m ? (m.pago || 'Efectivo') : 'Efectivo');
     pistaCom();
@@ -2023,9 +2021,10 @@
     if (!dia) { $('errForm').textContent = 'Elige una fecha.'; return; }
     if (dia > isoDia(Date.now())) { $('errForm').textContent = 'La fecha no puede ser futura.'; return; }
     let comision = 0, pago;
-    if (tipoActual === 'aporte' && $('inCom').value.trim()) {
+    if (tipoActual === 'aporte') {
+      if (!$('inCom').value.trim()) { $('errForm').textContent = 'Escribe la comisión. Si no te cobraron, pon 0.'; $('inCom').focus(); return; }
       comision = parseFloat($('inCom').value.replace(/[^0-9.,]/g, '').replace(',', '.'));
-      if (!(comision >= 0) || comision > 999999999) { $('errForm').textContent = 'Escribe una comisión válida o déjala vacía.'; return; }
+      if (!(comision >= 0) || comision > 999999999) { $('errForm').textContent = 'Escribe una comisión válida (puede ser 0).'; return; }
       comision = Math.round(comision * 100) / 100;
     }
     if (tipoActual === 'gasto') pago = $('inPago').value || 'Efectivo';
@@ -3382,7 +3381,7 @@
     $('inMonto').value = String(f.monto);
     $('inFecha').value = isoDia(Date.now());
     if (f.tipo === 'gasto') llenarPagos(f.pago || 'Efectivo');
-    if (f.tipo === 'aporte') $('inCom').value = f.comision > 0 ? String(f.comision) : '';
+    if (f.tipo === 'aporte') $('inCom').value = String(f.comision > 0 ? f.comision : 0);
     $('errForm').textContent = ''; pintarPista(); pistaCom();
   }
   $('frecFila').addEventListener('click', e => {
