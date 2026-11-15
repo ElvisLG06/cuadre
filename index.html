@@ -751,6 +751,19 @@
   .apo-mid span { font-size: 13px; font-weight: 600; color: #6B5A2E; text-align: right; }
   .bc.apo .mini-bar { background: #E6D7AE; } .bc.apo .mini-bar i { background: var(--oro); }
   .apo-pie { font-size: 12.5px; color: #6B5A2E; }
+  #aportes .top h2 { font-size: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .apo-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .apo-pills span { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,.55); color: #5E4A1C; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .apo-pills i, .fila-apo .cm i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .barra3 { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: #E6D7AE; gap: 2px; }
+  .barra3 i { display: block; height: 100%; min-width: 0; transition: flex-grow .6s cubic-bezier(.2,.8,.2,1); }
+  .c-tr { background: #C9962F; } .c-com { background: #8C7BC8; } .c-cr { background: #D9534A; }
+  .fila-apo .der { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+  .fila-apo .cm { font-size: 11.5px; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .fila-apo .mt.cr { color: var(--red); }
+  .tag.cred { background: var(--surface-2); color: var(--muted); margin-left: 4px; }
+  html.oscuro .apo-pills span { background: rgba(255,255,255,.07); color: #D8C79C; }
+  html.oscuro .barra3 { background: #4A3E22; }
   @media (max-width: 380px) { .bc-pie b { font-size: 15px; } .bc-dona { font-size: 11.5px; gap: 8px; } .bc-dona svg { width: 40px; height: 40px; } .bc-t { font-size: 17px; } .bc.mov .bc-t { font-size: 16px; } .bc-ir { width: 24px; height: 24px; } }
 
   /* =================== BARRAS (al tocar la ganancia) =================== */
@@ -898,9 +911,9 @@
       </button>
 
       <div class="bc apo" id="abrirAportes" role="button" tabindex="0">
-        <div class="apo-top"><span class="bc-t" id="apoTitulo">Aportes</span><button class="btn-aportar" id="btnAportar">+ Aportar</button></div>
+        <div class="apo-top"><span class="bc-t" id="apoTitulo">Transferencias</span><button class="btn-aportar" id="btnAportar">+ Transferir</button></div>
         <div class="apo-mid"><b id="apoCardTotal">$0</b><span id="apoCardPct"></span></div>
-        <div class="mini-bar"><i id="apoCardBar"></i></div>
+        <div class="barra3" id="apoCardBar"></div>
         <span class="apo-pie" id="apoCardPie"></span>
       </div>
     </div>
@@ -945,17 +958,18 @@
       <button class="back" id="cerrarAportes" aria-label="Volver">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
-      <h2 id="tituloAportes">Aportes</h2>
+      <h2 id="tituloAportes">Transferencias</h2>
       <button class="btn-icono" id="editarReceptor" aria-label="Cambiar el nombre de quien recibe">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
       </button>
     </div>
     <div class="apo-res">
-      <small>Total aportado</small>
+      <small id="apoResT">Neto transferido</small>
       <span class="cifra" id="apoTotal">$0</span>
-      <div class="mini-bar"><i id="apoBar"></i></div>
+      <div class="apo-pills" id="apoPills"></div>
+      <div class="barra3" id="apoBar"></div>
       <span class="pct" id="apoPct"></span>
-      <button class="btn-negro" id="nuevoAporte">+ Nuevo aporte</button>
+      <button class="btn-negro" id="nuevoAporte">+ Nueva transferencia</button>
     </div>
     <div class="hist-t">Historial</div>
     <div class="lista-apo" id="listaAportes"></div>
@@ -997,7 +1011,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
       <button class="btn sec full" id="abrirCats" style="margin-bottom:6px">
-        Administrar categorías y presupuestos
+        Administrar categorías, presupuestos y pagos
       </button>
       <button class="link-guia" id="abrirGuia">¿Cómo funciona Cuadre?</button>
     </div>
@@ -1086,7 +1100,7 @@
       <button data-t="todos" class="on">Todos</button>
       <button data-t="ingreso">Ingresos</button>
       <button data-t="gasto">Gastos</button>
-      <button data-t="aporte">Aportes</button>
+      <button data-t="aporte">Transf.</button>
     </div>
     <div class="chips-wrap" id="chipsWrap"><div><div class="chips" id="chips"></div></div></div>
     <div class="lista-wrap">
@@ -1121,8 +1135,21 @@
       <small class="pista-nombre" id="pistaNombre"></small>
     </label>
     <label class="campo monto">
-      <span>Monto ($)</span>
+      <span id="lblMonto">Monto ($)</span>
       <input id="inMonto" type="text" inputmode="decimal" placeholder="0.00" enterkeyhint="done">
+    </label>
+    <label class="campo monto" id="campoCom" hidden>
+      <span>Comisión ($) <em class="opc req">(obligatorio, pon 0 si no te cobraron)</em></span>
+      <input id="inCom" type="text" inputmode="decimal" placeholder="0.00" enterkeyhint="done">
+      <small class="pista-nombre" id="pistaCom"></small>
+    </label>
+    <label class="campo" id="campoPago" hidden>
+      <span>Tipo de pago</span>
+      <div class="select-wrap">
+        <select id="inPago"></select>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <small class="pista-nombre" id="pistaPago"></small>
     </label>
     <label class="campo">
       <span>Fecha</span>
@@ -1300,10 +1327,11 @@
   <div class="hoja alta" id="hojaCats">
     <div class="agarre"></div>
     <h3>Categorías</h3>
-    <div class="segmento" id="segCats" data-t="gasto" style="grid-template-columns:repeat(2,1fr);margin-bottom:14px">
-      <span class="indicador" style="width:calc((100% - 8px) / 2);transform:translateX(100%)"></span>
+    <div class="segmento" id="segCats" data-t="gasto" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">
+      <span class="indicador" style="width:calc((100% - 8px) / 3);transform:translateX(100%)"></span>
       <button data-t="ingreso">Ingresos</button>
       <button data-t="gasto" class="on">Gastos</button>
+      <button data-t="pagos">Pagos</button>
     </div>
     <div class="scroll" id="listaCats"></div>
     <button type="button" class="btn sec full" id="cerrarCats" style="margin-top:6px">Listo</button>
@@ -1399,9 +1427,9 @@
     <div class="scroll">
       <p class="intro">Todo lo que registras se guarda solo en este iPhone. Nadie más lo ve y no necesita internet.</p>
       <details open><summary>🏠 Inicio</summary><div class="cuerpo">
-        <p>Arriba registras un <b>Ingreso</b> o un <b>Gasto</b>. El número grande es tu <b>Ganancia total</b> (ingresos − gastos − aportes). Si es negativa, cambia a <b>Pérdida</b> en rojo.</p>
-        <p>Toca la ganancia para ver las <b>barras</b>: la <b>verde</b> son tus ingresos y la <b>roja</b> tus gastos, con tus aportes encima en <b>dorado</b>. Con <b>Todo / ‹ Mes ›</b> eliges si ves todo o solo un mes.</p>
-        <p>Cada recuadro te lleva a Movimientos, Deudas, Estadísticas, Metas y Aportes, con un resumen de cada uno.</p>
+        <p>Arriba registras un <b>Ingreso</b> o un <b>Gasto</b>. El número grande es tu <b>Ganancia total</b> (ingresos − gastos − transferencias). Si es negativa, cambia a <b>Pérdida</b> en rojo.</p>
+        <p>Toca la ganancia para ver las <b>barras</b>: la <b>verde</b> son tus ingresos y la <b>roja</b> tus gastos, con tus transferencias encima en <b>dorado</b>. Con <b>Todo / ‹ Mes ›</b> eliges si ves todo o solo un mes.</p>
+        <p>Cada recuadro te lleva a Movimientos, Deudas, Estadísticas, Metas y Transferencias, con un resumen de cada uno.</p>
       </div></details>
       <details><summary>➕ Ingresos y gastos</summary><div class="cuerpo">
         <p>Toca <b>Ingreso</b> o <b>Gasto</b>, elige la <b>categoría</b>, el monto y la fecha. El nombre es opcional: si lo dejas vacío se guarda con el nombre de la categoría. En <b>Otros</b> el nombre es obligatorio.</p>
@@ -1417,13 +1445,16 @@
         <p>Puedes registrar <b>abonos</b> (pagos parciales). Las deudas pagadas pasan a <b>Cerradas</b>.</p>
         <p>Al crear una deuda eliges <b>la fecha de pago</b>. Ese día (y mientras siga pendiente) la app te avisa al abrirla: puedes marcar <b>Ya se pagó</b> o elegir una <b>nueva fecha</b>.</p>
       </div></details>
-      <details><summary>💛 Aportes</summary><div class="cuerpo">
-        <p>Registra el dinero que le das a alguien. Toca <b>+ Aportar</b>; la primera vez eliges a quién. Puedes cambiar el nombre con el ✏️ dentro de Aportes.</p>
-        <p>Un aporte <b>se resta de tu ganancia</b>, pero <b>no es un gasto</b>: no aparece en Estadísticas ni en Presupuestos. En Movimientos tiene su propia pestaña.</p>
-        <p>El <b>%</b> compara lo que aportaste con lo que ganaste sin contar los aportes. Toca un aporte para editarlo o eliminarlo.</p>
+      <details><summary>💸 Transferencias</summary><div class="cuerpo">
+        <p>Registra el dinero que le transfieres a alguien, con la <b>comisión</b> que cobra la app que usas. Toca <b>+ Transferir</b>; la primera vez eliges a quién. Cambias el nombre con el ✏️.</p>
+        <p>En Movimientos sale el <b>total</b> (lo que le llega + comisión), que es lo que sale de tu tarjeta y se resta de tu ganancia. No es un gasto: no aparece en Estadísticas ni en Presupuestos.</p>
+        <p>Si pagas algo con su tarjeta, elige el tipo de pago <b>«Crédito de …»</b>: no se resta de tu ganancia, se descuenta de lo que le transferiste. El recuadro muestra el <b>neto</b> (transferido − gastado con su tarjeta) y la barra reparte en colores lo que le quedó, la comisión y lo gastado.</p>
+      </div></details>
+      <details><summary>💳 Tipos de pago</summary><div class="cuerpo">
+        <p>Cada gasto tiene un tipo de pago: <b>Efectivo</b>, <b>Débito</b> o <b>Crédito</b>. Puedes agregar los tuyos (Yape, Plin…) en <b>Estadísticas → Administrar categorías → Pagos</b>.</p>
       </div></details>
       <details><summary>🎯 Metas</summary><div class="cuerpo">
-        <p>Tu ganancia (sin restar los aportes) llena tus metas <b>de arriba hacia abajo</b>: primero la #1, luego la #2… </p>
+        <p>Tu ganancia (sin restar las transferencias) llena tus metas <b>de arriba hacia abajo</b>: primero la #1, luego la #2… </p>
         <p><b>Mantén presionada</b> una meta y arrástrala para cambiar su prioridad. Cuando una se complete, toca <b>Ya lo compré</b>: se registra el gasto y pasa a <b>Logradas</b> 🏆.</p>
       </div></details>
       <details><summary>📊 Estadísticas y presupuestos</summary><div class="cuerpo">
@@ -1442,11 +1473,11 @@
   <!-- ========== HOJA: A QUIÉN APORTAS ========== -->
   <form class="hoja" id="hojaReceptor" autocomplete="off">
     <div class="agarre"></div>
-    <h3>¿A quién le aportas?</h3>
-    <p class="det">Es el nombre que verás en «Aportes a …». Puedes cambiarlo cuando quieras.</p>
+    <h3>¿A quién le transfieres?</h3>
+    <p class="det">Es el nombre que verás en «Transferencias a …» y en el tipo de pago «Crédito de …». Puedes cambiarlo cuando quieras.</p>
     <label class="campo">
       <span>Nombre</span>
-      <input id="rNombre" type="text" maxlength="20" placeholder="Ej. Mary, Mamá, Ahorro casa…" enterkeyhint="done">
+      <input id="rNombre" type="text" maxlength="20" placeholder="Ej. Mamá, Hermana, Ahorros…" enterkeyhint="done">
     </label>
     <div class="error" id="errReceptor"></div>
     <div class="botones">
@@ -1491,6 +1522,8 @@
       gasto: CATS_DEF.gasto.map(n => ({ id: idCat(), nombre: n, presupuesto: 0 }))
     };
   }
+  const PAGOS_DEF = ['Efectivo', 'Débito', 'Crédito'];
+  if (!Array.isArray(catsData.pagos)) catsData.pagos = PAGOS_DEF.map(n => ({ id: idCat(), nombre: n }));
   function guardarCats() { try { localStorage.setItem(KEY_CATS, JSON.stringify(catsData)); } catch (e) {} }
   const PALETA = ['#5b8def', '#e8a33d', '#b06fd8', '#3fb8b0', '#d86f9b', '#a3ad5a', '#8f7cf0', '#e07b4f', '#4fb3d9', '#c9785b', '#8a93a6'];
   function colorCat(tipo, nombre) {
@@ -1555,18 +1588,30 @@
   const KEY_APO = 'cuadre_aporte_nombre';
   let receptor = ''; try { receptor = (localStorage.getItem(KEY_APO) || '').trim(); } catch (e) {}
   const aQuien = () => receptor || '…';
-  const tituloMov = m => m.tipo === 'aporte' ? `Aporte a ${aQuien()}` : m.nombre;
+  const tituloMov = m => m.tipo === 'aporte' ? `Transferencia a ${aQuien()}` : m.nombre;
   const notaApo = m => m.tipo === 'aporte' && m.nombre && m.nombre !== 'Aporte' ? m.nombre : '';
-  const etiquetaTipo = t => t === 'ingreso' ? 'Ingreso' : t === 'aporte' ? 'Aporte' : 'Gasto';
+  const etiquetaTipo = t => t === 'ingreso' ? 'Ingreso' : t === 'aporte' ? 'Transferencia' : 'Gasto';
   const claseValor = t => t === 'ingreso' ? 'pos' : t === 'aporte' ? 'oro' : 'neg';
   const red2 = n => Math.round(n * 100) / 100;
+  // Tipo de pago especial: la tarjeta de quien recibe tus transferencias
+  const CREDITO = 'credito-receptor';
+  const esCredito = m => m.tipo === 'gasto' && m.pago === CREDITO;
+  const pagoDe = m => m.pago === CREDITO ? `Crédito de ${aQuien()}` : (m.pago || 'Efectivo');
+  const comDe = m => m.tipo === 'aporte' && m.comision > 0 ? m.comision : 0;
+  const totalSale = m => m.tipo === 'aporte' ? red2(m.monto + comDe(m)) : m.monto;   // lo que sale de tu tarjeta
+  // Efecto en la ganancia: un gasto con «Crédito de …» no la toca (ya salió al transferir)
+  const efecto = m => m.tipo === 'ingreso' ? m.monto : esCredito(m) ? 0 : -totalSale(m);
   function sumas(filtro) {
-    let ing = 0, gas = 0, ap = 0;
+    let ing = 0, gas = 0, tr = 0, com = 0, cred = 0;
     movs.forEach(m => {
       if (filtro && !filtro(m)) return;
-      if (m.tipo === 'ingreso') ing += m.monto; else if (m.tipo === 'gasto') gas += m.monto; else if (m.tipo === 'aporte') ap += m.monto;
+      if (m.tipo === 'ingreso') ing += m.monto;
+      else if (m.tipo === 'gasto') { if (esCredito(m)) cred += m.monto; else gas += m.monto; }
+      else if (m.tipo === 'aporte') { tr += m.monto; com += comDe(m); }
     });
-    return { ing: red2(ing), gas: red2(gas), ap: red2(ap) };
+    const r = { ing: red2(ing), gas: red2(gas), tr: red2(tr), com: red2(com), cred: red2(cred) };
+    r.ap = red2(r.tr + r.com);   // todo lo que salió por transferencias (con comisión)
+    return r;
   }
 
   /* ---------- Inicio: siempre muestra TODO ---------- */
@@ -1593,7 +1638,7 @@
     $('movHoy').textContent = n ? `Hoy · ${n} movimiento${n === 1 ? '' : 's'}` : 'Hoy · sin movimientos';
     // Línea: cómo fue cambiando tu ganancia en los últimos 30 días
     const DIAS = 30, ini = new Date(); ini.setHours(0, 0, 0, 0); ini.setDate(ini.getDate() - (DIAS - 1));
-    const t0 = ini.getTime(), neto = m => m.tipo === 'ingreso' ? m.monto : -m.monto;
+    const t0 = ini.getTime(), neto = efecto;
     let acc = movs.filter(m => m.fecha < t0).reduce((a, m) => a + neto(m), 0);
     const porDia = new Array(DIAS).fill(0);
     movs.forEach(m => { if (m.fecha >= t0) porDia[Math.min(DIAS - 1, Math.floor((m.fecha - t0) / 86400000))] += neto(m); });
@@ -1644,22 +1689,31 @@
     $('metNombre').textContent = act.nombre; $('metPct').textContent = pct + '%'; $('metBar').style.width = pct + '%';
   }
 
-  // El % compara lo aportado con la ganancia SIN restar aportes (esa cifra no se muestra)
+  // El % compara lo transferido (con comisión) con la ganancia SIN restar transferencias (esa cifra no se muestra)
   function datosAportes() {
-    const lista = movs.filter(m => m.tipo === 'aporte').sort((a, b) => b.fecha - a.fecha);
-    const { ing, gas, ap } = sumas();
-    const bruta = red2(ing - gas);
-    return { lista, total: ap, pct: bruta > 0 ? ap / bruta * 100 : null };
+    const lista = movs.filter(m => m.tipo === 'aporte' || esCredito(m)).sort((a, b) => b.fecha - a.fecha);
+    const t = sumas(), bruta = red2(t.ing - t.gas);
+    return { lista, trans: lista.filter(m => m.tipo === 'aporte'), tr: t.tr, com: t.com, cred: t.cred,
+      liquido: red2(t.tr - t.cred), pct: bruta > 0 ? (t.ap / bruta) * 100 : null };
   }
   const textoPct = p => `${p > 0 && p < 1 ? '<1' : Math.round(p)}% de lo que ganaste`;
+  function pastillas(d) {
+    return `<span><i class="c-tr"></i>Transferido ${fmt(d.tr)}</span><span><i class="c-com"></i>Comisión ${fmt(d.com)}</span><span><i class="c-cr"></i>Crédito de ${esc(aQuien())} ${fmt(d.cred)}</span>`;
+  }
+  // Barra llena en 3 colores: lo que le queda + comisión + lo gastado con su tarjeta
+  function barra3(d) {
+    const a = Math.max(0, d.tr - d.cred), tot = a + d.com + d.cred;
+    if (!(tot > 0)) return '';
+    return `<i class="c-tr" style="flex-grow:${a}"></i><i class="c-com" style="flex-grow:${d.com}"></i><i class="c-cr" style="flex-grow:${d.cred}"></i>`;
+  }
   function pintarCardAportes() {
-    const { lista, total, pct } = datosAportes();
-    $('apoTitulo').textContent = receptor ? `Aportes a ${receptor}` : 'Aportes';
-    $('apoCardTotal').innerHTML = `${fmt(total)} <small>aportado</small>`;
-    $('apoCardPct').textContent = lista.length && pct != null ? textoPct(pct) : '';
-    $('apoCardBar').style.width = Math.min(100, pct || 0) + '%';
-    $('apoCardPie').textContent = !receptor ? 'Toca «+ Aportar» y elige a quién le aportas.'
-      : lista.length ? `${lista.length} aporte${lista.length === 1 ? '' : 's'} · Último: ${fmtDia(lista[0].fecha)}, ${fmt(lista[0].monto)}` : 'Aún no hay aportes.';
+    const d = datosAportes();
+    $('apoTitulo').textContent = receptor ? `Transferencias a ${receptor}` : 'Transferencias';
+    $('apoCardTotal').innerHTML = `${fmt(d.liquido)} <small>neto</small>`;
+    $('apoCardPct').textContent = d.trans.length && d.pct != null ? textoPct(d.pct) : '';
+    $('apoCardBar').innerHTML = barra3(d);
+    $('apoCardPie').textContent = !receptor ? 'Toca «+ Transferir» y elige a quién le transfieres.'
+      : d.trans.length ? `${d.trans.length} transferencia${d.trans.length === 1 ? '' : 's'} · Última: ${fmtDia(d.trans[0].fecha)}, ${fmt(d.trans[0].monto)}` : 'Aún no hay transferencias.';
   }
 
   /* ---------- Barras (al tocar la ganancia): aquí sí se elige el mes ---------- */
@@ -1727,7 +1781,7 @@
     const r = $('resumen');
     if (fTipo === 'todos' && !busqueda) { r.className = 'resumen'; return; }
     if (fTipo === 'todos') {   // solo búsqueda: muestra el neto
-      const neto = r2(lista.reduce((a, m) => a + (m.tipo === 'ingreso' ? m.monto : -m.monto), 0));
+      const neto = r2(lista.reduce((a, m) => a + efecto(m), 0));
       $('resTitulo').textContent = `Resultado de «${$('inBuscar').value.trim()}»`;
       $('resCuenta').textContent = `${lista.length} movimiento${lista.length === 1 ? '' : 's'}`;
       $('resMonto').textContent = (neto > 0 ? '+' : '') + fmt(neto);
@@ -1736,9 +1790,10 @@
       return;
     }
     if (fTipo === 'aporte') {
-      const t = r2(lista.reduce((a, m) => a + m.monto, 0));
-      $('resTitulo').textContent = `Total aportes a ${aQuien()}`;
-      $('resCuenta').textContent = `${lista.length} aporte${lista.length === 1 ? '' : 's'}`;
+      const nT = lista.filter(m => m.tipo === 'aporte').length, nC = lista.length - nT;
+      const t = r2(lista.reduce((a, m) => a + (m.tipo === 'aporte' ? m.monto : -m.monto), 0));
+      $('resTitulo').textContent = `Neto transferido a ${aQuien()}`;
+      $('resCuenta').textContent = `${nT} transferencia${nT === 1 ? '' : 's'}` + (nC ? ` · ${nC} con su tarjeta` : '');
       $('resMonto').textContent = fmt(t); $('resMonto').className = 'monto-res oro';
       r.className = 'resumen on aporte'; return;
     }
@@ -1756,7 +1811,7 @@
     const cont = $('lista');
     pintarFiltros();
     pintarPeriodo();
-    const lista = movs.filter(m => enPeriodo(m) && coincide(m) && (fTipo === 'todos' || m.tipo === fTipo) && (fCat === null || m.categoria === fCat));
+    const lista = movs.filter(m => enPeriodo(m) && coincide(m) && (fTipo === 'todos' || m.tipo === fTipo || (fTipo === 'aporte' && esCredito(m))) && (fCat === null || m.categoria === fCat));
     pintarResumen(lista);
     if (!movs.length) {
       cont.innerHTML = '<div class="vacio">Aún no hay movimientos.<br>Registra un ingreso o un gasto desde el inicio.</div>';
@@ -1764,7 +1819,7 @@
     }
     if (!lista.length) {
       const que = busqueda ? `que coincidan con «${esc($('inBuscar').value.trim())}»`
-        : fCat ? `en «${esc(fCat)}»` : fTipo === 'ingreso' ? 'de ingresos' : fTipo === 'gasto' ? 'de gastos' : fTipo === 'aporte' ? 'de aportes' : '';
+        : fCat ? `en «${esc(fCat)}»` : fTipo === 'ingreso' ? 'de ingresos' : fTipo === 'gasto' ? 'de gastos' : fTipo === 'aporte' ? 'de transferencias' : '';
       const cuando = periodo === 'todo' ? '' : ` en ${nombreMes(periodo)}`;
       cont.innerHTML = `<div class="vacio">No hay movimientos ${que}${cuando}.</div>`;
       return;
@@ -1772,7 +1827,7 @@
     // Agrupar por día, con el neto de cada día
     const orden = [...lista].sort((a, b) => b.fecha - a.fecha);
     const netoDia = {};
-    orden.forEach(m => { const k = claveDia(m.fecha); netoDia[k] = (netoDia[k] || 0) + (m.tipo === 'ingreso' ? m.monto : -m.monto); });
+    orden.forEach(m => { const k = claveDia(m.fecha); netoDia[k] = (netoDia[k] || 0) + efecto(m); });
     let ultimo = null;
     cont.innerHTML = orden.map(m => {
       const k = claveDia(m.fecha); let cab = '';
@@ -1784,14 +1839,25 @@
       <div class="item" data-id="${m.id}">
         <div class="info">
           <div class="nombre">${esc(tituloMov(m))}</div>
-          <div class="meta"><span class="tag ${m.tipo}">${etiquetaTipo(m.tipo)}</span><span class="fecha">${m.tipo === 'aporte' ? (notaApo(m) ? esc(notaApo(m)) + ' · ' : '') : m.categoria && m.categoria !== m.nombre ? esc(m.categoria) + ' · ' : ''}${horaDe(m.fecha)}</span></div>
+          <div class="meta"><span class="tag ${m.tipo}">${etiquetaTipo(m.tipo)}</span><span class="fecha">${subMov(m)}${horaDe(m.fecha)}</span></div>
         </div>
-        <div class="valor ${claseValor(m.tipo)}">${m.tipo === 'ingreso' ? '+' : '-'}${fmt(m.monto)}</div>
+        <div class="valor ${claseValor(m.tipo)}">${m.tipo === 'ingreso' ? '+' : '-'}${fmt(totalSale(m))}</div>
         <button class="borrar" aria-label="Eliminar">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
         </button>
       </div>`;
     }).join('');
+  }
+
+  // Segunda línea de cada movimiento: categoría, tipo de pago, nota o comisión
+  function subMov(m) {
+    const p = [];
+    if (m.tipo === 'aporte') { if (notaApo(m)) p.push(esc(notaApo(m))); if (comDe(m)) p.push('comisión ' + fmt(comDe(m))); }
+    else {
+      if (m.categoria && m.categoria !== m.nombre) p.push(esc(m.categoria));
+      if (m.tipo === 'gasto') p.push(esCredito(m) ? `<b class="oro">${esc(pagoDe(m))}</b>` : esc(pagoDe(m)));
+    }
+    return p.length ? p.join(' · ') + ' · ' : '';
   }
 
   /* ---------- Días y búsqueda ---------- */
@@ -1810,7 +1876,7 @@
   const horaDe = ts => new Date(ts).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false });
   const norm = t => (t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   let busqueda = '';
-  const coincide = m => !busqueda || norm(m.nombre).includes(busqueda) || norm(m.categoria).includes(busqueda) || norm(tituloMov(m)).includes(busqueda);
+  const coincide = m => !busqueda || norm(m.nombre).includes(busqueda) || norm(m.categoria).includes(busqueda) || norm(tituloMov(m)).includes(busqueda) || (m.tipo === 'gasto' && norm(pagoDe(m)).includes(busqueda));
   $('btnBuscar').onclick = () => { $('filaFiltros').classList.add('buscando'); setTimeout(() => $('inBuscar').focus(), 50); };
   $('cerrarBuscar').onclick = () => { $('inBuscar').value = ''; busqueda = ''; $('filaFiltros').classList.remove('buscando'); pintarLista(); };
   $('inBuscar').addEventListener('input', () => { busqueda = norm($('inBuscar').value.trim()); pintarLista(); });
@@ -1861,7 +1927,7 @@
     if (tipoActual === 'aporte') {
       $('inCategoria').classList.remove('sin-valor');
       $('opcNombre').textContent = '(opcional)'; $('opcNombre').classList.remove('req');
-      $('pistaNombre').textContent = `Se verá como «Aporte a ${aQuien()}».`;
+      $('pistaNombre').textContent = `Se verá como «Transferencia a ${aQuien()}».`;
       if ($('errForm').textContent) $('errForm').textContent = '';
       return;
     }
@@ -1883,7 +1949,7 @@
   function abrirForm(tipo, m) {
     tipoActual = tipo; editId = m ? m.id : null;
     const ing = tipo === 'ingreso', apo = tipo === 'aporte';
-    $('tituloForm').textContent = apo ? (m ? 'Editar aporte' : `Nuevo aporte a ${aQuien()}`) : (m ? 'Editar ' : 'Nuevo ') + (ing ? 'ingreso' : 'gasto');
+    $('tituloForm').textContent = apo ? (m ? 'Editar transferencia' : `Nueva transferencia a ${aQuien()}`) : (m ? 'Editar ' : 'Nuevo ') + (ing ? 'ingreso' : 'gasto');
     $('campoCat').hidden = apo;
     $('lblNombre').textContent = apo ? 'Nota' : 'Nombre';
     $('inNombre').placeholder = apo ? 'Ej. Quincena de noviembre' : 'Ej. Pago de noviembre';
@@ -1901,6 +1967,11 @@
     $('inMonto').value = m ? String(m.monto) : '';
     $('inFecha').value = isoDia(m ? m.fecha : Date.now());
     $('inFecha').max = isoDia(Date.now());
+    $('lblMonto').textContent = apo ? 'Monto que le llega ($)' : 'Monto ($)';
+    $('campoCom').hidden = !apo; $('inCom').value = m && apo ? String(comDe(m)) : '';
+    $('campoPago').hidden = tipo !== 'gasto';
+    if (tipo === 'gasto') llenarPagos(m ? (m.pago || 'Efectivo') : 'Efectivo');
+    pistaCom();
     const bloqueado = !!(m && (m.deudaId || m.metaId));
     $('inCategoria').disabled = bloqueado; $('inMonto').disabled = bloqueado; $('notaBloqueo').hidden = !bloqueado;
     $('notaBloqueo').textContent = `Este movimiento viene de ${m && m.metaId ? 'una meta' : 'una deuda'}: solo puedes cambiar el nombre y la fecha.`;
@@ -1912,6 +1983,26 @@
     abrirHoja($('hojaForm'));
   }
   document.querySelectorAll('.pill[data-tipo]').forEach(b => b.onclick = () => abrirForm(b.dataset.tipo, null));
+  // Tipos de pago: los tuyos + «Crédito de …» si ya elegiste a quién le transfieres
+  function llenarPagos(sel) {
+    const ops = catsData.pagos.map(p => [p.nombre, p.nombre]);
+    if (receptor) ops.push([CREDITO, `Crédito de ${receptor}`]);
+    if (sel && !ops.some(o => o[0] === sel)) ops.push([sel, sel === CREDITO ? `Crédito de ${aQuien()}` : sel]);
+    $('inPago').innerHTML = ops.map(([v, t]) => `<option value="${esc(v)}">${esc(t)}</option>`).join('');
+    $('inPago').value = sel || 'Efectivo';
+    pistaPago();
+  }
+  function pistaPago() {
+    $('pistaPago').textContent = $('inPago').value === CREDITO ? `No se resta de tu ganancia: se descuenta de lo que le transferiste a ${aQuien()}.` : '';
+  }
+  $('inPago').addEventListener('change', pistaPago);
+  function pistaCom() {
+    if (tipoActual !== 'aporte') return;
+    const mo = parseFloat($('inMonto').value.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
+    const co = parseFloat($('inCom').value.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
+    $('pistaCom').textContent = mo > 0 ? `Sale de tu tarjeta: ${fmt(Math.round((mo + co) * 100) / 100)}` : 'Lo que te cobra la app por enviar el dinero.';
+  }
+  $('inMonto').addEventListener('input', pistaCom); $('inCom').addEventListener('input', pistaCom);
   $('cancelarForm').onclick = cerrarHoja;
   $('inNombre').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('inMonto').focus(); } });
 
@@ -1929,13 +2020,22 @@
     const dia = $('inFecha').value;
     if (!dia) { $('errForm').textContent = 'Elige una fecha.'; return; }
     if (dia > isoDia(Date.now())) { $('errForm').textContent = 'La fecha no puede ser futura.'; return; }
-    if (!editId && manejarFrecuente({ categoria, nombre, monto: Math.round(monto * 100) / 100 })) return;
-    const original = editId ? movs.find(x => x.id === editId) : null;
-    // Un aporte no puede ser mayor a la ganancia actual (al editar, se cuenta lo que ya tenía ese aporte)
+    let comision = 0, pago;
     if (tipoActual === 'aporte') {
-      const t = sumas(), disp = r2(t.ing - t.gas - t.ap + (original ? original.monto : 0));
-      if (Math.round(monto * 100) / 100 > disp) {
-        $('errForm').textContent = disp > 0 ? `Solo tienes ${fmt(disp)} de ganancia disponible.` : 'No tienes ganancia disponible para aportar.';
+      if (!$('inCom').value.trim()) { $('errForm').textContent = 'Escribe la comisión. Si no te cobraron, pon 0.'; $('inCom').focus(); return; }
+      comision = parseFloat($('inCom').value.replace(/[^0-9.,]/g, '').replace(',', '.'));
+      if (!(comision >= 0) || comision > 999999999) { $('errForm').textContent = 'Escribe una comisión válida (puede ser 0).'; return; }
+      comision = Math.round(comision * 100) / 100;
+    }
+    if (tipoActual === 'gasto') pago = $('inPago').value || 'Efectivo';
+    const extra = tipoActual === 'aporte' ? { comision } : tipoActual === 'gasto' ? { pago } : {};
+    if (!editId && manejarFrecuente({ categoria, nombre, monto: Math.round(monto * 100) / 100, ...extra })) return;
+    const original = editId ? movs.find(x => x.id === editId) : null;
+    // Transferencia + comisión no puede ser mayor a la ganancia actual (al editar, se cuenta lo que ya tenía)
+    if (tipoActual === 'aporte') {
+      const t = sumas(), disp = r2(t.ing - t.gas - t.ap + (original ? totalSale(original) : 0));
+      if (Math.round((monto + comision) * 100) / 100 > disp) {
+        $('errForm').textContent = disp > 0 ? `Solo tienes ${fmt(disp)} de ganancia disponible (contando la comisión).` : 'No tienes ganancia disponible para transferir.';
         return;
       }
     }
@@ -1947,10 +2047,11 @@
     if (original) {
       original.categoria = categoria; original.nombre = nombre; original.fecha = fecha;
       if (!original.deudaId && !original.metaId) original.monto = Math.round(monto * 100) / 100;
-      toast(original.tipo === 'aporte' ? 'Aporte actualizado' : 'Movimiento actualizado');
+      Object.assign(original, extra);
+      toast(original.tipo === 'aporte' ? 'Transferencia actualizada' : 'Movimiento actualizado');
     } else {
-      movs.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tipo: tipoActual, categoria, nombre, monto: Math.round(monto * 100) / 100, fecha });
-      if (tipoActual === 'aporte' && dia === isoDia(Date.now())) toast(`Aporte a ${aQuien()} registrado`);
+      movs.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tipo: tipoActual, categoria, nombre, monto: Math.round(monto * 100) / 100, fecha, ...extra });
+      if (tipoActual === 'aporte' && dia === isoDia(Date.now())) toast(`Transferencia a ${aQuien()} registrada`);
       if (dia !== isoDia(Date.now())) toast('Guardado el ' + new Date(fecha).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' }).replace('.', ''));
     }
     guardar(movs); editId = null;
@@ -1983,8 +2084,11 @@
     $('detMovFichas').innerHTML = `
       <div class="ficha"><span>Tipo</span><b class="${cls}">${etiquetaTipo(m.tipo)}</b></div>
       ${apo ? `<div class="ficha"><span>Para</span><b>${esc(aQuien())}</b></div>` + (notaApo(m) ? `<div class="ficha"><span>Nota</span><b>${esc(notaApo(m))}</b></div>` : '')
+              + `<div class="ficha"><span>Le llega</span><b class="oro">${fmt(m.monto)}</b></div><div class="ficha"><span>Comisión</span><b>${fmt(comDe(m))}</b></div>`
             : `<div class="ficha"><span>Categoría</span><b>${m.categoria ? esc(m.categoria) : '—'}</b></div>`}
-      <div class="ficha"><span>Monto</span><b class="${cls}">${m.tipo === 'ingreso' ? '+' : '-'}${fmt(m.monto)}</b></div>
+      ${m.tipo === 'gasto' ? `<div class="ficha"><span>Tipo de pago</span><b class="${esCredito(m) ? 'oro' : ''}">${esc(pagoDe(m))}</b></div>` : ''}
+      <div class="ficha"><span>${apo ? 'Total que salió' : 'Monto'}</span><b class="${cls}">${m.tipo === 'ingreso' ? '+' : '-'}${fmt(totalSale(m))}</b></div>
+      ${esCredito(m) ? `<div class="ficha"><span>Ganancia</span><b>No la cambia: se descuenta de lo transferido</b></div>` : ''}
       <div class="ficha"><span>Fecha</span><b>${etiquetaDia(m.fecha)} · ${horaDe(m.fecha)}</b></div>`;
     abrirHoja($('hojaMov'));
   }
@@ -1993,7 +2097,7 @@
   $('btnMovBorrar').onclick = () => { const m = movSel; cerrarHoja(); setTimeout(() => abrirBorrar(m), 280); };
   function abrirBorrar(m) {
     idBorrar = m.id;
-    $('detBorrar').textContent = `${etiquetaTipo(m.tipo)} · ${tituloMov(m)}${notaApo(m) ? ' (' + notaApo(m) + ')' : ''} · ${fmt(m.monto)}`;
+    $('detBorrar').textContent = `${etiquetaTipo(m.tipo)} · ${tituloMov(m)}${notaApo(m) ? ' (' + notaApo(m) + ')' : ''} · ${fmt(totalSale(m))}`;
     pasoBorrar(1);
     const ligada = m.deudaId && deudas.some(d => d.id === m.deudaId && d.estado !== 'cerrada');
     $('avisoBorrar').textContent = ligada
@@ -2009,7 +2113,7 @@
     movs = movs.filter(m => m.id !== idBorrar); guardar(movs);  // 2ª confirmación → borra
     cerrarHoja(); pintarLista(); pintarInicio();
     if ($('aportes').classList.contains('on')) pintarAportes();
-    toastDeshacer(borrado && borrado.tipo === 'aporte' ? 'Aporte eliminado' : 'Movimiento eliminado', snap);
+    toastDeshacer(borrado && borrado.tipo === 'aporte' ? 'Transferencia eliminada' : 'Movimiento eliminado', snap);
   };
 
   /* =================== DEUDAS =================== */
@@ -2366,7 +2470,8 @@
   function pintarSeg(el, t) {
     el.dataset.t = t;
     el.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
-    el.querySelector('.indicador').style.transform = el.querySelectorAll('button')[0].dataset.t === t ? 'translateX(0)' : 'translateX(100%)';
+    const idx = [...el.querySelectorAll('button')].findIndex(b => b.dataset.t === t);
+    el.querySelector('.indicador').style.transform = `translateX(${Math.max(0, idx) * 100}%)`;
     el.querySelector('.indicador').style.background = t === 'ingreso' ? 'var(--green-soft)' : 'var(--red-soft)';
   }
 
@@ -2453,15 +2558,16 @@
   });
   function pintarCats() {
     pintarSeg($('segCats'), tipoCats);
-    const g = tipoCats === 'gasto';
-    $('listaCats').innerHTML = otrosAlFinal(catsData[tipoCats]).map(c => `
+    const g = tipoCats === 'gasto', pg = tipoCats === 'pagos';
+    $('listaCats').innerHTML = (pg ? catsData.pagos : otrosAlFinal(catsData[tipoCats])).map(c => `
       <button class="cat-fila" data-id="${c.id}">
-        <span class="pt" style="background:${colorCat(tipoCats, c.nombre)}"></span>
+        ${pg ? '' : `<span class="pt" style="background:${colorCat(tipoCats, c.nombre)}"></span>`}
         <span class="nm">${esc(c.nombre)}</span>
         ${g ? `<span class="pp">${c.presupuesto > 0 ? fmt(c.presupuesto) + '/mes' : 'Sin límite'}</span>` : ''}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>`).join('') +
-      `<button class="cat-agregar" id="agregarCat">+ Agregar categoría de ${g ? 'gasto' : 'ingreso'}</button>`;
+      (pg && receptor ? `<div class="nota-bloqueo" style="margin:4px 2px 8px">«Crédito de ${esc(receptor)}» se agrega solo porque tienes Transferencias.</div>` : '') +
+      `<button class="cat-agregar" id="agregarCat">+ Agregar ${pg ? 'tipo de pago' : 'categoría de ' + (g ? 'gasto' : 'ingreso')}</button>`;
     $('agregarCat').onclick = () => abrirCat(null);
   }
   $('listaCats').addEventListener('click', e => {
@@ -2470,15 +2576,16 @@
   });
   function abrirCat(c) {
     catEdit = c; borrandoCat = false;
-    const g = tipoCats === 'gasto', otros = c && FIJAS.includes(c.nombre);
-    $('tituloCat').textContent = c ? 'Editar categoría' : `Nueva categoría de ${g ? 'gasto' : 'ingreso'}`;
+    const g = tipoCats === 'gasto', pg = tipoCats === 'pagos', otros = c && (pg ? c.nombre === 'Efectivo' : FIJAS.includes(c.nombre));
+    $('tituloCat').textContent = pg ? (c ? 'Editar tipo de pago' : 'Nuevo tipo de pago') : c ? 'Editar categoría' : `Nueva categoría de ${g ? 'gasto' : 'ingreso'}`;
+    $('cNombre').placeholder = pg ? 'Ej. Yape, Plin, Tarjeta BCP…' : 'Ej. Gimnasio, Mascota…';
     $('cNombre').value = c ? c.nombre : ''; $('cNombre').disabled = otros;
     $('notaOtros').hidden = !otros;
     if (otros) $('notaOtros').textContent = `«${c.nombre}» es fija: no se puede renombrar ni eliminar.` + (g ? ' Sí puedes cambiar su presupuesto.' : '');
     $('campoPpto').hidden = !g;
     $('cPpto').value = c && c.presupuesto > 0 ? String(c.presupuesto) : '';
     $('borrarCat').hidden = !c || otros;
-    $('borrarCat').textContent = 'Eliminar categoría';
+    $('borrarCat').textContent = pg ? 'Eliminar tipo de pago' : 'Eliminar categoría';
     $('avisoCat').hidden = true; $('errCat').textContent = '';
     $('botonesCat').hidden = false;
     cerrarHoja(); setTimeout(() => abrirHoja($('hojaCat')), 260);
@@ -2492,7 +2599,8 @@
     const err = t => { $('errCat').textContent = t; };
     if (!nombre) { err('Escribe un nombre.'); return; }
     if (RESERVADAS.includes(norm(nombre))) { err(`«${nombre}» está reservado por la app. Usa otro nombre.`); return; }
-    if (lista.some(c => c !== catEdit && norm(c.nombre) === norm(nombre))) { err('Ya tienes una categoría con ese nombre.'); return; }
+    if (lista.some(c => c !== catEdit && norm(c.nombre) === norm(nombre))) { err(tipoCats === 'pagos' ? 'Ya tienes un tipo de pago con ese nombre.' : 'Ya tienes una categoría con ese nombre.'); return; }
+    if (tipoCats === 'pagos' && norm(nombre).startsWith('credito de')) { err('«Crédito de …» lo crea la app sola. Usa otro nombre.'); return; }
     let ppto = 0;
     if (tipoCats === 'gasto' && $('cPpto').value.trim()) {
       ppto = parseMonto($('cPpto').value);
@@ -2503,16 +2611,18 @@
       const viejo = catEdit.nombre;
       if (viejo !== nombre) {   // renombrar también en los movimientos
         movs.forEach(m => {
-          if (m.tipo === tipoCats && m.categoria === viejo) { m.categoria = nombre; if (m.nombre === viejo) m.nombre = nombre; }
+          if (tipoCats === 'pagos') { if (m.tipo === 'gasto' && m.pago === viejo) m.pago = nombre; }
+          else if (m.tipo === tipoCats && m.categoria === viejo) { m.categoria = nombre; if (m.nombre === viejo) m.nombre = nombre; }
         });
+        if (tipoCats === 'pagos') { frecuentes.forEach(f => { if (f.pago === viejo) f.pago = nombre; }); guardarFrec(); }
         guardar(movs);
       }
       catEdit.nombre = nombre;
       if (tipoCats === 'gasto') catEdit.presupuesto = ppto;
-      toast('Categoría actualizada');
+      toast(tipoCats === 'pagos' ? 'Tipo de pago actualizado' : 'Categoría actualizada');
     } else {
       lista.push(tipoCats === 'gasto' ? { id: idCat(), nombre, presupuesto: ppto } : { id: idCat(), nombre });
-      toast('Categoría creada');
+      toast(tipoCats === 'pagos' ? 'Tipo de pago creado' : 'Categoría creada');
     }
     guardarCats(); pintarInicio(); volverACats();
   });
@@ -2520,14 +2630,15 @@
     if (!catEdit) return;
     if (!borrandoCat) {
       borrandoCat = true;
-      const n = movs.filter(m => m.tipo === tipoCats && m.categoria === catEdit.nombre).length;
-      $('avisoCat').textContent = `¿Eliminar «${catEdit.nombre}»?` + (n ? ` Tus ${n} movimiento${n === 1 ? '' : 's'} con esta categoría se mantienen, pero ya no podrás elegirla.` : '');
+      const pg = tipoCats === 'pagos';
+      const n = movs.filter(m => pg ? m.tipo === 'gasto' && m.pago === catEdit.nombre : m.tipo === tipoCats && m.categoria === catEdit.nombre).length;
+      $('avisoCat').textContent = `¿Eliminar «${catEdit.nombre}»?` + (n ? ` Tus ${n} movimiento${n === 1 ? '' : 's'} con ${pg ? 'este tipo de pago' : 'esta categoría'} se mantienen, pero ya no podrás elegirl${pg ? 'o' : 'a'}.` : '');
       $('avisoCat').hidden = false; $('botonesCat').hidden = true;
       $('borrarCat').textContent = 'Sí, eliminar';
       return;
     }
     catsData[tipoCats] = catsData[tipoCats].filter(c => c !== catEdit);
-    guardarCats(); toast('Categoría eliminada'); volverACats();
+    guardarCats(); toast(tipoCats === 'pagos' ? 'Tipo de pago eliminado' : 'Categoría eliminada'); volverACats();
   };
 
   /* =================== SUELDOS =================== */
@@ -2617,7 +2728,7 @@
   function guardarLogradas() { try { localStorage.setItem(KEY_LOGRADAS, JSON.stringify(logradas)); } catch (e) {} }
 
   // Ganancia SIN restar los aportes: es la que llena las metas (único lugar donde se ve esa cifra)
-  const ganancia = () => movs.reduce((a, m) => a + (m.tipo === 'ingreso' ? m.monto : m.tipo === 'gasto' ? -m.monto : 0), 0);
+  const ganancia = () => movs.reduce((a, m) => a + (m.tipo === 'ingreso' ? m.monto : m.tipo === 'gasto' && !esCredito(m) ? -m.monto : 0), 0);
   // Reparte la ganancia disponible entre las metas según el orden dado
   function repartir(orden) {
     let resto = Math.max(0, r2(ganancia()));
@@ -3012,6 +3123,9 @@
         if (ya) { if (t === 'gasto' && !(ya.presupuesto > 0) && +c.presupuesto > 0) ya.presupuesto = r2(+c.presupuesto); return; }
         catsData[t].push(t === 'gasto' ? { id: idCat(), nombre: c.nombre.slice(0, 24), presupuesto: +c.presupuesto > 0 ? r2(+c.presupuesto) : 0 } : { id: idCat(), nombre: c.nombre.slice(0, 24) });
       }));
+      (Array.isArray(catsPend.pagos) ? catsPend.pagos : []).forEach(c => {
+        if (c && typeof c.nombre === 'string' && !catsData.pagos.some(x => norm(x.nombre) === norm(c.nombre))) catsData.pagos.push({ id: idCat(), nombre: c.nombre.slice(0, 24) });
+      });
       guardarCats(); catsPend = null;
     }
     if (!receptor && apoNombrePend) { receptor = apoNombrePend; try { localStorage.setItem(KEY_APO, receptor); } catch (e) {} }
@@ -3072,18 +3186,18 @@
   function datosExcel() {
     const orden = movs.slice().sort((a, b) => a.fecha - b.fecha);
     const meses = [...new Set(orden.map(m => ymDe(m.fecha)))].sort();
-    const resumen = [['Mes', 'Ingresos', 'Gastos', 'Aportes', 'Ganancia']];
+    const resumen = [['Mes', 'Ingresos', 'Gastos', 'Transferencias', 'Ganancia']];
     let ti = 0, tg = 0, ta = 0;
     meses.forEach(ym => {
       const del = orden.filter(m => ymDe(m.fecha) === ym);
       const i = r2(del.filter(m => m.tipo === 'ingreso').reduce((a, m) => a + m.monto, 0));
-      const g = r2(del.filter(m => m.tipo === 'gasto').reduce((a, m) => a + m.monto, 0));
-      const a = r2(del.filter(m => m.tipo === 'aporte').reduce((x, m) => x + m.monto, 0));
+      const g = r2(del.filter(m => m.tipo === 'gasto' && !esCredito(m)).reduce((a, m) => a + m.monto, 0));
+      const a = r2(del.filter(m => m.tipo === 'aporte').reduce((x, m) => x + totalSale(m), 0));
       ti += i; tg += g; ta += a; resumen.push([mesLargo(ym), i, g, a, r2(i - g - a)]);
     });
     resumen.push(['TOTAL', r2(ti), r2(tg), r2(ta), r2(ti - tg - ta)]);
-    const movRows = [['Fecha', 'Hora', 'Tipo', 'Categoría', 'Nombre', 'Monto', 'Neto']].concat(orden.map(m => [
-      isoDia(m.fecha), horaDe(m.fecha), etiquetaTipo(m.tipo), m.tipo === 'aporte' ? '' : m.categoria || '', m.tipo === 'aporte' ? tituloMov(m) + (notaApo(m) ? ' · ' + notaApo(m) : '') : m.nombre, m.monto, m.tipo === 'ingreso' ? m.monto : -m.monto]));
+    const movRows = [['Fecha', 'Hora', 'Tipo', 'Categoría', 'Nombre', 'Tipo de pago', 'Monto', 'Comisión', 'Efecto en ganancia']].concat(orden.map(m => [
+      isoDia(m.fecha), horaDe(m.fecha), etiquetaTipo(m.tipo), m.tipo === 'aporte' ? '' : m.categoria || '', m.tipo === 'aporte' ? tituloMov(m) + (notaApo(m) ? ' · ' + notaApo(m) : '') : m.nombre, m.tipo === 'gasto' ? pagoDe(m) : '', m.monto, comDe(m), r2(efecto(m))]));
     const porCat = [['Mes', 'Tipo', 'Categoría', 'Total']];
     meses.forEach(ym => ['ingreso', 'gasto'].forEach(t => {
       const acc = {};
@@ -3099,7 +3213,7 @@
       logradas.map(m => [m.nombre, m.monto, m.monto, 'Lograda', '', isoDia(m.fecha), isoDia(m.fechaLograda)]));
     return [
       { nombre: 'Resumen por mes', filas: resumen, anchos: [20, 14, 14, 14, 14] },
-      { nombre: 'Movimientos', filas: movRows, anchos: [12, 8, 10, 18, 30, 12, 12] },
+      { nombre: 'Movimientos', filas: movRows, anchos: [12, 8, 13, 18, 30, 18, 12, 11, 16] },
       { nombre: 'Por categoría', filas: porCat, anchos: [20, 10, 20, 14] },
       { nombre: 'Deudas', filas: deu, anchos: [10, 22, 18, 12, 12, 12, 10, 12, 14, 12, 20] },
       { nombre: 'Metas', filas: met, anchos: [22, 12, 12, 13, 10, 12, 12] }
@@ -3220,12 +3334,14 @@
 
   function limpiarCampos() {
     $('inCategoria').value = tipoActual === 'aporte' ? 'Aporte' : ''; $('inNombre').value = ''; $('inMonto').value = '';
-    $('inFecha').value = isoDia(Date.now()); $('errForm').textContent = ''; pintarPista();
+    $('inFecha').value = isoDia(Date.now()); $('errForm').textContent = ''; $('inCom').value = '';
+    if (tipoActual === 'gasto') llenarPagos('Efectivo');
+    pintarPista(); pistaCom();
   }
   function textosForm() {
-    const nom = frecTipo === 'ingreso' ? 'ingreso' : frecTipo === 'aporte' ? 'aporte' : 'gasto';
+    const nom = frecTipo === 'ingreso' ? 'ingreso' : frecTipo === 'aporte' ? 'transferencia' : 'gasto';
     $('tituloForm').textContent = modoFrec === 'nuevo' ? `Nuevo frecuente · ${nom}`
-      : modoFrec === 'editar' ? 'Editar frecuente' : frecTipo === 'aporte' ? `Nuevo aporte a ${aQuien()}` : `Nuevo ${nom}`;
+      : modoFrec === 'editar' ? 'Editar frecuente' : frecTipo === 'aporte' ? `Nueva transferencia a ${aQuien()}` : `Nuevo ${nom}`;
     $('guardarForm').textContent = modoFrec === 'editar' ? 'Guardar frecuente' : 'Guardar';
   }
   function mostrarEleccion(si) { $('frecEleccion').hidden = !si; $('botonesForm').hidden = si; }
@@ -3264,7 +3380,9 @@
     $('inNombre').value = f.nombre === f.categoria ? '' : f.nombre;
     $('inMonto').value = String(f.monto);
     $('inFecha').value = isoDia(Date.now());
-    $('errForm').textContent = ''; pintarPista();
+    if (f.tipo === 'gasto') llenarPagos(f.pago || 'Efectivo');
+    if (f.tipo === 'aporte') $('inCom').value = String(f.comision > 0 ? f.comision : 0);
+    $('errForm').textContent = ''; pintarPista(); pistaCom();
   }
   $('frecFila').addEventListener('click', e => {
     const b = e.target.closest('.frec'); if (!b) return;
@@ -3300,12 +3418,12 @@
     if (frecRegistrando) { frecRegistrando = false; return false; }
     if (modoFrec === 'editar') {
       const f = frecuentes.find(x => x.id === frecSel);
-      if (f) { Object.assign(f, { categoria: datos.categoria, nombre: datos.nombre, monto: datos.monto }); guardarFrec(); }
+      if (f) { Object.assign(f, datos); guardarFrec(); }
       modoFrec = null; pintarChips(); toast('Frecuente actualizado');
       return true;
     }
     if (modoFrec === 'nuevo') {
-      frecPendiente = { id: 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), tipo: frecTipo, categoria: datos.categoria, nombre: datos.nombre, monto: datos.monto };
+      frecPendiente = { id: 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), tipo: frecTipo, ...datos };
       $('frecEleccionTxt').textContent = `«${datos.nombre}» · ${fmt(datos.monto)} es un frecuente nuevo. ¿Qué quieres hacer?`;
       $('frecRegistrar').className = 'btn full ' + (frecTipo === 'ingreso' ? 'verde' : frecTipo === 'aporte' ? 'oro' : 'rojo');
       document.activeElement && document.activeElement.blur();
@@ -3353,7 +3471,8 @@
     receptor = ''; try { localStorage.removeItem(KEY_APO); } catch (e) {}
     catsData = {
       ingreso: CATS_DEF.ingreso.map(n => ({ id: idCat(), nombre: n })),
-      gasto: CATS_DEF.gasto.map(n => ({ id: idCat(), nombre: n, presupuesto: 0 }))
+      gasto: CATS_DEF.gasto.map(n => ({ id: idCat(), nombre: n, presupuesto: 0 })),
+      pagos: PAGOS_DEF.map(n => ({ id: idCat(), nombre: n }))
     }; guardarCats();
     try { [KEY_RESP, KEY_AV_RESP, KEY_AV_DEU].forEach(k => localStorage.removeItem(k)); } catch (e) {}
     escribir(KEY_PRIMER, Date.now());
@@ -3367,18 +3486,23 @@
   /* =================== APORTES =================== */
   const fechaLarga = ts => { const d = new Date(ts); return `${d.getDate()} ${MESES[d.getMonth()].slice(0, 3)} ${d.getFullYear()}`; };
   function pintarAportes() {
-    const { lista, total, pct } = datosAportes();
-    $('tituloAportes').textContent = receptor ? `Aportes a ${receptor}` : 'Aportes';
-    $('apoTotal').textContent = fmt(total);
-    $('apoBar').style.width = Math.min(100, pct || 0) + '%';
-    $('apoPct').textContent = !lista.length ? 'Aún no hay aportes.'
-      : pct != null ? textoPct(pct) + ' desde que empezaste' : 'Tu ganancia aún no es positiva.';
-    $('listaAportes').innerHTML = lista.length ? lista.map(m => `
+    const d = datosAportes();
+    $('tituloAportes').textContent = receptor ? `Transferencias a ${receptor}` : 'Transferencias';
+    $('apoTotal').textContent = fmt(d.liquido);
+    $('apoPills').innerHTML = d.lista.length ? pastillas(d) : '';
+    $('apoBar').innerHTML = barra3(d);
+    $('apoPct').textContent = !d.trans.length ? 'Aún no hay transferencias.'
+      : d.pct != null ? textoPct(d.pct) + ' desde que empezaste' : 'Tu ganancia aún no es positiva.';
+    $('listaAportes').innerHTML = d.lista.length ? d.lista.map(m => m.tipo === 'aporte' ? `
       <div class="fila-apo" data-id="${m.id}">
-        <div class="info"><b>${fechaLarga(m.fecha)}</b><small>${esc(notaApo(m) || 'Aporte')}</small></div>
-        <span class="mt">${fmt(m.monto)}</span>${icoChev}
-      </div>`).join('') + '<p class="nota-apo">Toca un aporte para editarlo o eliminarlo.</p>'
-      : '<div class="vacio" style="margin-top:12%">Aún no hay aportes.<br>Toca <b>+ Nuevo aporte</b> para registrar el primero.</div>';
+        <div class="info"><b>${fechaLarga(m.fecha)}</b><small>${esc(notaApo(m) || 'Transferencia')}</small></div>
+        <div class="der"><span class="mt">${fmt(m.monto)}</span><span class="cm"><i class="c-com"></i>+ ${fmt(comDe(m))} comisión</span></div>${icoChev}
+      </div>` : `
+      <div class="fila-apo" data-id="${m.id}">
+        <div class="info"><b>${fechaLarga(m.fecha)}</b><small>${esc(m.nombre)}${m.categoria && m.categoria !== m.nombre ? ' · ' + esc(m.categoria) : ''}</small></div>
+        <div class="der"><span class="mt cr">-${fmt(m.monto)}</span><span class="cm"><i class="c-cr"></i>Crédito de ${esc(aQuien())}</span></div>${icoChev}
+      </div>`).join('') + '<p class="nota-apo">Toca una fila para editarla o eliminarla.</p>'
+      : '<div class="vacio" style="margin-top:12%">Aún no hay transferencias.<br>Toca <b>+ Nueva transferencia</b> para registrar la primera.</div>';
   }
   $('abrirBarras').onclick = () => { pintarBarras(); abrirVista('barras'); };
   $('cerrarBarras').onclick = () => cerrarVista('barras');
